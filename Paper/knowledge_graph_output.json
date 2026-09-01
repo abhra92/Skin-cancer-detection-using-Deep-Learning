@@ -1,0 +1,631 @@
+{
+  "nodes": [
+    {
+      "id": "problem_high_prevalence",
+      "label": "High Prevalence of Skin Cancer",
+      "file_type": "concept",
+      "source_file": "Multiple papers",
+      "source_location": "Problem statements"
+    },
+    {
+      "id": "problem_high_mortality",
+      "label": "High Mortality Rate in Late-Stage Detection",
+      "file_type": "concept",
+      "source_file": "Multiple papers",
+      "source_location": "Problem statements"
+    },
+    {
+      "id": "problem_manual_diagnosis",
+      "label": "Manual Diagnosis is Time-Consuming and Subjective",
+      "file_type": "concept",
+      "source_file": "3330482.3330525.pdf, JBPE-12-559.pdf",
+      "source_location": "Introduction"
+    },
+    {
+      "id": "problem_healthcare_access",
+      "label": "Limited Healthcare Access in Rural/Remote Areas",
+      "file_type": "concept",
+      "source_file": "1-s2.0-S2666521224000589-main.pdf",
+      "source_location": "Abstract"
+    },
+    {
+      "id": "problem_early_detection",
+      "label": "Need for Early Detection Systems",
+      "file_type": "concept",
+      "source_file": "Multiple papers",
+      "source_location": "Problem statements"
+    },
+    {
+      "id": "cancer_melanoma",
+      "label": "Melanoma (Most Dangerous Form)",
+      "file_type": "concept",
+      "source_file": "Multiple papers",
+      "source_location": "Background"
+    },
+    {
+      "id": "cancer_bcc",
+      "label": "Basal Cell Carcinoma (BCC)",
+      "file_type": "concept",
+      "source_file": "JBPE-12-559.pdf, ijerph-18-05479.pdf",
+      "source_location": "Introduction"
+    },
+    {
+      "id": "cancer_scc",
+      "label": "Squamous Cell Carcinoma (SCC)",
+      "file_type": "concept",
+      "source_file": "JBPE-12-559.pdf, ijerph-18-05479.pdf",
+      "source_location": "Introduction"
+    },
+    {
+      "id": "cancer_nmsc",
+      "label": "Non-Melanoma Skin Cancer (NMSC)",
+      "file_type": "concept",
+      "source_file": "JBPE-12-559.pdf",
+      "source_location": "Introduction"
+    },
+    {
+      "id": "obj_early_detection_model",
+      "label": "Develop Early Detection Model for Skin Cancer",
+      "file_type": "objective",
+      "source_file": "Nahata_Satya.pdf, Multiple papers",
+      "source_location": "Abstract, Objectives"
+    },
+    {
+      "id": "obj_classify_cancer_types",
+      "label": "Classify Different Types of Skin Cancer",
+      "file_type": "objective",
+      "source_file": "Multiple papers",
+      "source_location": "Objectives"
+    },
+    {
+      "id": "obj_improve_accuracy",
+      "label": "Improve Diagnostic Accuracy Beyond Manual Methods",
+      "file_type": "objective",
+      "source_file": "Multiple papers",
+      "source_location": "Objectives"
+    },
+    {
+      "id": "obj_digital_health_integration",
+      "label": "Integrate into Digital Health Platforms for Accessibility",
+      "file_type": "objective",
+      "source_file": "1-s2.0-S2666521224000589-main.pdf",
+      "source_location": "Abstract"
+    },
+    {
+      "id": "dataset_isic",
+      "label": "ISIC Archive (International Skin Imaging Collaboration)",
+      "file_type": "dataset",
+      "source_file": "Nahata_Satya.pdf, aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "dataset_dermoscopic_images",
+      "label": "Dermoscopic Images",
+      "file_type": "dataset",
+      "source_file": "Multiple papers",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "dataset_public",
+      "label": "Publicly Available Skin Cancer Datasets",
+      "file_type": "dataset",
+      "source_file": "3330482.3330525.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "method_cnn",
+      "label": "Convolutional Neural Networks (CNN)",
+      "file_type": "method",
+      "source_file": "Multiple papers",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "method_transfer_learning",
+      "label": "Transfer Learning",
+      "file_type": "method",
+      "source_file": "Nahata_Satya.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "method_data_augmentation",
+      "label": "Data Augmentation",
+      "file_type": "method",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "method_ensemble",
+      "label": "Ensemble Methods",
+      "file_type": "method",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "method_feature_extraction",
+      "label": "Feature Extraction from Images",
+      "file_type": "method",
+      "source_file": "3330482.3330525.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "method_image_segmentation",
+      "label": "Image Segmentation",
+      "file_type": "method",
+      "source_file": "3330482.3330525.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "method_few_shot_learning",
+      "label": "Few-Shot Learning",
+      "file_type": "method",
+      "source_file": "1-s2.0-S2666521224000589-main.pdf",
+      "source_location": "Abstract"
+    },
+    {
+      "id": "arch_mobilenetv2",
+      "label": "MobileNetV2",
+      "file_type": "architecture",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "arch_densenet",
+      "label": "DenseNet",
+      "file_type": "architecture",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "arch_inceptionv3",
+      "label": "InceptionV3",
+      "file_type": "architecture",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "arch_random_forest",
+      "label": "Random Forest (ML)",
+      "file_type": "architecture",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "tool_keras",
+      "label": "Keras Framework",
+      "file_type": "tool",
+      "source_file": "Nahata_Satya.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "tool_tensorflow",
+      "label": "TensorFlow",
+      "file_type": "tool",
+      "source_file": "Nahata_Satya.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "tool_python",
+      "label": "Python Programming Language",
+      "file_type": "tool",
+      "source_file": "Nahata_Satya.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "challenge_class_imbalance",
+      "label": "Class Imbalance in Dataset",
+      "file_type": "challenge",
+      "source_file": "1-s2.0-S2666521224000589-main.pdf",
+      "source_location": "Abstract"
+    },
+    {
+      "id": "challenge_dataset_limitation",
+      "label": "Limited Dataset Availability",
+      "file_type": "challenge",
+      "source_file": "1-s2.0-S2666521224000589-main.pdf",
+      "source_location": "Abstract"
+    },
+    {
+      "id": "challenge_clinical_validation",
+      "label": "Need for Clinical Validation and Trust",
+      "file_type": "challenge",
+      "source_file": "JBPE-12-559.pdf",
+      "source_location": "Introduction"
+    },
+    {
+      "id": "result_mobilenetv2_97",
+      "label": "MobileNetV2 Achieves 97.58% with Augmentation",
+      "file_type": "result",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "result_ensemble_97",
+      "label": "Ensemble (DenseNet+InceptionV3) Achieves 97.50% with Augmentation",
+      "file_type": "result",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "result_rf_87",
+      "label": "Random Forest Achieves 87.32% with Augmentation",
+      "file_type": "result",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "result_cnn_89",
+      "label": "CNN Achieves 89.5% Test Accuracy",
+      "file_type": "result",
+      "source_file": "3330482.3330525.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "result_early_detection_95",
+      "label": "Early Detection Can Achieve >95% Survival Rate",
+      "file_type": "result",
+      "source_file": "Nahata_Satya.pdf",
+      "source_location": "Abstract"
+    },
+    {
+      "id": "result_similar_to_dermatologist",
+      "label": "DL Accuracy Similar to Dermatologist Performance",
+      "file_type": "result",
+      "source_file": "JBPE-12-559.pdf",
+      "source_location": "Introduction"
+    },
+    {
+      "id": "rationale_cnn_visual",
+      "label": "CNNs Show Highest Accuracy in Visual Imaging Tasks",
+      "file_type": "rationale",
+      "source_file": "Nahata_Satya.pdf",
+      "source_location": "Abstract"
+    },
+    {
+      "id": "rationale_augmentation",
+      "label": "Data Augmentation Addresses Limited Dataset Availability",
+      "file_type": "rationale",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "rationale_ensemble",
+      "label": "Ensemble Methods Combine Strengths of Multiple Architectures",
+      "file_type": "rationale",
+      "source_file": "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "source_location": "Results"
+    },
+    {
+      "id": "rationale_transfer_learning",
+      "label": "Transfer Learning Enables Early Convergence and Better Generalization",
+      "file_type": "rationale",
+      "source_file": "Nahata_Satya.pdf",
+      "source_location": "Methodology"
+    },
+    {
+      "id": "rationale_few_shot",
+      "label": "Few-Shot Learning Addresses Limited Training Data",
+      "file_type": "rationale",
+      "source_file": "1-s2.0-S2666521224000589-main.pdf",
+      "source_location": "Abstract"
+    }
+  ],
+  "edges": [
+    {
+      "source": "problem_high_prevalence",
+      "target": "obj_early_detection_model",
+      "relation": "motivates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "problem_high_mortality",
+      "target": "obj_early_detection_model",
+      "relation": "motivates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "problem_manual_diagnosis",
+      "target": "obj_improve_accuracy",
+      "relation": "motivates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "problem_healthcare_access",
+      "target": "obj_digital_health_integration",
+      "relation": "motivates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.92
+    },
+    {
+      "source": "problem_early_detection",
+      "target": "obj_early_detection_model",
+      "relation": "addresses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "cancer_melanoma",
+      "target": "cancer_nmsc",
+      "relation": "type_of_contrast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "cancer_bcc",
+      "target": "cancer_nmsc",
+      "relation": "is_type_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "cancer_scc",
+      "target": "cancer_nmsc",
+      "relation": "is_type_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "obj_classify_cancer_types",
+      "target": "method_cnn",
+      "relation": "implemented_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "obj_improve_accuracy",
+      "target": "method_data_augmentation",
+      "relation": "achieved_through",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "obj_early_detection_model",
+      "target": "method_transfer_learning",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "obj_classify_cancer_types",
+      "target": "dataset_isic",
+      "relation": "trained_on",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "method_cnn",
+      "target": "dataset_dermoscopic_images",
+      "relation": "processes",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "method_feature_extraction",
+      "target": "dataset_dermoscopic_images",
+      "relation": "extracts_from",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "method_cnn",
+      "target": "method_transfer_learning",
+      "relation": "enhanced_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "method_image_segmentation",
+      "target": "method_feature_extraction",
+      "relation": "precedes",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "method_cnn",
+      "target": "arch_mobilenetv2",
+      "relation": "implemented_as",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "method_cnn",
+      "target": "arch_densenet",
+      "relation": "implemented_as",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "method_cnn",
+      "target": "arch_inceptionv3",
+      "relation": "implemented_as",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "method_ensemble",
+      "target": "arch_densenet",
+      "relation": "combines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "method_ensemble",
+      "target": "arch_inceptionv3",
+      "relation": "combines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "method_cnn",
+      "target": "tool_keras",
+      "relation": "implemented_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "method_cnn",
+      "target": "tool_tensorflow",
+      "relation": "uses_backend",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "tool_keras",
+      "target": "tool_python",
+      "relation": "language",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "challenge_class_imbalance",
+      "target": "method_data_augmentation",
+      "relation": "addressed_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "challenge_dataset_limitation",
+      "target": "method_few_shot_learning",
+      "relation": "addressed_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "challenge_clinical_validation",
+      "target": "result_similar_to_dermatologist",
+      "relation": "demonstrates",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8
+    },
+    {
+      "source": "arch_mobilenetv2",
+      "target": "result_mobilenetv2_97",
+      "relation": "achieves",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "method_ensemble",
+      "target": "result_ensemble_97",
+      "relation": "achieves",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "arch_random_forest",
+      "target": "result_rf_87",
+      "relation": "achieves",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "method_cnn",
+      "target": "result_cnn_89",
+      "relation": "achieves",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "method_data_augmentation",
+      "target": "result_mobilenetv2_97",
+      "relation": "enables",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "method_cnn",
+      "target": "rationale_cnn_visual",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "method_data_augmentation",
+      "target": "rationale_augmentation",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "method_ensemble",
+      "target": "rationale_ensemble",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "method_transfer_learning",
+      "target": "rationale_transfer_learning",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "method_few_shot_learning",
+      "target": "rationale_few_shot",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "result_mobilenetv2_97",
+      "target": "result_ensemble_97",
+      "relation": "comparable_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "result_ensemble_97",
+      "target": "result_rf_87",
+      "relation": "outperforms",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "result_cnn_89",
+      "target": "result_rf_87",
+      "relation": "comparable_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "he_skin_cancer_detection_pipeline",
+      "label": "Skin Cancer Detection Pipeline",
+      "members": [
+        "method_image_segmentation",
+        "method_feature_extraction",
+        "method_cnn",
+        "result_cnn_89"
+      ],
+      "type": "process_flow"
+    },
+    {
+      "id": "he_augmentation_performance",
+      "label": "Data Augmentation Impact on Performance",
+      "members": [
+        "method_data_augmentation",
+        "challenge_dataset_limitation",
+        "result_mobilenetv2_97",
+        "result_ensemble_97"
+      ],
+      "type": "causal"
+    },
+    {
+      "id": "he_ensemble_comparative",
+      "label": "Ensemble vs Individual Architectures",
+      "members": [
+        "method_ensemble",
+        "arch_densenet",
+        "arch_inceptionv3",
+        "result_ensemble_97"
+      ],
+      "type": "comparison"
+    }
+  ],
+  "input_tokens": 15000,
+  "output_tokens": 8500
+}

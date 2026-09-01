@@ -1,0 +1,1248 @@
+Research Article
+Skin Cancer Segmentation and Classification Using Vision
+Transformer for Automatic Analysis in Dermatoscopy-BasedNoninvasive Digital System
+Galib Muhammad Shahriar Himel ,1Md. Masudul Islam ,1Kh. Abdullah Al-Aff ,2
+Shams Ibne Karim ,3and Md. Kabir Uddin Sikder1
+1Jahangirnagar University, Dhaka, Bangladesh
+2Bangladesh University of Health Sciences, Dhaka, Bangladesh
+3Bangabandhu Sheikh Mujib Medical University, Dhaka, Bangladesh
+Correspondence should be addressed to Galib Muhammad Shahriar Himel; galib.muhammad.shahriar@gmail.com
+Received 15 July 2023; Revised 3 January 2024; Accepted 9 January 2024; Published 3 February 2024 Academic Editor: Vincenzo PositanoCopyright © 2024 Galib Muhammad Shahriar Himel et al. This is an open access article distributed under the Creative Commons
+Attribution License, which permits unrestricted use, distribution, and reproduction in any medium, provided the original work isproperly cited.
+Skin cancer is a signi ﬁcant health concern worldwide, and early and accurate diagnosis plays a crucial role in improving patient
+outcomes. In recent years, deep learning models have shown remarkable success in various computer vision tasks, including imageclassiﬁcation. In this research study, we introduce an approach for skin cancer classi ﬁcation using vision transformer, a state-of-
+the-art deep learning architecture that has demonstrated exceptional performance in diverse image analysis tasks. The study
+utilizes the HAM10000 dataset; a publicly available dataset comprising 10,015 skin lesion images classi ﬁed into two categories:
+benign (6705 images) and malignant (3310 images). This dataset consists of high-resolution images captured usingdermatoscopes and carefully annotated by expert dermatologists. Preprocessing techniques, such as normalization andaugmentation, are applied to enhance the robustness and generalization of the model. The vision transformer architecture is
+adapted to the skin cancer classi ﬁcation task. The model leverages the self-attention mechanism to capture intricate spatial
+dependencies and long-range dependencies within the images, enabling it to e ﬀectively learn relevant features for accurate
+classiﬁcation. Segment Anything Model (SAM) is employed to segment the cancerous areas from the images; achieving an IOU
+of 96.01% and Dice coe ﬃcient of 98.14% and then various pretrained models are used for classi ﬁcation using vision
+transformer architecture. Extensive experiments and evaluations are conducted to assess the performance of our approach. The
+results demonstrate the superiority of the vision transformer model over traditional deep learning architectures in skin cancer
+classiﬁcation in general with some exceptions. Upon experimenting on six di ﬀerent models, ViT-Google, ViT-MAE, ViT-
+ResNet50, ViT-VAN, ViT-BEiT, and ViT-DiT, we found out that the ML approach achieves 96.15% accuracy using Google ’s
+ViT patch-32 model with a low false negative ratio on the test dataset, showcasing its potential as an e ﬀective tool for aiding
+dermatologists in the diagnosis of skin cancer.
+1. Introduction
+Cancer is a condition that arises when cells undergo uncon-
+trolled division and extend into nearby tissues. The develop-
+ment of cancer is triggered by alterations and mutations in
+the DNA. The majority of DNA changes responsible for can-cer occur within speci ﬁc regions known as genes. Among the
+various types of cancers, skin cancer is among the ﬁve on thelist. If we disregard breast and prostate cancers which are
+gender-dependent, skin cancer will remain in the third larg-est cancer category among many others. Based on the statis-tics released by the American Cancer Society (ACS) [1],
+there were 58,120 recorded cases of skin cancer among
+males and 39,490 cases among females. An intriguing obser-vation is that the incidence of skin cancer has been steadilyrising from 1992 to 2019, with a notable exception in 2020Hindawi
+International Journal of Biomedical Imaging
+Volume 2024, Article ID 3022192, 18 pages
+https://doi.org/10.1155/2024/3022192
+
+[2]. This exception can be attributed to the understandable
+decrease in cases during the COVID-19 pandemic, as people
+were mostly con ﬁned to their homes. This decline is reason-
+able considering that exposure to ultraviolet (UV) radiationis a signi ﬁcant contributing factor to the development of
+skin cancer.
+More people are diagnosed with skin cancer each year in
+the U.S. than all other cancers combined [3]. More than5,400 people worldwide die of nonmelanoma skin cancerevery month [4]. The number of melanoma deaths isexpected to increase by 4.4 percent in 2023 [3]. More peopledevelop skin cancer because of indoor tanning than developlung cancer because of smoking [5]. Skin cancer representsapproximately 2 to 4 percent of all cancers in Asians, 4 to
+5 percent of all cancers in Hispanics, and 1 to 2 percent of
+all cancers in Black people [6 –8]. Skin cancers account for
+3 percent of pediatric cancers [9].
+There are various factors involving the initiation of
+developing skin cancer such as ultraviolet rays, arsenicconsumption, cigarette smoking, exposure to nuclear radi-ation, excessive X-ray exposure, indoor tanning, drinkingalcohol, viruses, changing environments, sunburn, abnor-mal swelling, eczema, weak immune system, and humanpapilloma virus. There are also environmental factors thatwork as a catalyst for developing skin cancer such asworking coal, tar, petroleum, and shale oils [10]. Some dis-
+eases may fasten the development rate of skin cancer but
+not necessarily the root cause of cancer themselves suchas AIDS and other diseases that involve the weakeningof the immune system.
+Skin cancer may form on the upper part of the skin
+(which is visible to us) as well as in the inner parts of di ﬀer-
+ent layers of the skin. More than 90% of skin cancers arecaused by direct sunlight exposure, to be speci ﬁc, UV expo-
+sure. Almost all of the cases are related to cancer develop-ment on the upper visible part of the skin. The a ﬀected
+skin areas can be easily captured by a dermatoscope orhigh-resolution smartphone camera. On the other hand,
+skin cancers that develop inside the skin layers require inva-
+sive sample collection methods. Since more than 90% of skincancer is caused by UV rays and these cancers occur primar-ily on the surface of the skin through UV exposure, it can besaid that the majority of skin cancers can be identi ﬁed
+through noninvasive methods using a dermatoscope, as itallows for the collection of samples from the skin.
+Traditionally, the ABCDE [11] method is used for the
+primary diagnosis (classi ﬁcation) of skin cancer. The
+ABCDE acronym is used as a mnemonic for recognizingpotential signs of melanoma, a type of skin cancer that is
+shown in Figure 1. Each letter corresponds to a characteristic
+feature that may indicate the presence of melanoma. Here isthe breakdown of the ABCDE criteria:(i) A —asymmetry: Melanomas often exhibit irregular
+or asymmetrical shapes, where one half does not
+match the other half
+(ii) B —border irregularity: The borders of a melanoma
+may be uneven, ragged, or notched, rather thansmooth and well-de ﬁned
+(iii) C —color variation: Melanomas can have a range of
+colors within the same lesion, such as di ﬀerent
+shades of brown, black, blue, red, or white
+(iv) D —diameter: While melanomas can be smaller, any
+mole or lesion with a diameter larger than 6 milli-meters (about the size of a pencil eraser) should beclosely examined
+(v) E —evolution or changes over time: Watch out for
+any changes in size, shape, color, elevation, or other
+characteristics of a mole or lesion
+After the primary classi ﬁcation, the sample is transferred
+to the pathological analysis team for a de ﬁnitive result. The
+pathological analysis is an invasive method. This methodcan be used for classifying all kinds of cancer cells. However,it has its disadvantages. This method is very costly, time-consuming, and painful. Pathological diagnosis of skin can-cer typically involves an invasive method known as a biopsy.The biopsy procedure is performed by a healthcare profes-sional, usually a dermatologist or a surgeon, and it involvesthe removal of a small sample of suspicious skin tissue forfurther examination.
+There are di ﬀerent types of skin biopsies, including the
+following:
+(i) Excisional biopsy: This type of biopsy involves the
+complete removal of the suspicious skin lesion,along with a small margin of surrounding healthytissue. The excised sample is then sent to a pathol-ogy laboratory for analysis
+(ii) Incisional biopsy: In this method, only a portion of
+the suspicious skin lesion is removed for examina-tion. It is typically done when the lesion is large ordeep, and the entire lesion cannot be easily excised
+(iii) Punch biopsy: A punch biopsy involves using a spe-
+cial tool called a punch to remove a small circularpiece of skin tissue, including the suspicious lesionand a small portion of normal skin around it
+(iv) Shave biopsy: This method involves shaving o ﬀthe
+top layers of the skin using a surgical blade to obtain
+a sample. It is commonly used for super ﬁcial lesions
+or those located on the surface of the skin
+Asymmetry Borders Color Diameter Evolution6 mm
+Figure 1: The ABCDE method for primary diagnosis of skin cancer.2 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Once the skin sample is obtained through the biopsy
+procedure, it is sent to a pathology laboratory, where itundergoes microscopic examination by a pathologist. Thepathologist examines the tissue sample, looking for charac-teristic features of skin cancer, such as abnormal cell growthpatterns, cellular atypia, and invasion of surrounding tissues.Based on the examination ﬁndings, the pathologist provides
+ad eﬁnitive diagnosis and may further classify the speci ﬁc
+type and stage of skin cancer.
+Due to the time-consuming nature of even the primary
+diagnosis process used in the conventional method, itoften becomes very di ﬃcult to identify cancer within the
+target time. At the same time, handling a lot of patientswithin the expected timeframe becomes a nightmare. Fromthe statistics, it is also clear that day by day, skin cancerpatients are increasing rapidly as a result of the depressionof the ozone layer creating an inability to block the UVrays. So, soon, the hospital and the diagnosis centers willface more di ﬃculties in managing the situation in due
+time. To solve this issue, arti ﬁcial intelligence can play a
+vital role. Using a dermatoscope, the suspected areas ofthe skin can be captured at up to 20x magni ﬁcation very
+easily. These images can be used to train an intelligent sys-tem that can classify cancer cells accurately. Computers,smartphones, or any other smart devices can be used todo the task.
+In this paper, we are proposing a vision transfer-based
+machine learning model that will classify the cancerous cellson the upper part of the skin. This model can be mounted onany smart device which can be used to capture images using
+a dermatoscope and instantly generate a classi ﬁcation deci-
+sion regarding the suspected area. In Figure 2, the work ﬂow
+of rapid cancer cell classi ﬁcation is shown.In this research, the HAM10000 [12] dataset is used for
+training the model. At ﬁrst, we manually annotated the sus-
+pected areas and then applied the Segment Anything Model(SAM) [13] to train the segmentation model. This modelwill be used to detect the speci ﬁc area using the concept of
+semantic segmentation. In the second stage, the classi ﬁca-
+tion model will be used to di ﬀerentiate between the benign
+and malignant categories. The major contribution of our
+research:
+(i) Creating the segmentation model using the Segment
+Anything Model (SAM)
+(ii) For classi ﬁcation, we have used Google ’s ViT model
+(patch 32) [14], Visual Attention Network (VAN)[15], ResNet50 [14], Facebook ’s MAE model [16],
+Document Image Transformer (DiT) [17], andBERT pretraining of image transformer (BEiT)
+[18] to train the vision transformer model. Compar-
+ing these models, we have found out that Google ’s
+ViT model (patch-32) generates better results thanthe other models in skin cancer classi ﬁcation
+(iii) We meticulously ﬁne-tuned the hyperparameters
+for our model, exploring various optimization strat-egies, learning rates, and loss functions. Speci ﬁcally,
+we evaluated the performance under di ﬀerent opti-
+mizers, including “Adam, ”“Adamax, ”“RMSProp, ”
+and“SGD. ”The learning rates considered spanned
+a range of values: 0.1, 0.01, 0.001, 0.0001, 0.00002,
+and 0.00001. Additionally, we experimented withdiﬀerent loss functions, namely, “Cross Entropy
+Loss”and “Hinge.
+”After a thorough analysis, we
+PatientMachine
+learningmodel
+DermatoscopeSample
+Malignant
+Rapid skin cancerForwarded for
+Pathological
+Diagnosis
+Figure 2: Rapid cancer cell classi ﬁcation using dermatoscope.3 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+determined that the most e ﬀective combination for
+our vision transformer (ViT) model involved
+employing the “Adam ”optimizer with a learning
+rate of 0.00002 and using “Cross Entropy Loss ”for
+calculating the loss. These optimized hyperpara-
+meters were instrumental in achieving superior per-
+formance and model e ﬃciency
+The following paper is structured in the following way:
+Section 2 describes the existing literature on the topic and
+comparison among them. Section 3 describes the methodol-
+ogy of our works which includes dataset description, exper-
+imental model, and experimental setup. Section 4 provides
+various graphical representations of the result analysis and
+a discussion of the challenging part of our study. Section 5
+provides the concluding remarks.
+2. Related Works
+Traditionally, the initial step of the skin cancer classi ﬁcation
+process involves the patient visiting a dermatologist or a
+healthcare professional with concerns about a suspicious
+skin lesion. The specialist conducts a thorough examination
+of the skin, including a visual inspection of the lesion and an
+examination of the patient ’s medical history. If the specialist
+suspects a potential skin cancer, they may use a dermoscopy,
+a handheld device with magni ﬁcation and lighting, to obtain
+a closer view of the lesion. Dermoscopy allows for a detailed
+examination of the lesion ’s surface structures, patterns, and
+colors, aiding in the assessment of malignancy. This takes
+around 10-15 minutes. To obtain a de ﬁnitive diagnosis, a
+skin biopsy is often performed. The specialist numbs the
+area surrounding the lesion with a local anesthetic and
+extracts a sample of skin tissue, including a portion of the
+suspicious lesion. Various biopsy techniques may be used,
+such as punch biopsy, incisional biopsy, or excisional biopsy,
+depending on the size and characteristics of the lesion. Usu-
+ally, it takes 2-3 weeks. The skin tissue sample obtained from
+the biopsy is sent to a pathology laboratory for histopathol-
+ogical examination. A pathologist, specializing in dermato-
+pathology, analyzes the tissue under a microscope. They
+assess cellular characteristics, such as cell shape, size, and
+organization, to determine if the lesion is cancerous or
+benign. This process takes 2-3 days. The examination also
+helps in identifying the speci ﬁc type of skin cancer, such as
+melanoma, basal cell carcinoma, squamous cell carcinoma,
+or other variants. If skin cancer is con ﬁrmed, the pathologist
+and specialist determine the stage and grade of the cancer
+based on additional tests and evaluations. Staging involves
+assessing the tumor size, depth of invasion, involvement of
+lymph nodes, and potential spread to distant sites. Grading
+refers to the assessment of tumor aggressiveness and
+diﬀerentiation.
+To know the decision de ﬁnitively, it takes almost a
+month which may be hazardous if the patient is in the ﬁnal
+stage. To minimize the time taken for diagnosis, research has
+been done in this ﬁeld for decades. Arti ﬁcial intelligence has
+been used in this ﬁeld in recent years. Since arti ﬁcial intelli-
+gence is a new ﬁeld, achieving highly accurate results in skincancer diagnosis has not been possible in the early stages of
+the research. Continuous development in machine learning
+algorithms has been done to gain better accuracy. Over the
+years, pathologists, doctors, and computer scientists collabo-
+rated along sides to develop a better digital classi ﬁcation sys-
+tem. We have presented some prominent research
+conducted on skin cancer detection from 2018 to 2023.
+Dorj et al. [19] utilized a dataset from the internet com-
+prising 3753 images with four classes. Employing AlexNet
+and ECOC SVM, they achieved a notable accuracy of
+94.2%. AlexNet was employed for feature extraction, while
+ECOC SVM handled the classi ﬁcation task. It is essential
+to note that the dataset collected from the internet did not
+adhere to benchmark standards. In a di ﬀerent approach,
+Rezvantalab et al. [20] utilized the HAM10000 10015
+images + PH2 (120 images) dataset, consisting of eight clas-
+ses. Their model, DenseNet 201, achieved an accuracy of
+86.59%. The authors incorporated various pretrained
+models, including DenseNet 201, ResNet 152, InceptionV3,
+and InceptionResNetV2. Results were presented through
+AUC values ranging from 93.80% to 99.3% across eight cat-
+egories. Moving to the PH2 dataset with three classes, Hosny
+et al. [21] achieved an accuracy of 98.61% using a custom-
+ized AlexNet. The augmentation of the main dataset resulted
+in 4400 images, and a modi ﬁed version of AlexNet was
+applied to obtain the results. Dascalu and David [22] delved
+into the ISIC 2017 dataset (5161 images) with two classes,
+obtaining an AUC of 81.40%. Their unique approach
+involved using K-means clustering and soni ﬁcation to eval-
+uate the impact of image quality on diagnosis accuracy. In
+another study, Pham et al. [23] explored the HAM10000
+(1113 images) and ISIC 2016 (172 images) datasets, com-
+prising one class. Their approach, involving linear normali-
+zation, HSV, and LBP balanced random forest, achieved an
+accuracy of 74.75%. This study was a comparative analysis
+of the color, texture, and shape features of melanoma skin
+cancer cells. Hekler et al. [24], dealing with the HAM10000
+and ISIC datasets (11,444 images combined) with ﬁve clas-
+ses, reached an accuracy of 82.95% through a fusion of phy-
+sician and CNN. Notably, the study presented results for
+both multiclass and binary classi ﬁcations, utilizing the
+XGBoost algorithm for the former. Emara et al. [25] tackled
+the HAM10000 dataset (7 classes) and achieved an accuracy
+of 94.7% using a modi ﬁed InceptionV4 model. Their study
+focused on proposing a modi ﬁed inceptionV4 model tai-
+lored to the unbalanced proportions of the HAM10000 data-
+set. Chaturvedi et al. [26] applied a MobileNet pretrained
+model on the HAM10000 dataset (7 classes) and achieved
+an accuracy of 83.1%. The study involved training on an
+augmented dataset comprising 38,569 images. In a similar
+vein, Mohapatra et al. [27] utilized a MobileNet pretrained
+model on the HAM10000 dataset (7 classes) without modi-
+ﬁcations and achieved an accuracy of 80%. Moving to the
+N/A dataset with nine classes, Chen et al. [28] achieved an
+accuracy of 83.74% using a ResNet50 pretrained model.
+The study emphasized the application of the ResNet50
+model to achieve accuracy across nine classes of skin lesions.
+Jinnai et al. [29] worked with the National Cancer Center,
+Tokyo, dataset (5846 images) with six classes. Their4 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+approach involved FRCNN, BCD, and TRN, resulting in
+accuracies of 86.2%, 79.5%, and 75.1%, respectively. Thestudy utilized a customized dataset with two main classes(benign and malignant) and compared results across di ﬀer-
+ent classi ﬁers. Chaturvedi et al. [30] explored the
+HAM10000 dataset (7 classes) and achieved an accuracy of92.83% using ResNetXt101. The study extensivelyresearched optimal hyperparameter con ﬁgurations for ﬁve
+pretrained models on ImageNet, with ResNetXt101 yielding
+the best performance. Garg et al. [31] worked with the
+HAM10000 dataset (7 classes), achieving an accuracy of90.51% using ResNet50. Their study applied two pretrainedmodels, VGG16 and ResNet50, along with three metalear-ners: random forest, XGBoost, and SVM. Benedetti et al.[32] applied the HAM10000 dataset (7 classes) and achievedan accuracy of 78.9% using a Modi ﬁed InceptionResNetv2.
+Their model incorporated an InceptionResNetv2 architec-ture with the addition of a ﬂattening layer. Moving to the
+ISIC 2019 dataset (25331 images) with nine classes, Goudaand Amudha [33] achieved an accuracy of 92% usingResNet34. Their study focused on applying the ResNet34
+model for the classi ﬁcation of cancerous cells. Ismail et al.
+[34] worked with the HAM10000 dataset (7 classes) andachieved an accuracy of 84.01% using a combination ofResNet50, VGG16, and DenseNet. The authors ranResNet50, VGG16, and DenseNet in parallel, concatenatingtheir results by stacking. Kondaveeti and Edupuganti [35]proposed a model with ResNet50, MobileNet, Xception,and InceptionV3 as base models for the classi ﬁcation of skin
+lesion images in the HAM10000 dataset. They achieved anaccuracy of 90%. Maiti et al. [36] applied the GAN Datadataset (4992 images) with three classes and achieved anaccuracy of 97.08% using random forest. Their study sug-
+gested that employing a color quantization technique com-
+bined with synthetic data generation signi ﬁcantly enhanced
+the accuracy of well-known machine learning models. Ash-raf et al. [37] utilized the DHQ Hospital dataset (400 images)with three classes and achieved an accuracy of 93.29% usingDCNN. The study emphasized the importance of skin can-cer segmentation and image preprocessing. Pacheco andKrohling [38] worked with the ISIC 2019 dataset (33,569images) with eight classes, achieving an accuracy of 91.3%.They compared the MetaBlock approach with models with-out using metadata, the baseline concatenation method, andthe MetaNet. Alagu and Bagan [39] utilized the ISIC dataset
+(500 images) with three classes and achieved an accuracy of
+95% using CNN and DenseNet. The study focused on iden-tifying melanoma cells, and the augmented data were trainedusing DenseNet. Krohling et al. [40] applied the PAD-UFES-20 dataset (2057 images) with seven classes and achieved anaccuracy of 85% using ResNet50 and the di ﬀerential evolu-
+tion (DE) algorithm. The study highlighted the importanceof data balancing for success. Mijwil [41] worked with theISIC dataset (24000+ images) with two classes, achievingan accuracy of 86.90% using InceptionV3. The authors usedInceptionV3, ResNet, and VGG19 to apply CNN to the
+dataset and reported the best result. Shah [42] applied the
+HAM10000 dataset 7 classes and achieved an accuracy of90.6% using LRNet. The study employed LRNet to developthe ML model for classifying skin cancers. Maron et al.
+[43] explored the SAM dataset (319 images), SAM-C, andSAM-P dataset with two classes. They applied AlexNet,VGG16+BN, ResNet50, and DenseNet121, although speci ﬁc
+accuracy values were not detailed. The study focused onassessing the robustness of these AI methods by comparingtheir application to an unmodi ﬁed dataset (SAM) and arti ﬁ-
+cially modi ﬁed datasets (SAM-C, SAM-P). Ali et al. [44] uti-
+lized the HAM10000 dataset (2 classes) and achieved an
+accuracy of 91.93% using a modi ﬁed DCNN. The authors
+compared their results with AlexNet, ResNet, VGG-16, Den-seNet, and MobileNet. Dascalu et al. [45] worked with adataset comprising images from HAM10000 (149 images),Dascalu et al. (16 images) [22], biopsy-validated (159images), and JID2018 (39 images) with two classes. Theyachieved an accuracy of DI-87.8% using CNN and soni ﬁca-
+tion. The study involved a model where a CNN predictedmalignancy from a raw image overlaid with a second inde-pendent CNN processing soni ﬁcation of the original image,
+combined into a uni ﬁed malignancy classi ﬁer. Yilmaz et al.
+[46] applied the ISIC 2017 dataset (2750 images) with two
+classes and achieved an accuracy of 82% using NASNetMo-
+bile. The study utilized MobileNet, MobileNetV2, and NAS-NetMobile in di ﬀerent batch sizes to optimize results.
+Ahmad et al. [47] worked with the HAM10000 dataset (4classes) and achieved an accuracy of 92.5% using TED-GAN and CNN. The study proposed a framework calledT-Distribution Encoder & Decoder-Generative AdversarialNetwork to detect melanoma skin cancer. Kausar et al.[48] utilized the ISIC 2019 dataset (25331 images) with eightclasses and achieved an accuracy of 98.6% using a weightedaverage and voting ensemble of ﬁve pretrained models. The
+researchers employed ResNet, InceptionV3, DenseNet,
+InceptionResNetV2, and VGG-19 models, combining their
+predictions using majority voting and weighted majorityvoting for enhanced accuracy. Mazoure et al. [49] employedthe ISIC 2018 dataset, consisting of 33,900 images with twoclasses, achieving an accuracy of 83.4%. Their methodologyinvolved utilizing six pretrained models, Grad-CAM, andthe UMAP algorithm. The authors introduced the DUNES-can (Deep Uncertainty Estimation for Skin Cancer) webserver, which conducts a comprehensive analysis of uncer-tainty in prevalent skin cancer classi ﬁcation models based
+on convolutional neural networks (CNNs). The server incor-porates six e ﬃcient CNN models, including the winners of
+the dermatological Kaggle competition: Inceptionv313,
+ResNet5014, MobileNetv23, E ﬃcientNet15, BYOL16, and
+SwAV17. Bechelli and Delhommelle [50] employed the ISICdataset comprising 3,297 images with two classes, achievinga 73% accuracy using an ensemble of LR, LDA, KNN,CART, and GNB. Their study extensively utilized machinelearning algorithms (LR, LDA, KNN, CART, and GNB)and explored various combinations on the ISIC dataset. Incontrast, deep learning models (Xception, VGG16, andResNet50) were employed on the HAM10000 dataset, withResNet50 proving superior at 88% accuracy. Additionally,
+they achieved an 88% accuracy using a ﬁne-tuned VGG16
+model. Maniraj and Maran [51] utilized the PH2 dataset,which comprises 200 images with three classes, achieving5 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+an impressive accuracy of 99.33% through hybrid deep
+learning (VGG) and a subband fusion of 3D wavelets. Thestudy introduced a novel hybrid deep learning (HDL) meth-odology (VGG model) that incorporates 3D wavelet fusionthrough subband processing, demonstrating improved clas-siﬁcation outcomes. Filali et al. [52] employed the combined
+PH2 (200 images) and ISIC 2017 (2,000 images) dataset withunspeci ﬁed classes, achieving an accuracy of 82% using
+ResNet18. The authors explored ResNet, VGG16, GoogLe-
+Net, and AlexNet for skin cancer classi ﬁcation. Hassan
+Bedeir et al. [53] used the HAM10000 dataset with sevenclasses, achieving an accuracy of 94.14% through a mergedResNet50 and VGG16 approach. The study is aimed atachieving high accuracy in classifying various skin cancertypes using three approaches: ResNet-50, VGG-16, and amerged model combining both techniques through the con-catenate function. Gouda et al. [54] utilized the ISIC 2018dataset with 3,533 images and two classes, achieving an85.8% accuracy using ﬁne-tuned CNN, ResNet, Incep-
+tionV3, and InceptionResNet. Their study employed aCNN model for identifying two main tumor categories:
+malignant and benign. Image enhancement using ESRGAN
+andﬁne-tuning with transfer learning models like ResNet50,
+InceptionV3, and Inception ResNet contributed to theachieved accuracy. Fraiwan and Faouri [55] used theHAM10000 dataset with seven classes, achieving an accu-racy of 82.9% through DenseNet201. The study exploredmultiple models, including SqueezeNet, GoogLeNet, Incep-tionv3, DenseNet-201, MobileNetv2, ResNet18, RestNet50,ResNet101, Xception, InceptionResNet, Shu ﬄeNet, Dar-
+kNet-53, and E ﬃcientNet-B0, to obtain the reported accu-
+racy. Tabrizchi et al. [56] applied the ISIC dataset with33,126 images and two classes, achieving an accuracy of
+86.30% using an enhanced VGG16 model. The research
+introduced an improved VGG16 model for the early identi-ﬁcation of skin cancer using dermoscopic images. Naeem
+et al. [57] used the ISIC 2019 dataset with 25,331 imagesand four classes, achieving an impressive accuracy of96.91% using SCDNet. The proposed SCDNet model com-bined VGG16 with convolutional neural networks (CNN)for the classi ﬁcation of various forms of skin cancer, outper-
+forming four widely used pretrained classi ﬁers in the medi-
+calﬁeld: ResNet50, InceptionV3, AlexNet, and VGG19.
+Huynh et al. [58] employed the combined SIIM-ISIC 2020+ ISIC 2019 dataset with 58,457 images and two classes,
+achieving an AUC of 98.78% using InceptionResNetV2.
+The researchers combined two datasets and applied thebackbones of models including E ﬀecientNetB6, VGG16,
+ResNet152V2, InceptionResNetV2, and InceptionV3, evalu-ating performance based on loss, AUC, and sensitivity. Xinet al. [59] utilized the HAM10000 dataset with seven classes,achieving an accuracy of 94.3% using ViT and SkinTrans.The authors proposed the SkinTrans model, an improvedtransformer network derived from the visual transformer(ViT) model, and obtained satisfactory results in two di ﬀer-
+ent datasets. Bassel [60] used the ISIC dataset with 1,000
+images and two classes, achieving a 90.9% accuracy using
+Xception. The classi ﬁcation method involved stacking classi-
+ﬁers using a threefold approach, employing feature extrac-tion with Resnet50, Xception, and VGG16. Ali et al. [61]
+used the HAM10000 dataset with seven classes, achievingan 87.9% accuracy using E ﬃcientNetB4. The study involved
+training on E ﬃcientNet models ranging from E ﬃcientNet
+B0 to B7, with E ﬃcientNet B4 exhibiting the highest accu-
+racy. Qasim Gilani [62] employed the ISIC 2019 dataset with6,993 images and two classes, achieving an 89.57% accuracyusing spiking VGG-13. The spiking VGG-13 model utilizedthe surrogate gradient descent technique for classifying mel-
+anoma and nonmelanoma cancer. Durães and Véstias [63]
+used the HAM10000 dataset with seven classes, achievingan 87% accuracy using a dual Model: ResNet18 + ResNet50.The research focused on developing a low-cost skin cancerclassiﬁcation system implemented on an FPGA, optimizing
+models with the Vitis-AI design ﬂow and emphasizing speed
+rather than accuracy. Rezk et al. [64] employed the PH2dataset with 200 images and four classes, achieving an 87%accuracy using an incremental DNN and Modi ﬁed Incep-
+tionV3. The researchers developed a progressive multiout-put model predicting lesion source, malignancyclassiﬁcation, and disease diagnosis. Tembhurne et al. [65]
+utilized the ISIC dataset with 2,637 images and two classes,
+achieving a 93% accuracy using a voting ensemble of LR,SVM, and modi ﬁed VGG19. The study employed an ensem-
+ble of ML and DL techniques, utilizing modi ﬁed VGG19 for
+feature extraction and component analysis. Shaaban et al.[66] used the HAM10000 dataset with two classes, achievinga 96.66% accuracy using Xception. Two optimization algo-rithms were employed to optimize parameters for multiplemodels, resulting in the highest accuracy. Tahir et al. [67]employed the ISIC 2020 + HAM100000 + DermIS datasetwith four classes, achieving a 94.17% accuracy usingDSCC-Net. The authors introduced the DSC-Net model to
+address dataset imbalance and evaluated its performance
+against six baseline deep networks. Karpagam et al. [68] uti-lized the DERMIS dataset with 402 images and two classes,achieving a 97% accuracy using SVM and KNN. The SVMmethod was applied to the combined feature of LBO andGLCM. Mridha et al. [69] used the HAM10000 dataset withseven classes, achieving an 82% accuracy using an optimizedCNN. The research introduced a re ﬁned convolutional neu-
+ral network (CNN) with an XAI-based system incorporatingGrad-CAM and Grad-CAM++. H. L. Gururaj et al. [70]employed the HAM10000 dataset with seven classes, achiev-ing a 91.2% accuracy using DensNet169. The authors
+applied DensNet169 and ResNet50 models, measuring accu-
+racy in both undersampled and oversampled instances andtesting accuracy in di ﬀerent training-testing splits. They
+achieved an 83% accuracy using ResNet50.
+Khan et al. [71] introduced an HSIFT descriptor crafted
+for hands to extract features for anatomical object classi ﬁca-
+tion, achieving signi ﬁcant performance improvement over
+traditional CNN-based models. Gulzar and Khan [72] con-ducted a comparative study on U-Net and attention-basedmethods for skin lesion image segmentation, attaining92.11% accuracy with a superior hybrid TransUNet. Khan
+et al. [73] proposed an ensemble (XG-Ada-RF) on extreme
+gradient boosting, Ada-boost, and random forest, achieving95.9% accuracy for tumor detection and 94.9% for normal6 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+brain tumor images. Mehmood et al. [74] presented SBXcep-
+tion, a modi ﬁed model for the HAM10000 dataset, achieving
+96.97% accuracy on a holdout test set.
+Siddique et al. [75] researched the existing literature
+about U-Net on medical image segmentation. Various sec-
+tors including skin cancer diagnosis have been thoroughly
+reviewed in this article. Krithika and Suganthi [76] also
+conducted a systematic review of the modi ﬁed architecture
+of U-Nets, demonstrating the applicability and limitation
+of U-Nets. Sreelatha et al. [77] presented a segmentation
+method utilizing the Gradient and Feature Adaptive Con-
+tour (GFAC) model on the PH2 dataset, achieving an accu-
+racy of 98.64%. Liu et al. [78] applied an enhanced U-Net
+model with and without an ensemble for skin lesion segmen-
+tation on the ISIC 2017 dataset, reaching 92.6% accuracy
+without the test ensemble and 93% accuracy with the test
+ensemble. Wu et al. [79] introduced the C-U-Net model,
+incorporating inception-like convolutional blocks, recurrent
+convolutional blocks, and dilated convolutional layers. Their
+modiﬁed model achieved a Jaccard index of 77.5% and a
+Dice coe ﬃcient of 86.9% on the ISIC 2018 dataset. Tang
+et al. [80] utilized a separable-U-Net for skin lesion segmen-
+tation across three datasets: ISIC 2016, ISIC 2017, and PH2,
+achieving an average Dice coe ﬃcient of 93.03% and a
+Jaccard index of 89.25% for ISIC 2016, 86.93% and 79.26%
+for ISIC 2017, and 94.13% and 89.40% for PH2. Araújo
+et al. [81] combined U-Net and LinkNet methods and
+applied them to three datasets: PH2, ISIC 2018, and DermIS,
+obtaining an average Dice of 0.923 in PH2, Dice = 0 893in
+ISIC 2018, and Dice = 0 879in DermIS. Nawaz et al. [82]
+proposed an improved DenseNet77-based U-Net model for
+the ISIC 2017 and ISIC 2018 datasets, achieving segmenta-
+tion accuracies of 99.21% and 99.51%, respectively. In
+2018, Facebook introduced Detectron2, an object detection
+model that has demonstrated remarkable results in recent
+medical segmentation research, surpassing traditional U-Net
+models [83]. Despite the existence of an even more advanced
+model from Facebook called “SAM: Segment Anything
+Model, ”it has yet to be employed in medical research. Given
+the success of the previous model, we have opted to utilize
+SAM in our research during the segmentation phase.
+From the existing literature, we have come to an under-
+standing that various pretrained models and traditional
+machine learning algorithms were being used on di ﬀerent
+skin cancer datasets with or without ﬁne-tuning and modi ﬁ-
+cation. Very few experiments were done using ViT while
+scopes of ViT are more than the traditional methods in
+terms of time complexity and accuracy. For complete identi-
+ﬁcation of cancerous regions, the whole process is done in
+two steps: segmentation and classi ﬁcation. In medical image
+segmentation, various models like U-Net-based models have
+been used throughout the years. However, rather than using
+conventional segmentation methods, we have decided to use
+SAM: an object detection model developed by Facebook
+[13], to detect regions of interest ﬁrst as the model has never
+been used in the ﬁeld of cancer detection. After segmenting
+the cancerous regions, the classi ﬁcation can be done to
+identify benign and malignant cases. In this article, we
+have aimed to experiment on several ViT models to identifythe best one to classify skin cancers from the HAM10000
+dataset.
+3. Methodology and Implementation
+3.1. Dataset Description. We used the HAM10000 dataset
+which contains 10015 images. From the dataset, we have dis-
+regarded 15 images to make data distribution perfect. The
+dimension of each image is 600 × 450 . During the training
+phase, all the images were resized to 224 × 224 . The dataset
+is downloaded from the Harvard Dataverse website [12].
+The number of benign images is 6705, and the number of
+malignant images is 3295. We have taken 5000 images from
+the benign category and applied data augmentation to the
+malignant category to make it 5000. For this augmentation,
+we used rotation, ﬂip, and zoom-in augmentation parame-
+ters. We split the dataset into three portions: training set
+60%, validation set 20%, and test set 20% of the total data
+which is shown in Table 1. The images were captured using
+a dermatoscope at a magni ﬁcation of 20x. Figure 3 shows
+some of the example images from the dataset. Data were
+annotated by experts.
+3.2. Experimental Procedures. The development of an arti ﬁ-
+cial intelligence- (AI-) based digital skin cancer detection
+system that incorporates both segmentation and classi ﬁca-
+tion techniques is presented in this study. Figure 4 illustrates
+the overall segmentation and classi ﬁcation process. The clas-
+siﬁcation part of Figure 4 is illustrated in detail in Figure 5.
+The system is aimed at improving the accuracy and e ﬃ-
+ciency of skin cancer diagnosis. We are proposing a method
+that will use the HAM10000 dataset to train theTable 1: Dataset description.
+Total images Train images Val images Test images
+Benign 3000 1000 1000
+Malignant 3000 1000 1000
+Total 6000 2000 2000
+224 × 22420×Benign Malignant
+Figure 3: Example images of dataset.7 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+segmentation and classi ﬁcation models that can be used in
+digital smart devices to instantly classify skin cancers fromnew images. For the training task, all of the cancer imageswere segmented using binary masking where the white arearepresents the cancerous area and the black portion repre-sents irrelevant areas (skin, background, etc.). After the
+training phase, the segmentation is generated that is capable
+of segmenting the cancer region automatically. Recently,Facebook ’s SAM model has gained huge popularity in terms
+of segmenting any objects almost perfectly but has not beenemployed in any biomedical imaging experiment o ﬃcially.
+That is why we have trained our model using the SAM archi-tecture and have achieved good results. After the segmenta-tion has been done, the segmented images need to beclassiﬁed. Rather than employing new models, we have
+experimented with some existing vision transformer archi-
+tectures and compared their results to ﬁnd out the best one
+for the classi ﬁcation task.
+For the classi ﬁcation part, CNN-based network and
+vision transformer-based architecture can be used. Among
+Input imageObject
+detectionMaskingBinary
+Masking
+SegmentationType
+Benign
+Malignant
+Semantic segmentation using segment-anything-model (SAM) Classification
+Figure 4: Step-by-step processes for cancer segmentation and classi ﬁcation.
+Linear Linear Linear
+Linear
+Concentrate
+Scale-dot
+product
+attention
+Transformer
+encoderLinear embedding
+Classifer
+FC FC GeLUNormalization
+Multi-head
+attentionNormalization
+Multi layer perceptronEmbedded
+patchesL × Layers VK QMatrix
+MultiScaleMaskSofMa xMatrix
+Multi
+Positional
+embeddingX(1-6)
+X(19-24)X(7-12)
+X(25-30)X(13-18)
+X(31-36)
+ClasslabelV K Q
+Figure 5: Vision transformer-based skin cancer classi ﬁcation model.8 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+the convolutional neural networks, there are many types
+such as RNN and ANN that are very popular. However,the vision transformer architecture has some advantagessuch as ViT models that can capture long-range dependen-cies in the input images more e ﬀectively than CNNs by
+utilizing the self-attention mechanism. ViT can learn con-textual relationships between di ﬀerent patches, allowing for
+a better understanding of global image structures andimproving performance on tasks that require modeling
+long-range dependencies, and it can handle images of vary-
+ing resolutions without the need for architectural modi ﬁca-
+tions. CNNs, on the other hand, typically require resizingor cropping of images to match a speci ﬁc input size. ViT ’s
+patch-based approach enables ﬂexibility in processing
+images of di ﬀerent dimensions, making it easier to adapt to
+diverse datasets. ViT models tend to have fewer parameterscompared to CNNs, which can lead to more computation-ally eﬃcient training and inference. This e ﬃciency is partly
+due to the absence of convolutional layers and sharedweights across spatial locations. Consequently, ViT can bemore memory-e ﬃcient and require fewer computational
+resources. The attention mechanism used in ViT provides
+interpretability advantages, as it allows the model to assignimportance weights to di ﬀerent patches in the image. This
+attention mechanism enables a better understanding ofwhich regions contribute more to the model ’s decision-
+making process, aiding in model interpretability and facili-tating analysis of the learned representations. ViT modelscan bene ﬁt from transfer learning using pretraining on
+large-scale datasets. By pretraining on a large dataset, ViTcan learn generic visual representations that can be ﬁne-
+tuned on speci ﬁc downstream tasks, even with limited
+task-speci ﬁc-labeled data. This transfer learning capability
+contributes to improved performance and e ﬃciency. Con-
+sidering these factors, we are proposing a vision transformerfor the classi ﬁcation task of skin cancer. We have tried the
+following six di ﬀerent ViT models: ViT-Google, ViT-MAE,
+ViT-ResNet50, ViT-VAN, ViT-BEiT, and ViT-DiT. Amongthese, the ViT-Google model outperformed the other ones.
+A detailed work ﬂow regarding acquiring cancer images,
+creating a segmentation model, creating a classi ﬁcation
+model, decision-making from new images, and data visuali-zation for diagnosis is described in Algorithm 1.
+In the primary phase, cancer images of 20x magni ﬁca-
+tion are acquired by dermatoscopes. After resizing the
+images to 224 × 224 pixels, they are given as input to the
+SAM automatically. After the SAM output is generated,it is converted to binary masking. The processed outputimages are given to the ViT model for classi ﬁcation. In
+the ViT model, it takes the input image which then isdivided into ﬁxed-size patches, which are then linearly
+transformed into lower-dimensional embeddings. Eachpatch serves as an input token to the transformer. Posi-tional embeddings are used to provide spatial informationabout the patches. Inside the positional embedding, sine
+and cosine functions of di ﬀerent frequencies are used to
+represent the relative positions of the patches. The core
+of the vision transformer is the transformer encoder whichconsists of multiple layers of self-attention and feed-forward neural networks. The self-attention mechanism
+allows the model to capture global and local dependencieswithin the image, enabling it to attend to relevant patchesand learn informative representations. This self-attention
+mechanism helps the network to identify necessary fea-
+tures. Every pretrained model has its mapping criteria. Inour experimental model, we have used Google ’s patch 32
+version to extract the image feature and train the vision1.Input :IDERMATOSCOPY ,SegNetSAM
+IDERMATOSCOPY =the 20X Dermatoscopy images
+SegNetSAM=the SAM segmentation
+2.Initialization:
+i.I= Resize IDERMATOSCOPY into 224 ×224-pixel
+ii.ISEG= Apply SegNetSAMonI
+iii. ISEG= Apply Binary Mask on ISEG
+3.ViT:
+i.Input: ISEG
+ii.IPATCH =Convert ISEGinto 14 ×14 patches
+iii. While m:=IPATCH ≤IPATCH Count
+i.ILP[m] = IPATCHUNROLLED [m]×E [][]
+ii.D=Concatenate (EPOS[m], ILP[m])
+iv.End While
+v.While n<=Ldo
+i.D'n=MSA (LN(Dn-1)) + Dn-1
+ii.Dn=MLP (LN(D'n)) + D'n
+vi.End While
+vii.IFINAL =LN(DL)
+4.IfIFINAL≤Threshold Value Then
+Result: = “Benign ”
+Else
+Result: = “Malignant ”
+End If
+5.Return Result
+Algorithm 1: Step by step skin cancer segmentation and classi ﬁ-
+cation using ViT.
+Table 2: Hyperparameter optimization for segmentation.
+Hyperparameter Optimization space
+Epoch 100
+Batch size 32
+Learning rate 0.0001Optimizer “RMSprop ”
+Loss function [Dice coe ﬃcient loss]
+Table 3: Hyperparameter optimization for classi ﬁcation using ViT.
+Hyperparameter Optimization space
+Epoch 100
+Batch size 32
+Learning rate 0.00002Optimizer “Adam ”
+Loss function [Cross entropy loss]9 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+transformer. Within each transformer layer, multihead
+attention is applied to capture di ﬀerent types of relation-
+ships between patches. It allows the model to attend todiﬀerent parts of the image simultaneously, enabling it to
+learn diverse and meaningful representations. In additionto the self-attention mechanism, each transformer layeralso contains feed-forward neural networks, which processthe embeddings and facilitate the learning of nonlinearrelationships. Layer normalization is applied after each
+self-attention and feed-forward network, which helps sta-
+bilize the training process and improves the model ’s ability
+to generalize to di ﬀerent inputs. A classi ﬁcation head
+(described in Figure 5) is added on top of the transformerencoder to produce class probabilities. We have used afully connected layer followed by a SoftMax activationfunction. The vision transformer that we employed uses
+supervised learning on large-scale labeled image datasets.
+In the ﬁnal phase, the image is classi ﬁed whether it is
+benign or malignant. Our experimental model successfullydiﬀerentiates cancerous cells from noncancerous ones.
+Then, the result will be visualized in the electronic device
+for analysis.
+3.3. Experimental Setup. For our experiment, we used both
+“TensorFlow ”[84] and “PyTorch ”[85]. We have utilized
+the TensorFlow-based interface to employ the SAM for the
+segmentation process. For running the segmentation exper-
+iment, we have used the following hyperparameters men-tioned in Table 2.
+We have utilized the PyTorch-based interface to employ
+the vision transformers. This environment was set up in adiﬀerent computer to avoid dependency mismatch. The
+hyperparameter optimization was done as mentioned inTable 3.
+Our experiment was done by using two di ﬀerent com-
+puters; one of them running on Windows 11 OS andequipped with an NVIDIA GeForce RTX 3090 (24 GB)GPU and 32 GB RAM; another was running on Windows
+11 OS and equipped with an NVIDIA GeForce RTX
+3080Ti (16 GB) GPU and 64 GB RAM.4. Results and Discussion
+4.1. Accuracy. Figures 6 –8 illustrate the accuracy, Intersec-
+tion Oven Union (IOU), and Dice coe ﬃcient curves, respec-
+tively, for the Segment Anything Model (SAM). Table 4shows the training accuracy, IOU, and Dice coe ﬃcient as
+well as the validation accuracy, IOU, and Dice coe ﬃcient
+for the segmentation model. Figure 9 depicts the cancer seg-mentation result by the Segment Anything Model (SAM).Table 5 Provides the accuracy and loss scores of di ﬀerent
+ViT classi ﬁers. Figure 10 illustrates the accuracy and loss
+curve for various models tested for ViT.
+4.1.1. Segmentation. Pixel accuracy is a commonly used met-
+ric for evaluating the performance of image segmentationalgorithms. It measures the exactness of the segmentationresults by comparing the predicted segmentation mask tothe ground truth mask at the pixel level. Pixel accuracy cal-culates the percentage of correctly classi ﬁed pixels in the seg-
+mentation output, indicating how well the algorithmaccurately assigns each pixel to its correct class or region.It is calculated by dividing the number of correctly classi ﬁed
+pixels by the total number of pixels in the image. Pixel accu-
+racy is a straightforward metric that provides a basic mea-sure of segmentation performance. However, it does notconsider the distinction between di ﬀerent classes or the00.300.400.500.600.700.800.901.00
+20 40 60 80 100Accuracy
+Epoch
+Training accuracy
+Validation accuracy
+Figure 6: Accuracy curve for segmentation.
+00.300.400.500.600.700.800.901.00
+20 40 60 80 100
+EpochTraining IOU
+Validation IOUIOU
+Figure 7: Intersection Oven Union (IOU) curve for segmentation.10 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+spatial relationships between pixels. As a result, it may not
+provide a comprehensive assessment of segmentation qual-
+ity in cases where certain classes are more critical than
+others or when precise boundaries are important. While
+pixel accuracy is useful for obtaining a general understand-
+ing of the segmentation accuracy, it is often accompanied
+by additional evaluation metrics, such as Intersection over
+Union (IoU) or Dice coe ﬃcient, to provide a more compre-
+hensive assessment. These metrics take into account the
+overlap between the predicted and ground truth masks,
+providing a more nuanced evaluation of segmentation
+performance.
+IoU calculates the ratio of the intersection area between
+the predicted segmentation mask and the ground truth mask
+to the union area of both masks. It provides a measure ofoverlap or similarity between the predicted and ground truth
+masks, taking into account both true positive and false pos-
+itive predictions. IoU is more informative than pixel accu-
+racy as it considers the spatial relationship and overlap
+between the segmented regions. Equation (1) represents
+the IoU formula. Figure 11 demonstrates the graphical rep-
+resentation of IOU.
+IoU =Intersection
+Union1
+The Dice coe ﬃcient measures the similarity between the
+predicted and ground truth masks by computing the ratio of
+twice the intersection area to the sum of areas of both masks.
+It balances precision and recall, providing a measure of over-
+all segmentation performance. Like IoU, the Dice coe ﬃcient
+captures the spatial overlap between segmented regions and
+is more informative than pixel accuracy. Equation (2) is rep-
+resenting the Dice coe ﬃcient formula.
+Dice−coefficient =2 × Intersection
+Union + Intersection2
+IoU is more intuitive and easier to interpret. It represents
+the ratio of the intersection area between the predicted and
+ground truth masks to the union area of both masks. It
+directly re ﬂects the overlap or similarity between the two
+masks, making it easier to understand the quality of segmen-
+tation in terms of spatial overlap. That is why we prefer the
+IoU matrix over other matrices in terms of measuring seg-
+mentation performance.
+In our experiment, while applying the SAM model, we
+have gotten over 96% of areas matched on average under
+the IoU matrix. In Figure 9, we can see a side-by-side com-
+parison of two example images which indicates the IoU
+accuracy.
+4.1.2. Classi ﬁcation. Using the same dataset, we have applied
+6d iﬀerent pretrained models to employ our vision
+transformer-based classi ﬁcation. The obtained accuracy for
+the following ViT-Google, ViT-MAE, ViT-ResNet50, ViT-00.300.400.500.600.700.800.901.00
+20 40 60 80 100
+Epoch
+Training dice-coef
+Validation dice-coefDice-coef
+Figure 8: Dice coe ﬃcient curve for segmentation.
+Table 4: Training and validation accuracy, IOU, and Dice
+coeﬃcient.
+Accuracy IOU Dice coe ﬃcient
+Training 0.99057 0.97043 0.99422
+Validation 0.97129 0.96071 0.98139
+Original image Ground truth PredictionBenign Malignant
+Figure 9: Cancer segmentation result by Segment Anything Model
+(SAM).11 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 5: Accuracy and loss scores of di ﬀerent ViT classi ﬁers.
+Model Training accuracy Training loss Validation accuracy Validation loss Test accuracy
+ViT-Google 0.99375 0.40280 0.96275 0.50341 0.96150
+ViT-MAE 0.96975 0.77760 0.92500 0.96414 0.92150
+ViT-ResNet50 0.87175 2.45290 0.81000 2.45290 0.80900ViT-VAN 0.95825 0.95315 0.92500 1.04780 0.92400ViT-BEiT 0.92500 1.49015 0.87500 1.89523 0.86250
+ViT-DiT 0.86175 1.54550 0.82500 0.82500 0.81900
+Training accuracy
+Training lossValidation accuracy
+Validation loss0.00.20.40.60.81.01.2
+0 2 04 06 08 01 0 0
+Epoch0 20 40 60 80 100
+Epoch
+0 20 40 60 80 100
+Epoch0 20 40 60 80 100
+Epoch
+0 20 40 60 80 100
+Epoch0 20 40 60 80 100
+EpochAccuracy & loss Accuracy & loss
+Accuracy & lossAccuracy & loss curve (ViT-Google)
+0.00.51.01.52.02.5Accuracy & loss curve (ViT-MAE)
+0.00.51.01.52.02.53.0Accuracy & loss
+0.00.51.01.52.02.53.0
+Accuracy & loss
+0.00.51.01.52.02.53.0Accuracy & loss
+0.00.51.01.52.02.53.0Accuracy & loss curve (ViT-ResNet) Accuracy & Loss Curve (ViT-VAN)
+Accuracy & loss curve (ViT-BEiT) Accuracy & loss curve (ViT-DiT)
+Figure 10: Accuracy curve for various models tested for ViT.12 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+VAN, ViT-BEiT, and ViT-DiT models is mentioned in
+detail in Table 5. Comparing the accuracies, we have used
+Google ’s ViT (patch 32) model to be employed in the overall
+skin cancer detection smart system. Figure 10 illustrates the
+accuracy di ﬀerence between ViT-Google and the other
+models. Another thing can be also observed from
+Figure 10 that the loss scores are signi ﬁcantly better than
+the other ﬁve models.
+TheF1score is a widely used metric in classi ﬁcation
+evaluations that assesses the overall e ﬀectiveness of a model
+in binary or multiclass classi ﬁcation tasks. It provides a bal-
+anced measure of accuracy by calculating the harmonic
+mean of precision and recall. The precision determines the
+proportion of correct positive predictions out of all positive
+predictions made by the model, re ﬂecting its ability to accu-
+rately identify positive instances. On the other hand, recall,
+also known as sensitivity or true positive rate, measures the
+proportion of true positive predictions out of all actual pos-
+itive instances in the dataset, indicating the model ’s capabil-
+ity to capture all positive instances. By combining precision
+and recall into a single metric, the F1score o ﬀers a balanced
+assessment of a model ’s performance. It is particularly valu-
+able when dealing with imbalanced datasets or when both
+precision and recall hold equal importance. The F1score
+ranges from 0 to 1, where a value of 1 signi ﬁes perfect preci-
+sion and recall, while 0 represents the poorest performance.
+The formulas for precision, recall, F1score, and accuracy are
+provided in Equations (3) –(6), respectively. The classi ﬁca-
+tion report of the transfer learning models can be found in
+Table 6.
+Precision =true positive
+true positive + false positive, 3
+Recall =true positive
+true positive + false negative, 4
+F1 score = 2 ∗precision × recall
+precision + recall, 5
+Accuracy =true negative + true positive
+true negative + false positive + true positive + false negative
+6
+In Figure 12, the confusion matrices of the tested models
+are presented. From the confusion matrices, we can observethat in the misclassi ﬁcation cases, the false negative rate is
+greater than false positive cases for all models while the over-
+all test accuracy of ViT-Google is greater than those of
+others.
+4.2. Accuracy Comparison. Figure 13. compares the training,
+validation, and test accuracy of the applied models. Table 7
+describes the value di ﬀerence between training accuracy
+and test accuracy of all tested models. The value di ﬀerence
+is an indication of training performance. The lower the value
+is, the better the training process is. However, one thing
+should be taken into consideration; this value may be low
+even if the test accuracy is low. In that case, this value cannot
+be a measurement factor regarding assessing the training
+performance. From Table 7. It is clear that for the ViT-
+Google model, the value di ﬀerence between training accu-
+racy and test accuracy is low at the same time the test accu-
+racy is higher than the other models. Since the ViT-Google
+model has performed better, we have chosen that model
+forﬁnal implementation. For this reason, we have applied
+5-fold cross-validation on that model. Figure 14 describes
+the 5-fold cross-validation for the ViT-Google model. The
+average validation accuracy found using the 5-fold cross-
+validation method is around 96.15%. The receiver operating
+characteristic (ROC) curve is a widely used evaluation tool
+in medical research. It provides a graphical representation
+of the trade-o ﬀbetween the true positive rate (sensitivity)
+and false positive rate (1-speci ﬁcity) for di ﬀerent classi ﬁca-
+tion thresholds. The area under the ROC curve (AUC) sum-
+marizes the overall performance of a diagnostic or predictive
+model. In this study, the ROC analysis was employed to
+assess the discrimination ability of our selected model for
+skin cancer classi ﬁcation. The AUC value serves as a quanti-
+tative measure of the model ’s ability to distinguish between
+cancerous and noncancerous cases, with higher values indi-
+cating better performance. From Figure 15, we can see that
+the ROC score or AUC of ViT-Google is 99.49%.
+5. Conclusion
+In this research, we utilize Google ’s 32-patch-based vision
+transformer (ViT) model to address the identi ﬁcation of skin
+cancer. The prevalence of skin cancer has increased signi ﬁ-
+cantly worldwide due to the depletion of the ozone layer,
+posing a substantial threat to communities. Delayed testing
+procedures, limited facilities, and a lack of early-stage diag-
+nosis have led to numerous deaths. To solve this, intelligent
+smart technologies are necessary to establish rapid and e ﬀec-
+tive testing procedures. Our experimental approach involves
+employing the ViT model in conjunction with the SAM seg-
+mentation model for skin cancer identi ﬁcation and classi ﬁ-
+cation. The application of the Segment Anything Model
+(SAM) enables the segmentation of cancerous regions in
+the images, yielding an Intersection over Union (IOU) of
+96.01% and a Dice coe ﬃcient of 98.14%. Also, our classi ﬁca-
+tion experiments with Google ’s ViT model yield impressive
+results, achieving 96.15% accuracy and 99.49% ROC score.
+Consequently, we conclude that the ViT-Google (patch 32)
+model can be trained as an e ﬃcient skin cancer detectionComputer
+generated
+mask
+IOUGround
+truth
+mask
+FP TP FN
+TN
+Figure 11: Intersection Over Union (IOU). Here, FP means false
+positive, TP means true positive, FN means false negative, and
+TN means true negative.13 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 6: Classi ﬁcation report of the best combination for each transfer learning model.
+Model Precision Recall F1-score Model Precision Recall F1-score
+ViT (Google)Benign 0.96950 0.95300 0.96120
+ViT (VAN)Benign 0.93620 0.91000 0.92290
+Malignant 0.95380 0.97000 0.96180 Malignant 0.91250 0.93800 0.92500
+Accuracy 0.96150 Accuracy 0.92400
+Macro- F1 0.96150 Macro- F1 0.92400
+Weighted- F1 0.96150 Weighted- F1 0.92400
+ViT (Mae)Benign 0.94230 0.89800 0.91960
+ViT (BEiT)Benign 0.91430 0.80000 0.85330
+Malignant 0.90260 0.94500 0.92330 Malignant 0.82220 0.92500 0.87060
+Accuracy 0.92150 Accuracy 0.86250
+Macro- F1 0.92150 Macro- F1 0.86200
+Weighted- F1 0.92150 Weighted- F1 0.86200
+ViT (ResNet50)Benign 0.81470 0.80000 0.80730
+ViT (DiT)Benign 0.83160 0.80000 0.81550
+Malignant 0.80350 0.81800 0.81070 Malignant 0.80730 0.83800 0.82240
+Accuracy 0.80900 Accuracy 0.81900
+Macro- F1 0.80900 Macro- F1 0.81890
+Weighted- F1 0.80900 Weighted- F1 0.81890
+953
+97047
+30
+910
+93890
+62800
+925200
+75800
+838200
+162898
+945102
+55800
+818200
+182 MalignantViT (Google)
+ViT (VAN) ViT (BEiT) ViT (DiT)ViT (MAE) ViT (ResNet50)Malignant
+Predicted LabelTrue LabelBenign
+MalignantTrue LabelBenign
+MalignantTrue LabelBenign
+MalignantTrue LabelBenignMalignantTrue Label
+MalignantTrue LabelBenignBenign
+Malignant
+Predicted Label Benign
+Malignant
+Predicted Label Benign
+Malignant
+Predicted Label BenignMalignant
+Predicted Label Benign
+Malignant
+Predicted Label BenignBenign
+Figure 12: Confusion matrices.14 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+model using the vision transformer and implemented in
+smart devices for swift detection, thereby providing valuablesupport to pathologists. However, it is essential to acknowl-edge that our ViT model-based method is more suitable forfair-skinned individuals due to the dataset acquired fromHarvard University in America, where the predominantpopulation is white. Our future work will expand the datasetto encompass a more diverse range of cases from individualsof various ethnic backgrounds. Additionally, federatedlearning can be employed to update the existing model with0
+ViT-Google
+ViT-MAE
+ViT-ResNet50
+ViT-VAN
+ViT-BEiT
+ViT-DiT0.10.20.30.40.50.60.70.80.91Accuracy
+Training accuracyModel
+Validation accuracy
+Test accuracy
+Figure 13: Accuracy comparison chart.
+Table 7: Accuracy di ﬀerence.
+ModelTraining
+accuracyTest
+accuracyAccuracy
+diﬀerence
+ViT-Google 0.99375 0.9615 0.03225
+ViT-MAE 0.96975 0.9215 0.04825ViT-
+ResNet500.87175 0.8090 0.06275
+ViT-VAN 0.95825 0.9240 0.03425
+ViT-BEiT 0.92500 0.8625 0.06250ViT-DiT 0.86175 0.8190 0.04275
+0.750.800.850.900.95
+01.00
+20 40 60
+Epoch80 100
+Fold-1
+Fold-2Fold-4
+Fold-5
+Fold-3Validation accuracy
+Figure 14: 5-fold cross-validation for ViT-Google.0.00.00.20.40.60.8True positive rate1.0
+0.2 0.4
+False positive rateReceiver operating characteristic to multiclass
+0.6 0.8 1.0
+Micro-average ROC curve (area = 0.99)
+Macro-average ROC curve (area = 0.99)
+ROC curve of class 0 (area = 0.99)
+ROC curve of class 1 (area = 0.99)
+Figure 15: Receiver operating characteristic curve for ViT-Google.15 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+new data, allowing for iterative improvements without
+retraining the entire model.
+Data Availability
+The dataset is publicly available. The original data source isavailable at https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T. The related Datapaper can be found at doi:10.1038/sdata.2018.161.
+Conflicts of Interest
+The authors declare that they have no con ﬂicts of interest.
+References
+[1] National Cancer Institute, Common cancer Sites-cancer Stat
+Facts , SEER, 2018, 2018, https://seer.cancer.gov/statfacts/
+html/common.html.
+[2] National Cancer Institute, Melanoma of the Skin-Cancer Stat
+Facts , SEER, 2018, 2018, https://seer. cancer.gov/statfacts/
+html/melan.html.
+[3] A. C. Society, Cancer Facts & Figures 2023 | American Cancer
+Society , Www.cancer.org, 2023, 2023, https://www.cancer.org/
+research/cancer-facts-statistics/all-cancer-facts- ﬁgures/2023-
+cancer-facts- ﬁgures.html.
+[4] C. Fitzmaurice, D. Abate, N. Abbasi et al., “Global, regional,
+and national cancer incidence, mortality, years of life lost,
+years lived with disability, and disability-adjusted life-years
+for 29 cancer groups, 1990 to 2017: a systematic analysis forthe Global Burden of Disease study, ”JAMA Oncology , vol. 5,
+no. 12, pp. 1749 –1768, 2019.
+[5] M. R. Wehner, M.-M. Chren, D. Nameth et al., “International
+prevalence of indoor tanning, ”JAMA Dermatology , vol. 150,
+no. 4, pp. 390 –400, 2014.
+[6] R. S. Stern, “Prevalence of a history of skin cancer in 2007, ”
+Archives of Dermatology , vol. 146, no. 3, 2010.
+[7] H. M. Gloster and K. Neal, “Skin cancer in skin of color, ”Jour-
+nal of the American Academy of Dermatology , vol. 55, no. 5,
+pp. 741 –760, 2006.
+[8] P. T. Bradford, “Skin cancer in skin of color, ”Dermatology
+Nursing , vol. 21, no. 4, pp. 170 –177, 2009.
+[9] D. Han, J. S. Zager, G. Han et al., “The unique clinical charac-
+teristics of melanoma diagnosed in children, ”Annals of Surgi-
+cal Oncology , vol. 19, no. 12, pp. 3888 –3895, 2012.
+[10] Cancer Research UK, Risks and Causes|Skin Cancer| Cancer
+Research UK , Cancerresearchuk.org, 2019, 2019, https://www
+.cancerresearchuk.org/about-cancer/skin-cancer/risks-causes.
+[11] Q. Jin, ABCDEFG of Melanoma|DermNet NZ , Dermnetnz.org,
+2019, 2019, https://dermnetnz.org/topics/abcdes-of-melanoma.
+[12] P. Tschandl, C. Rosendahl, and H. Kittler, “The HAM10000
+dataset, a large collection of multi-source dermatoscopic
+images of common pigmented skin lesions, ”Scienti ﬁc Data ,
+vol. 5, no. 1, article 180161, 2018.
+[13] A. Kirillov, E. Mintun, N. Ravi et al., “Segment anything,
+”
+2023, http://arxiv.org/abs/2304.02643.
+[14] A. Dosovitskiy, L. Beyer, A. Kolesnikov et al., An Image Is
+Worth 16x16 Words: Transformers for Image Recognition at
+Scale , 2021.[15] M.-H. Guo, C.-Z. Lu, Z.-N. Liu, M.-M. Cheng, and H. Shi-Min,
+“Visual attention network, ”2022, http://arxiv.org/abs/.2202
+.09741.
+[16] K. He, X. Chen, S. Xie, Y. Li, P. Dollár, and R. Girshick,
+“Masked autoencoders are s calable vision learners, ”2021,
+http://arxiv.org/abs/2111.06377.
+[17] J. Li, Y. Xu, T. Lv, L. Cui, C. Zhang, and F. Wei, “DiT: self-
+supervised pre-training for document image transformer, ”in
+MM '22: Proceedings of the 30th ACM International Confer-ence on Multimedia , pp. 3530 –3539, Lisboa, Portugal, October
+2022.
+[18] H. Bao, L. Dong, and F. Wei, “BEiT: BERT pre-training of
+image transformers, ”2021, http://arxiv.org/abs/2106.08254.
+[19] U.-O. Dorj, K.-K. Lee, J.-Y. Choi, and M. Lee, “The skin cancer
+classiﬁcation using deep convolutional neural network, ”Mul-
+timedia Tools and Applications , vol. 77, no. 8, pp. 9909 –9924,
+2018.
+[20] A. Rezvantalab, H. Sa ﬁgholi, and S. Karimijeshni, “Dermatol-
+ogist level dermoscopy skin cancer classi ﬁcation using di ﬀer-
+ent deep learning convolutional neural networks algorithms, ”
+2018, https://arxiv.org/abs/1810.10348.
+[21] K. M. Hosny, M. A. Kassem, and M. M. Foaud, “Skin Cancer
+Classiﬁcation using Deep Learning and Transfer Learning, ”
+in2018 9th Cairo International Biomedical Engineering Con-
+ference (CIBEC) , pp. 90 –93, Cairo, Egypt, 2018.
+[22] A. Dascalu and E. O. David, “Skin cancer detection by deep
+learning and sound analysis algorithms: a prospective clinical
+study of an elementary dermoscope, ”eBioMedicine , vol. 43,
+no. May, pp. 107 –113, 2019.
+[23] T. C. Pham, G. S. Tran, T. P. Nghiem, A. Doucet, C. M. Luong,
+and V.-D. Hoang, “A Comparative Study for Classi ﬁcation of
+Skin Cancer, ”in2019 International Conference on System Sci-
+ence and Engineering (ICSSE) , pp. 267 –272, Dong Hoi, Viet-
+nam, 2019.
+[24] A. Hekler, J. S. Utikal, A. H. Enk et al., “Superior skin cancer
+classiﬁcation by the combination of human and arti ﬁcial intel-
+ligence, ”European Journal of Cancer , vol. 120, pp. 114 –121,
+2019.
+[25] T. Emara, H. M. A ﬁfy, F. H. Ismail, and A. E. Hassanien, “A
+Modiﬁed Inception-v4 for Imbalanced Skin Cancer Classi ﬁca-
+tion Dataset, ”in2019 14th International Conference on Com-
+puter Engineering and Systems (ICCES) , pp. 28 –33, Cairo,
+Egypt, 2019.
+[26] S. S. Chaturvedi, K. Gupta, and P. S. Prasad, “Skin Lesion Ana-
+lyser: An E ﬃcient Seven-Way Multi-class Skin Cancer Classi-
+ﬁcation Using MobileNet, ”inAdvanced Machine Learning
+Technologies and Applications. AMLTA 2020. Advances inIntelligent Systems and Computing , A. Hassanien, R. Bhatna-
+gar, and A. Darwish, Eds., vol. 1141, Springer, Singapore, 2021.
+[27] S. Mohapatra, N. V. S. Abhishek, D. Bardhan, A. A. Ghosh,
+and S. Mohanty, “Skin Cancer Classi ﬁcation Using Convolu-
+tion Neural Networks, ”inAdvances in Distributed Computing
+and Machine Learning , A. Tripathy, M. Sarkar, J. Sahoo, K. C.
+Li, and S. Chinara, Eds., vol. 127 of Lecture Notes in Networks
+and Systems, Springer, Singapore, 2021.
+[28] M. Chen, W. Chen, W. Chen, L. Cai, and G. Chai, “Skin cancer
+classiﬁcation with deep convolutional neural networks, ”Jour-
+nal of Medical Imaging and Health Informatics , vol. 10, no. 7,
+pp. 1707 –1713, 2020.
+[29] S. Jinnai, N. Yamazaki, Y. Hirano, Y. Sugawara, Y. Ohe, and
+R. Hamamoto, “The development of a skin cancer16 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+classiﬁcation system for pigmented skin lesions using deep
+learning, ”Biomolecules , vol. 10, no. 8, p. 1123, 2020.
+[30] S. S. Chaturvedi, J. V. Tembhurne, and T. Diwan, “A multi-
+class skin cancer classi ﬁcation using deep convolutional neural
+networks, ”Multimedia Tools and Applications , vol. 79, no. 39-
+40, pp. 28477 –28498, 2020.
+[31] R. Garg, S. Maheshwari, and A. Shukla, “Decision Support Sys-
+tem for Detection and Classi ﬁcation of Skin Cancer Using
+CNN, ”inInnovations in Computational Intelligence and Com-
+puter Vision , M. K. Sharma, V. S. Dhaka, T. Perumal, N. Dey,
+and J. M. R. S. Tavares, Eds., vol. 1189 of Advances in Intelli-
+gent Systems and Computing, Springer, Singapore, 2021,10.1007/978-981-15-6067-5_65.
+[32] P. Benedetti, D. Perri, M. Simonetti, O. Gervasi, G. Reali, and
+M. Femminella, “Skin Cancer Classi ﬁcation Using Inception
+Network and Transfer Learning, ”inComputational Science
+and Its Applications –ICCSA 2020. ICCSA 2020 , O. Gervasi,
+Ed., vol. 12249 of Lecture Notes in Computer Science(),
+Springer, Cham, 2020.
+[33] N. Gouda and J. Amudha, “Skin Cancer Classi ﬁcation using
+ResNet, ”in2020 IEEE 5th International Conference on Com-
+puting Communication and Automation (ICCCA) , pp. 536 –
+541, Greater Noida, India, 2020.
+[34] M. A. Ismail, N. Hameed, and J. Clos, “Deep Learning-Based
+Algorithm for Skin Cancer Classi ﬁcation, ”inProceedings of
+International Conference on Trends in Computational and
+Cognitive Engineering , M. S. Kaiser, A. Bandyopadhyay, M.
+Mahmud, and K. Ray, Eds., vol. 1309 of Advances in Intelli-gent Systems and Computing, Springer, Singapore, 2021.
+[35] H. K. Kondaveeti and P. Edupuganti, “Skin Cancer Classi ﬁca-
+tion using Transfer Learning, ”in2020 IEEE International
+Conference on Advent Trends in Multidisciplinary Researchand Innovation (ICATMRI) , pp. 1 –4, Buldhana, India, 2020.
+[36] A. Maiti, B. Chatterjee, and K. C. Santosh, “Skin cancer classi-
+ﬁcation through quantized color features and generative
+adversarial network, ”International Journal of Ambient Com-
+puting and Intelligence (IJACI) , vol. 12, no. 3, pp. 75 –97, 2021.
+[37] R. Ashraf, I. Kiran, T. Mahmood, A. U. R. Butt, N. Razzaq, and
+Z. Farooq, “An eﬃcient technique for skin cancer classi ﬁcation
+using deep learning, ”in2020 IEEE 23rd International Multito-
+pic Conference (INMIC) , pp. 1 –5, Bahawalpur, Pakistan, 2020.
+[38] A. G. C. Pacheco and R. A. Krohling, “An attention-based
+mechanism to combine images and metadata in deep learning
+models applied to skin cancer classi ﬁcation, ”IEEE Journal of
+Biomedical and Health Informatics , vol. 25, no. 9, pp. 3554 –
+3563, 2021.
+[39] S. Alagu and K. Bhoopathy Bagan, “Skin cancer classi ﬁcation
+in dermoscopy images using convolutional neural network, ”
+Nucleation and Atmospheric Aerosols , vol. 2336, no. 1, article
+040013, 2021.
+[40] B. Krohling, P. B. C. Castro, A. G. C. Pacheco, and R. A.
+Krohling, “A smartphone based application for skin cancer
+classiﬁcation using deep learning with clinical images and
+lesion information, ”2021, https://arxiv.org/abs/2104.14353.
+[41] M. M. Mijwil, “Skin cancer disease images classi ﬁcation using
+deep learning solutions, ”Multimedia Tools and Applications ,
+vol. 80, no. 17, pp. 26255 –26271, 2021.
+[42] M. Shah, “LRNet: Skin Cancer Classi ﬁcation Using Low-
+Resolution Images, ”in2021 International conference on com-
+munication information and computing technology (ICCICT) ,
+Mumbai, India, June 2021.[43] R. C. Maron, J. G. Schlager, S. Haggenmüller et al., “A bench-
+mark for neural network robustness in skin cancer classi ﬁca-
+tion,”European Journal of Cancer , vol. 155, pp. 191 –199, 2021.
+[44] M. S. Ali, M. S. Miah, J. Haque, M. M. Rahman, and M. K.
+Islam, “An enhanced technique of skin cancer classi ﬁcation
+using deep convolutional neural network with transfer learn-
+ing models, ”Machine Learning with Applications , vol. 5, arti-
+cle 100036, 2021.
+[45] A. Dascalu, B. N. Walker, Y. Oron, and E. O. David, “Non-
+melanoma skin cancer diagnosis: a comparison between der-
+moscopic and smartphone images by uni ﬁed visual and soni ﬁ-
+cation deep learning algorithms, ”Journal of Cancer Research
+and Clinical Oncology , vol. 148, pp. 2497 –2505, 2022.
+[46] A. Yilmaz, M. Kalebasi, Y. Samoylenko, M. E. Guvenilir, and
+H. Uvet, “Benchmarking of lightweight deep learning architec-
+tures for skin cancer classi ﬁcation using ISIC 2017 dataset, ”
+2021, https://arxiv.org/abs/2110.12270.
+[47] B. Ahmad, S. Jun, V. Palade, Q. You, L. Mao, and Z. Mao,
+“Improving skin cancer classi ﬁcation using heavy-tailed stu-
+dent T-distribution in generative adversarial networks (TED-
+GAN), ”Diagnostics , vol. 11, no. 11, p. 2147, 2021.
+[48] N. Kausar, A. Hameed, M. Sattar et al., “Multiclass skin cancer
+classiﬁcation using ensemble of ﬁne-tuned deep learning
+models, ”Applied Sciences , vol. 11, no. 22, article 10593, 2021.
+[49] B. Mazoure, A. Mazoure, J. Bédard, and V. Makarenkov,
+“DUNEScan: a web server for uncertainty estimation in skin
+cancer detection with deep neural networks, ”Scienti ﬁc
+Reports , vol. 12, no. 1, p. 179, 2022.
+[50] S. Bechelli and J. Delhommelle, “Machine learning and deep
+learning algorithms for skin cancer classi ﬁcation from dermo-
+scopic images, ”Bioengineering , vol. 9, no. 3, p. 97, 2022.
+[51] S. P. Maniraj and P. Sardar Maran, “A hybrid deep learning
+approach for skin cancer diagnosis using subband fusion of3D wavelets, ”The Journal of Supercomputing , vol. 78, no. 10,
+pp. 12394 –12409, 2022.
+[52] Y. Filali, H. El Khoukhi, M. A. Sabri, and A. Aarab, “Analysis
+and classi ﬁcation of skin cancer based on deep learning
+approach, ”in2022 International Conference on Intelligent Sys-
+tems and Computer Vision (ISCV) , Fez, Morocco, 2022.
+[53] R. H. Bedeir, R. O. Mahmoud, and H. H. Zayed, “Automated
+multi-class skin cancer classi ﬁcation through concatenated
+deep learning models, ”IAES International Journal of Arti ﬁcial
+Intelligence (IJ-AI) , vol. 11, no. 2, p. 764, 2022.
+[54] W. Gouda, N. U. Sama, G. Al-Waakid, M. Humayun, and
+N. Z. Jhanjhi, “
+Detection of skin cancer based on skin lesion
+images using deep learning, ”Healthcare , vol. 10, no. 7,
+p. 1183, 2022.
+[55] M. Fraiwan and E. Faouri, “On the automatic detection and
+classiﬁcation of skin cancer using deep transfer learning, ”Sen-
+sors, vol. 22, no. 13, p. 4963, 2022.
+[56] H. Tabrizchi, S. Parvizpour, and J. Razmara, “An improved
+VGG model for skin cancer detection, ”Neural Processing Let-
+ters, vol. 55, no. 4, pp. 3715 –3732, 2023.
+[57] A. Naeem, T. Anees, M. Fiza, R. A. Naqvi, and S.-W. Lee,
+“SCDNet: a deep learning-based framework for the multiclas-
+siﬁcation of skin cancer using dermoscopy images, ”Sensors ,
+vol. 22, no. 15, 2022.
+[58] T. Anh, V.-D. H. Huynh, S. Vu, T. T. Le, and H. D. Nguyen,
+“Skin cancer classi ﬁcation using di ﬀerent backbones of convo-
+lutional neural networks, ”inIn Advances and Trends in Arti-
+ﬁcial Intelligence. Theory and Practices in Arti ﬁcial17 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Intelligence , Lecture Notes in Computer Science, pp. 160 –172,
+Springer International Publishing, Cham, 2022.
+[59] C. Xin, Z. Liu, K. Zhao et al., “An improved transformer net-
+work for skin cancer classi ﬁcation, ”Computers in Biology
+and Medicine , vol. 149, article 105939, 2022.
+[60] A. Bassel, A. B. Abdulkareem, Z. A. A. Alyasseri, N. S. Sani,
+and H. J. Mohammed, “Automatic malignant and benign skin
+cancer classi ﬁcation using a hybrid deep learning approach, ”
+Diagnostics , vol. 12, no. 10, p. 2472, 2022.
+[61] K. Ali, Z. A. Shaikh, A. A. Khan, and A. A. Laghari, “Multiclass
+skin cancer classi ﬁcation using e ﬃcientnets –aﬁrst step
+towards preventing skin cancer, ”Neuroscience Informatics ,
+vol. 2, no. 4, article 100034, 2022.
+[62] S. Q. Gilani, T. Syed, M. Umair, and O. Marques, “Skin cancer
+classiﬁcation using deep spiking neural network, ”Journal of
+Digital Imaging , vol. 36, no. 3, pp. 1137 –1147, 2023.
+[63] P. F. Durães and M. P. Véstias, “Smart embedded system for
+skin cancer classi ﬁcation, ”Future Internet , vol. 15, no. 2,
+p. 52, 2023.
+[64] E. Rezk, M. Eltorki, and W. El-Dakhakhni, “Interpretable skin
+cancer classi ﬁcation based on incremental domain knowledge
+learning, ”Journal of Healthcare Informatics Research , vol. 7,
+no. 1, pp. 59 –83, 2023.
+[65] J. V. Tembhurne, N. Hebbar, H. Y. Patil, and T. Diwan, “Skin
+cancer detection using ensemble of machine learning and deep
+learning techniques, ”Multimedia Tools and Applications ,
+vol. 82, no. 18, pp. 27501 –27524, 2023.
+[66] S. Shaaban, H. Atya, H. Mohammed, A. Sameh, K. Raafat, and
+A. Magdy, “Skin cancer detection based on deep learning
+methods, ”inLecture Notes on Data Engineering and Commu-
+nications Technologies , pp. 58 –67, Cham, Springer Nature
+Switzerland, 2023.
+[67] M. Tahir, A. Naeem, H. Malik, J. Tanveer, R. A. Naqvi, and S.-
+W. Lee, “DSCC_Net: multi-classi ﬁcation deep learning models
+for diagnosing of skin cancer using dermoscopic images, ”Can-
+cers, vol. 15, no. 7, 2023.
+[68] N. Shunmuga Karpagam, S. Sindhuja, P. Sumathi,
+P. Yogananth, G. Saranya, and K. Madhan, “Skin cancer clas-
+siﬁcation based on machine learning techniques, ”in2023
+Eighth International Conference on Science Technology Engi-neering and Mathematics (ICONSTEM) , Chennai, India,
+2023IEEE.
+[69] K. Mridha, M. M. Uddin, J. Shin, S. Khadka, and M. F. Mridha,
+“An interpretable skin cancer classi ﬁcation using optimized
+convolutional neural network for a smart healthcare system, ”
+IEEE Access: Practical Innovations, Open Solutions , vol. 11,
+pp. 41003 –41018, 2023.
+[70] H. L. Gururaj, N. Manju, A. Nagarjun, V. N. Manjunath
+Aradhya, and F. Flammini, “DeepSkin: a deep learning
+approach for skin cancer classi ﬁcation, ”IEEE Access: Practi-
+cal Innovations, Open Solutions , vol. 11, 2023.
+[71] S. A. Khan, Y. Gulzar, S. Turaev, and Y. S. Peng, “A modi ﬁed
+HSIFT descriptor for medical image classi ﬁcation of anatomy
+objects, ”Symmetry , vol. 13, no. 11, p. 1987, 2021.
+[72] Y. Gulzar and S. A. Khan, “Skin lesion segmentation based on
+vision transformers and convolutional neural networks —a
+comparative study, ”Applied Sciences , vol. 12, no. 12, p. 5990,
+2022.
+[73] F. Khan, S. Ayoub, Y. Gulzar et al., “MRI-based e ﬀective
+ensemble frameworks for predicting human brain tumor, ”
+Journal of Imaging , vol. 9, no. 8, 2023.[74] A. Mehmood, Y. Gulzar, Q. M. Ilyas, A. Jabbari, M. Ahmad,
+and S. Iqbal, “SBXception: a shallower and broader xception
+architecture for e ﬃcient classi ﬁcation of skin lesions, ”Cancers ,
+vol. 15, no. 14, 2023.
+[75] N. Siddique, S. Paheding, C. P. Elkin, and V. Devabhaktuni,
+“U-Net and its variants for medical image segmentation: a
+review of theory and applications, ”IEEE Access: Practical
+Innovations, Open Solutions , vol. 9, pp. 82031 –
+82057, 2021.
+[76] M. Krithika alias Anbudevi and K. Suganthi, “Review of
+semantic segmentation of medical images using modi ﬁed
+architectures of UNET, ”Diagnostics , vol. 12, no. 12, p. 3064,
+2022.
+[77] T. Sreelatha, M. V. Subramanyam, and M. G. Prasad, “Early
+detection of skin cancer using melanoma segmentation tech-nique, ”Journal of Medical Systems , vol. 43, no. 7, p. 190, 2019.
+[78] L. Liu, L. Mou, X. X. Zhu, and M. Mandal, “Skin Lesion Seg-
+mentation Based on Improved U-Net, ”in2019 IEEE Cana-
+dian Conference of Electrical and Computer Engineering(CCECE) , Edmonton, AB, Canada, 2019.
+[79] J. Wu, E. Z. Chen, R. Rong, X. Li, D. Xu, and H. Jiang, “Skin
+lesion segmentation with C-UNet, ”in2019 41st Annual Inter-
+national Conference of the IEEE Engineering in Medicine and
+Biology Society (EMBC) , Berlin, Germany, 2019.
+[80] P. Tang, Q. Liang, X. Yan et al., “Eﬃcient skin lesion segmen-
+tation using separable-UNet with stochastic weight averaging, ”
+Computer Methods and Programs in Biomedicine , vol. 178,
+pp. 289 –301, 2019.
+[81] R. L. Araújo, F. H. D. de Araújo, and R. R. V. E. Silva, “Auto-
+matic segmentation of melanoma skin cancer using transfer
+learning and ﬁne-tuning, ”Multimedia Systems , vol. 28, no. 4,
+pp. 1239 –1250, 2022.
+[82] M. Nawaz, T. Nazir, M. Masood et al., “Melanoma segmenta-
+tion: a framework of improved DenseNet77 and UNET convo-lutional neural network, ”International Journal of Imaging
+Systems and Technology , vol. 32, no. 6, pp. 2137 –2153, 2022.
+[83] F. Chincholi and H. Koestler, “Detectron2 for lesion detection
+in diabetic retinopathy, ”Algorithms , vol. 16, no. 3, p. 147,
+2023.
+[84] TensorFlow, TensorFlow ,T e n s o r F l o w .G o o g l e ,2 0 1 9 ,2 0 1 9 ,
+https://www.tensor ﬂow.org/.
+[85] PyTorch, PyTorch , Pytorch.org, 2023, 2023, https://pytorch
+.org/.18 International Journal of Biomedical Imaging
+ 2973, 2024, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1155/2024/3022192, Wiley Online Library on [31/08/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+

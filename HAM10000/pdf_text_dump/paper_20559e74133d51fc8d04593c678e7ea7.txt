@@ -1,0 +1,995 @@
+Academic Editors: Ahyoung Lee,
+Ping-Feng Pai and Namgi Kim
+Received: 31 May 2025
+Revised: 30 June 2025
+Accepted: 9 July 2025
+Published: 10 July 2025
+Citation: Vieira, J.; Mendonça, F.;
+Morgado-Dias, F. Deep Learning
+Approaches for Skin Lesion Detection.
+Electronics 2025 ,14, 2785. https://
+doi.org/10.3390/electronics14142785
+Copyright: © 2025 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license
+(https://creativecommons.org/
+licenses/by/4.0/).
+Article
+Deep Learning Approaches for Skin Lesion Detection
+Jonathan Vieira1, Fábio Mendonça1,2,*
+and Fernando Morgado-Dias1,2
+1Faculty of Exact Sciences and Engineering, University of Madeira, 9020-105 Funchal, Portugal;
+2056722@student.uma.pt (J.V .); morgado@staff.uma.pt (F.M.-D.)
+2Interactive Technologies Institute (ITI/LARSyS) and ARDITI, 9020-105 Funchal, Portugal
+*Correspondence: fabioruben@staff.uma.pt; Tel.: +351-291-705-000
+Abstract
+Recently, there has been a rise in skin cancer cases, for which early detection is highly
+relevant, as it increases the likelihood of a cure. In this context, this work presents a
+benchmarking study of standard Convolutional Neural Network (CNN) architectures for
+automated skin lesion classification. A total of 38 CNN architectures from ten families (Con-
+vNeXt, DenseNet, EfficientNet, Inception, InceptionResNet, MobileNet, NASNet, ResNet,
+VGG, and Xception) were evaluated using transfer learning on the HAM10000 dataset
+for seven-class skin lesion classification, namely, actinic keratoses, basal cell carcinoma,
+benign keratosis-like lesions, dermatofibroma, melanoma, melanocytic nevi, and vascular
+lesions. The comparative analysis used standardized training conditions, with all models
+utilizing frozen pre-trained weights. Cross-database validation was then conducted using
+the ISIC 2019 dataset to assess generalizability across different data distributions. The
+ConvNeXtXLarge architecture achieved the best performance, despite having one of the
+lowest performance-to-number-of-parameters ratios, with 87.62% overall accuracy and
+76.15% F1 score on the test set, demonstrating competitive results within the established
+performance range of existing HAM10000-based studies. A proof-of-concept multiplatform
+mobile application was also implemented using a client–server architecture with encrypted
+image transmission, demonstrating the viability of integrating high-performing models
+into healthcare screening tools.
+Keywords: Artificial Intelligence; deep neural networks; CNN, skin cancer; smartphone
+1. Introduction
+Recently, there has been a substantial increase in skin cancers [ 1], which can be divided
+into two groups, namely non-melanoma and melanoma. Melanoma is a type of malignant
+skin cancer that begins in melanocytes. These are responsible for producing melanin,
+the pigment that gives the skin its natural color [2].
+Skin analysis is currently a complex task as it is the largest organ in the human body,
+acting as a protective barrier against the environment, which contains bacteria or viruses.
+Skin cells are constantly renewed by cellular regeneration, where old cells die and are re-
+placed by new cells, originating from the division of other cells. This process can be affected
+by external or internal factors, causing mutations in the Deoxyribonucleic Acid (DNA) of
+the cells. These mutations can cause the life cycle of the cells to become uncontrolled and
+continue to multiply uncontrollably. These cells are called cancer cells [3,4].
+Furthermore, the clinical challenges associated with early detection of skin cancer are
+multifaceted and significantly impact patient outcomes. Visual examination by derma-
+tologists, while considered the gold standard, is highly dependent on clinical expertise
+Electronics 2025 ,14, 2785 https://doi.org/10.3390/electronics14142785
+Electronics 2025 ,14, 2785 2 of 24
+and experience. Furthermore, the global shortage of dermatologists creates barriers to
+timely diagnosis. In many regions, the dermatologist-to-population ratio is critically low,
+with some areas having less than 1 dermatologist per 100,000 inhabitants, even in devel-
+oped countries such as Canada [ 5]. Thus, access to specialized diagnostics can involve
+high costs and/or prolonged waiting times, during which potentially malignant lesions
+may progress to advanced stages where treatment options become limited and survival
+rates decrease.
+The complexity of differential diagnosis presents another critical challenge, as benign
+lesions can closely mimic malignant lesions, leading to both false positives that cause
+unnecessary anxiety and procedures, and false negatives that delay critical treatment.
+Additionally, the anatomical location of lesions in areas that are difficult for patients
+to self-examine, such as the back, scalp, and between digits, further complicates early
+detection efforts. There is also the case of lesions in locations the patient might not feel
+comfortable showing to the clinicians. These clinical realities indicate the need for accessible,
+reliable screening tools that can assist both healthcare providers and patients in identifying
+suspicious lesions at earlier stages.
+This work postulates that by providing open tools that help detect lesions and alert
+users to consult a specialist, such tools will facilitate the detection of cancer at an early stage.
+In this context, the convergence between artificial intelligence, specifically Convolutional
+Neural Networks (CNNs), and mobile technology emerges as a solution to democratize
+access to screening tools.
+It is also important to note that access to specialized diagnostics can involve high costs
+and/or long waiting time. Thus, there is a need to develop an open-source application
+that can be used on mobile devices (smartphones) to evaluate and analyze skin lesions,
+making the process accessible to the general population. Therefore, the assumption is
+that by incorporating artificial intelligence (AI) into the application, it will be possible to
+identify skin cancer early, helping to flag skin lesions and democratizing access to affordable
+diagnostic technologies.
+The proposed solution consists of a multiplatform application that establishes com-
+munication with a server, where the image is sent to be analyzed and classified by the
+model, allowing the classification of skin lesions. The model implemented on the server
+was selected after a series of tests, and it was the one that presented the greatest accuracy
+among all the models trained and evaluated.
+Specifically, the model was trained to be able to classify seven different types of skin
+lesions, with a solution based on transfer learning. In this case, a CNN architecture was
+developed, pre-trained on a large set of general image data, and then additional layers
+were added for the specific task of classifying skin lesions. This approach allows taking
+advantage of the general pattern recognition knowledge of the pre-trained network to
+identify unique characteristics of different types of lesions.
+This work aims to perform an evaluation of common CNN models for classify-
+ing skin lesions, selecting the model with the best performance to be implemented in
+the developed client–server architecture. In this case, the client will capture images of
+skin lesions using a mobile device, and these will be transmitted to a server that will
+be responsible for processing the image, using the CNN selected to classify the lesion.
+The server will return the lesion classifications and corresponding probabilities for each
+one to the mobile device. However, the goal of this work is to compare the performance
+among the different examined architectures and not to attain the best possible perfor-
+mance with a single model, as this would require tuning the model structure (according to
+https://paperswithcode.com/sota/lesion-classification-on-ham10000 (accessed on 22 June
+2025) it was reported that Lan et al. [ 6] achieved the best performance on the HAM10000
+Electronics 2025 ,14, 2785 3 of 24
+dataset, using a capsule network, with an accuracy of 96.49%, and the subsequent better-
+performing models employed custom-tuned architecture), while in this work, we chose to
+use the same macrostructure, changing only the transfer learning model that performs the
+feature extraction.
+The main contributions and novelties of this work are threefold:
+• First, it presents a benchmark evaluation of 38 deep neural network architectures
+spanning ten standard CNN families (ConvNeXt, DenseNet, EfficientNet, Inception,
+InceptionResNet, MobileNet, NASNet, ResNet, VGG, and Xception) for skin lesion
+classification on the HAM10000 dataset with seven diagnostic classes. This com-
+parative analysis provides insights into the relative performance of state-of-the-art
+architectures for dermatological image classification.
+• Second, a cross-database validation was conducted by evaluating the best-performing
+model on the International Skin Imaging Collaboration (ISIC) 2019 test dataset, demon-
+strating the generalizability and robustness of the developed approach across different
+data distributions. This cross-database evaluation addresses a gap in the existing
+literature where models are typically validated only on a single dataset.
+• Third, a practical, multiplatform mobile application was implemented in Flutter with
+a client–server architecture, where the optimized CNN model runs on the server
+to provide real-time skin lesion classification. This implementation links research
+and practical deployment, offering an accessible tool for early skin cancer screening
+that could possibly be adopted by healthcare providers and patients alike for initial
+screening and priority assessment.
+Related work is presented in Section 2, materials and methods in Section 3, results in
+Section 4, and, lastly, the conclusions and future works in Section 5.
+2. Related Work
+Numerous studies focus on classifying skin lesions using deep neural networks,
+and the most relevant contributions of the examined works are summarized.
+Mahbod et al. [ 7] used pre-trained models, specifically AlexNet, VGG16, and ResNet18,
+for feature extraction, followed by classification using a support vector machine. The pro-
+posed classification was evaluated with 150 images, achieving 83.83% accuracy for
+melanoma and 97.55% for keratosis.
+Similarly, Hekler et al. [ 8] used a ResNet50 model and explored the benefits of combin-
+ing AI with human intervention in the classification of skin cancers. A total of 11,444 im-
+ages, divided into five categories, were used. A CNN was trained to classify the lesions.
+Subsequently, 112 dermatologists from 13 German university hospitals and the CNN inde-
+pendently classified a set of 300 lesions. The decisions of both were combined and achieved
+an accuracy of 82.95%, outperforming the CNN by 81.59%. These results indicate that
+collaboration between experts and AI can improve the classification of skin lesions.
+The work of Amal Al-Rasheed et al. [ 9] proposes a method for the classification
+of various types of skin cancer, using pre-trained models, namely VGG16, ResNet50,
+and ResNet101. To mitigate the class imbalance in the training dataset, the authors applied
+data augmentation techniques, such as image transformations, and the generation of realis-
+tic dermoscopic images. The pre-trained models were fine-tuned and trained, with VGG16,
+ResNet50, and ResNet101 achieving an accuracy of 92%, 92% and 92.25%, respectively.
+The results suggest that a combination of transfer learning models, together with data
+augmentation techniques, can improve the performance in classifying skin lesions.
+Soenksen et al. [ 10] also used CNNs to identify skin lesions, including those captured
+by mobile phone cameras. The system analyzes images of large areas of the skin and detects
+potentially malignant lesions. This system was trained with 38,283 lesions, and it achieved
+Electronics 2025 ,14, 2785 4 of 24
+an accuracy comparable to that of dermatologists. The system demonstrated an agreement
+of 82.96%, on at least one of the three main lesions, with the experts who evaluated and
+validated the results.
+In the work of Danilo Barros Mendes and Nilton Correia da Silva [ 11], a classifica-
+tion of skin lesions was performed using a classification model for 12 types of lesions.
+The model was a ResNet-152 architecture, trained with 3797 images that were augmented
+through position, scale, and illumination transformations, obtaining an Area Under the
+Receiver Operating Characteristic Curve (AUC) of 96% for melanoma and 91% for basal
+cell carcinoma.
+Kartikeya Agarwal and Tismeet Singh [ 12] also classified skin lesions using CNNs,
+but on a dataset from the ISIC (International Skin Imaging Collaboration) repository,
+consisting of 2947 images divided into benign and malignant. The images were resized,
+and data augmentation techniques were applied, dividing the dataset into 2900 images for
+training and 350 for testing. Several models were trained (DenseNet, XceptionNet, ResNet,
+and MobileNet), obtaining an accuracy of 86.65% in classifying the images.
+In the work carried out by Mst Shapna Akter et al. [ 13], multiple CNN models were ex-
+amined. Specifically, six transfer learning models (ResNet50, VGG16, DenseNet, MobileNet,
+InceptionV3, and Xception) were applied to the HAM10000 dataset [ 14]. The models were
+trained, obtaining accuracies of 90% for InceptionV3, 88% for Xception and DenseNet,
+87% for MobileNet, 82% for ResNet50 and 77% for CNN and VGG16. Additionally, they
+developed models that combined different architectures, but presented performances
+of 78%.
+In the work of Daniel Alonso Villanueva Nunez and Yongmin Li [ 15], DenseNet121,
+VGG16 with batch normalization, and ResNet50 were used for the diagnosis of skin lesions.
+The models were trained to classify benign and malignant lesions using the HAM10000
+dataset. The best model found was ResNet50, which obtained a recall for actinic keratosis
+lesions of 69%, 93% for basal cell carcinoma lesions, and 76% for melanoma lesions. When
+the model was adjusted for binary classification, ResNet50 achieved a sensitivity of 92.35%,
+but VGG16 achieved a sensitivity of 95.40%.
+With the advancement of technology, smartphones have become more accessible,
+allowing them to be used in the development of medical applications. In the work carried
+out by Ahmed et al. [ 16], an application was developed for iOS. This application allowed
+lesions to be evaluated using a CNN model called MobileNetV2. A total of 48,373 images
+were used to train the model, which classified lesions as benign or malignant with an
+accuracy of 91.33%.
+In the work of Oztel et al. [ 17], an application was developed for the Android operating
+system with the purpose of distinguishing monkeypox lesions from other lesions. Different
+pre-trained networks were used, and the networks with the best results and adaptation to
+mobile applications were chosen. The ResNet18 network achieved an accuracy of 74.27%
+and transformed into TensorFlow Lite format to be used in the Android application.
+Another application developed for Android was presented by Francese et. al. [ 18]. This
+application classifies lesions as melanoma or “non-melanoma” in real time. Because the
+dataset they used was not balanced, the accuracy of the model was 78.8%. The work
+took into account the asymmetry of the lesion, the border or segmentation of the lesion,
+the colors of the lesion, the diameter, and the evolution of the lesion. Additionally, RGB
+(Red, Green, Blue) and HSV (Hue, Saturation, Value) image formats were used.
+Another solution for mobile applications was proposed by Hameed et al. [ 19], using a
+cloud architecture, in which the trained model is placed on a server, and the smartphone
+application sends the image to be analyzed on the server. The model was developed using
+a Convolutional Neural Network called SqueezeNet, which was trained and tested on 1856
+Electronics 2025 ,14, 2785 5 of 24
+images. This solution had a classification accuracy of 97.21% for four categories: healthy
+skin, acne, eczema, and psoriasis.
+It is therefore clear that the most prevailing approach is to use transfer learning with
+CNN-based models. It was also observed that using data augmentation methods can lead
+to better performance. Lastly, the use of mobile applications was shown to be an effective
+way to provide an interface between the user and the model. However, most works are
+based on small datasets, have examined a small number of CNN architectures, and have
+not made the complete solution open-source. Thus, these will be the focus of this work,
+which examines 38 common CNN architectures, with and without attention mechanisms,
+on a large dataset, and makes all solutions suitable for mobile and open-source use.
+3. Materials and Methods
+This work uses CNNs for image classification, taking advantage of transfer learning to
+train and improve the performance of the models. Furthermore, to address data imbalance,
+image transformations were performed, only on the training data, to increase the number of
+samples to be processed by the model, balancing the dataset and verifying that differences
+in lighting, rotation, and image quality affect the performance of the models.
+3.1. Proposed Solution
+The architecture proposed for the mobile application was a client–server architecture.
+The client sends the image to the server, which receives it, processes it, and applies the
+selected classification model, returning the result to the client. The advantages identified
+using the architecture with a server are as follows:
+• Greater processing power, as the server can run more complex and accurate models
+without the hardware limitations of mobile devices;
+• Model updates are simplified, since the model can be updated on the server without
+the need to update the application;
+• Lower resource consumption on the mobile device, as model processing takes place
+on the server.
+However, the disadvantages identified in this architecture are as follows:
+• Requires internet access to process images and classify lesions;
+• Higher latency in predictions;
+• Infrastructure and server maintenance costs;
+• Need to ensure privacy for data sent to the server and responses to the client.
+The proposed application shares architectural similarities with prior works, partic-
+ularly Francese et al. [ 18], who also adopted a client–server model. This is dissimilar to
+the approach of Oztel et al. [ 17], which relies on fully local, on-device deployment. This
+approach was initially explored with a similar local deployment strategy. However, a
+considerable degradation in model accuracy was observed due to the quantization required
+for conversion to TensorFlow Lite, alongside substantial increases in application size (from
+a few megabytes to several hundred megabytes). Furthermore, local execution requires
+end users to have relatively high-end mobile devices, which limits accessibility. In contrast,
+the proposed system was designed with cross-platform flexibility in mind. Thus, Flutter
+was used to ensure that the client-side application can be easily adapted for multiple
+environments, including mobile, web, and desktop, without significant redevelopment
+efforts, while the server side can remain the same. While the architectural paradigm is a
+standard client–server solution, this work emphasizes maximizing deployment versatility
+and accessibility, while preserving model performance, and distinguishes, to the best of the
+authors’ knowledge, the proposed system from prior work on skin lesion analysis.
+Electronics 2025 ,14, 2785 6 of 24
+In Figure 1, the proposed solution for the multiplatform classification process is
+presented. The image is obtained on a smartphone and is sent to a server that processes
+the image by applying the selected classification model and returning the result to the
+mobile device.
+Figure 1. Solution for the multiplatform classification process.
+To ensure security in data transmission between the client and the server, encryption
+was used between the mobile device and the server. The encryption used was the AES
+(Advanced Encryption Standard) algorithm, which is a specification for data encryption
+established by the US National Institute of Standards and Technology (NIST) in 2001 [ 20].
+Due to it being a standard and having many implementations, tools and support libraries,
+AES-256 was used with a 2048-bit key. Additionally, the server is configured with an SSL
+certificate for secure connections between devices.
+The request made to the server will present a response if the token sent to the server
+matches what is established therein. The developed mobile solution was implemented in
+Flutter, as it is open-source and allows the creation of applications that run on different
+operating systems and in a web environment [21,22].
+In practical deployment scenarios, especially in environments with limited bandwidth
+or high network latency, it is important to minimize the payload size and optimize the
+server response time to ensure a smooth user experience. The developed solution was
+implemented in a standard server (with a graphics processing unit) and can be adapted to
+use lightweight communication protocols and image compression to reduce transmission
+time between the mobile device and the server. Additionally, although the server can
+be benchmarked under simulated high-load conditions in a production environment to
+evaluate its throughput and ability to handle concurrent requests without significant
+degradation in response time, in the context of this work, it was employed solely as a proof
+of concept.
+Regarding post-classification image handling, all user-submitted images are processed
+exclusively in-memory and are not stored persistently on the server. As soon as the image
+is analyzed by the model and a classification result is produced, the image is immediately
+discarded. No caching or logging of the original image data occurs at any point in the
+Electronics 2025 ,14, 2785 7 of 24
+processing pipeline. This design choice was made to uphold strong privacy guarantees and
+to ensure compliance with the General Data Protection Regulation (GDPR).
+3.2. Examined Dataset
+A systematic review was conducted by T. Debelee [ 23], with a summary of openly
+accessible datasets. Among the included datasets, HAM10000 [ 14] was selected to develop
+the models to classify skin lesions. This dataset was selected as the primary dataset for
+this study as it provides a standardized classification framework that represents clinically
+relevant diagnostic categories commonly encountered in dermatological practice, provid-
+ing sufficient sample diversity to support the comparative evaluation of the 38 examined
+models (across the ten CNN families), which constitutes the primary contribution of this
+work. The choice of HAM10000 is further validated by its adoption in multiple studies,
+enabling direct performance comparisons with them under equivalent experimental condi-
+tions. The lesions identified in the HAM10000 data repository are classified into the seven
+categories indicated in Figure 2, specifically [24]:
+• Actinic keratoses (akiec): Types of squamous cell carcinoma, non-invasive, and can be
+treated locally without surgery;
+• Basal cell carcinoma (bcc): A type of epithelial skin cancer that rarely spreads, but if
+left untreated, can be lethal;
+• Benign keratosis-like lesions (bkl): These are benign lesions similar to keratosis;
+• Dermatofibroma (df): Skin lesions that are benign growths or that result from an
+inflammatory response to minor trauma;
+• Melanocytic nevi (nv): Benign neoplasms of melanocytes and appear in a variety of
+shapes and sizes; from a dermoscopic point of view, the variants can differ dramatically ;
+• Vascular lesions (vasc): These angiomas can be benign or malignant;
+• Melanoma (mel): Melanoma is a cancerous tumor that develops from melanocytes
+and can take many different forms. If detected early, it can be treated with a basic
+surgical procedure.
+In the dataset, there is a large imbalance in the number of samples per class, as indi-
+cated in Table 1 that shows the number of images for each lesion in the complete dataset
+(indicated as Original) [14].
+Table 1. Number of images per lesion across original, training (before augmentation (BA) and after
+augmentation (AA)), validation, and test sets [14].
+Class Original Training (BA) Training (AA) Validation Test
+akiec 327 229 1374 49 49
+bcc 514 360 2160 77 77
+bkl 1099 769 4614 165 165
+df 115 81 486 17 17
+mel 1113 779 4674 167 167
+vasc 142 99 594 21 22
+nv 6705 4693 4694 1006 1006
+Total 10,015 7010 18,595 1502 1503
+The dataset was initially separated into three groups (with each image belonging only
+to one group), specifically, training, validation, and testing datasets. The training dataset
+received 70% of the samples, and the remaining 30% were divided into the validation and
+test datasets in equal parts.
+Electronics 2025 ,14, 2785 8 of 24
+To balance the training data, transformations on the images were performed, increasing
+the number of samples. This process is usually called data augmentation [ 25] and, from the
+vast number of possible transformations, it was decided to use only those that are most
+likely to occur in cell phone cameras, specifically, changing the brightness, rotating by 45 º,
+zooming, and mirroring the image horizontally and vertically, as indicated in Figure 3.
+(A) (B)
+(C) (D)
+(E) (F)
+(G)
+Figure 2. Types of lesions from the HAM10000 image set [ 14]: (A) actinic keratoses, ( B) basal cell
+carcinoma, ( C) benign keratosis-like, ( D) dermatofibroma, ( E) melanocytic nevi, ( F) vascular lesion,
+(G) melanoma.
+Figure 3. Data augmentation transformations applied to the training dataset images (from
+HAM10000 [14]).
+The total number of available images after data augmentation was performed on the
+training data is indicated in Table 1. However, in the original dataset, the nv lesion has
+Electronics 2025 ,14, 2785 9 of 24
+enough images to perform training; for this reason, no transformations were performed on
+this class. A comparison of the distribution of the classes before and after the augmentation
+is also presented in Figure 4.
+Figure 4. Distribution of the training data samples per class before augmentation (BA) and after
+augmentation (AA).
+The test and validation datasets had a lower set of images, but no transformations
+were performed on them to ensure that the performance metrics to be obtained were correct.
+The total number of images in these datasets is also shown in Table 1.
+3.3. Implemented Models
+All examined models used transfer learning, by freezing the layers of the base model
+and removing the top part of the original model and keeping only the feature generation
+part. Although complete retraining of the model could yield better performance, such an
+approach could compromise the comparative nature of this study, as different architectures
+would benefit unequally from full fine-tuning, making it impossible to isolate the inherent
+architectural advantages. The standardized transfer learning approach ensures fair com-
+parison across all 38 examined architectures by maintaining consistent training conditions
+and focusing the evaluation on the feature extraction capabilities of each base model rather
+than optimization-specific improvements.
+The examined architectures for feature extraction were selected to cover the stan-
+dard CNN architecture for image classification, with and without an attention mechanism.
+The examined architectures were ConvNeXt [ 26], DenseNet [ 27], EfficientNet [ 28], In-
+ception [ 29], InceptionResNet [ 30], MobileNet [ 31], NASNet [ 32], ResNet [ 33], VGG [ 34],
+and Xception [ 35]. In more detail, the 38 examined models are indicated in Table 2. The orig-
+inal image shape was 600 ×450×3 (three color channels).
+The number of layers in the model was determined using a TensorFlow function that
+enumerates all individual layers within the architecture. It is important to note that the
+number of parameters may differ from the original pre-trained model (as the final top
+layers were excluded).
+Electronics 2025 ,14, 2785 10 of 24
+Table 2. Deep learning architectures examined for feature extraction, indicating the architecture,
+number of layers/operational layers (N. Layers), number of parameters in millions (indicating the
+number of trainable, non-trainable, optimizer, and total parameters), and the used input shape.
+Architecture N. Layers Total Trainable Non-Trainable Optimizer Input Shape
+ConvNeXtBase 279 200.8 37.75 87.56 75.50 384 × 384 × 3
+ConvNeXtLarge 279 366.1 56.62 196.23 113.25 384 × 384 × 3
+ConvNeXtSmall 279 134.4 28.31 49.45 56.63 384 × 384 × 3
+ConvNeXtTiny 153 56.7 9.63 27.82 19.27 224 × 224 × 3
+ConvNeXtXLarge 279 574.6 75.50 348.15 151.0 384 × 384 × 3
+DenseNet121 435 45.5 12.84 7.03 25.69 224 × 224 × 3
+DenseNet169 603 75.2 20.87 12.64 41.75 224 × 224 × 3
+DenseNet201 715 90.5 24.09 18.32 48.18 224 × 224 × 3
+EfficientNetB0 246 52.2 16.06 4.05 32.12 224 × 224 × 3
+EfficientNetB1 348 69.5 20.97 6.57 41.95 240 × 240 × 3
+EfficientNetB2 348 95.3 29.20 7.77 58.40 260 × 260 × 3
+EfficientNetB3 393 128.7 39.32 10.78 78.65 300 × 300 × 3
+EfficientNetB4 483 215.8 66.06 17.67 132.13 380 × 380 × 3
+EfficientNetB5 585 382.4 117.97 28.51 235.94 456 × 456 × 3
+EfficientNetB6 675 552.3 170.46 40.96 340.93 528 × 528 × 3
+EfficientNetB7 822 773.8 236.59 64.10 473.18 600 × 600 × 3
+EfficientNetV2_B0 278 54.1 16.06 5.92 32.12 224 × 224 × 3
+EfficientNetV2_B1 342 69.8 20.97 6.93 41.95 240 × 240 × 3
+EfficientNetV2_B2 357 96.3 29.20 8.77 58.40 260 × 260 × 3
+EfficientNetV2_B3 417 130.9 39.32 12.93 78.65 300 × 300 × 3
+EfficientNetV2_L 1036 259.3 47.19 117.74 94.38 380 × 380 × 3
+EfficientNetV2_M 748 194.7 47.19 53.15 94.38 380 × 380 × 3
+EfficientNetV2_S 521 118.6 32.77 20.33 65.54 300 × 300 × 3
+InceptionResNetV2 788 83.8 9.83 54.33 19.67 224 × 224 × 3
+InceptionV3 319 61.1 13.11 21.80 26.22 224 × 224 × 3
+MobileNet 94 41.7 12.84 3.23 25.69 224 × 224 × 3
+MobileNetV2 162 50.4 16.06 2.26 32.12 224 × 224 × 3
+NASNetLarge 1047 459.6 124.90 84.92 249.81 331 × 331 × 3
+NASNetMobile 777 44.0 13.25 4.27 26.50 224 × 224 × 3
+ResNet101 353 119.75 25.69 42.66 51.39 224 × 224 × 3
+ResNet101V2 385 119.71 25.69 42.63 51.39 224 × 224 × 3
+ResNet152 523 135.46 25.69 58.37 51.39 224 × 224 × 3
+ResNet152V2 572 135.42 25.69 58.33 51.39 224 × 224 × 3
+ResNet50 183 100.68 25.69 23.59 51.39 224 × 224 × 3
+ResNet50V2 198 100.65 25.69 23.56 51.39 224 × 224 × 3
+VGG16 27 33.9 6.42 14.71 12.85 224 × 224 × 3
+VGG19 30 39.3 6.42 20.02 12.85 224 × 224 × 3
+Xception 140 178.1 52.43 20.86 104.86 299 × 299 × 3
+Electronics 2025 ,14, 2785 11 of 24
+Furthermore, Gaussian noise of 0.05 was used to add noise to the input values through
+a layer introduced between the input layer and the first layer of the feature extraction
+model. This was conducted to achieve a regularizing effect and reduce overfitting [ 36].
+The classification component received the output of the feature extraction model, applied
+batch normalization, flattened it, and applied dropout to further regularize the model.
+Then, a dense layer was fed with 256 neurons with Rectified Linear Unit (ReLu) activation,
+followed again by dropout and, lastly, a dense layer with seven neurons (one per class)
+with softmax activation. For all cases, the dropout used was 24%. Therefore, the macro-
+architecture was the same for all models and used an input layer, then a Gaussian noise
+layer, then the transfer learning model (without the final classification components), then
+batch normalization, followed by flatten, dropout, dense, dropout, and dense layers. Thus,
+the implemented macro-model is shown in Figure A2, following the style presented by
+Chen et al. [37], using ConvNeXtXLarge as an example in the transfer learning part.
+L2 regularization was also applied in order to reduce the risk of overfitting and ensure
+more stable performance in the datasets [ 38]. This approach is useful when developing
+models that have a large number of parameters, especially if the parameters have high
+weights [ 39]. Specifically, L2 neutralizes especially high coefficients by reducing all coeffi-
+cient values while minimizing the fit with the training data. The models were allowed to
+train up to 200 epochs, but the early stopping mechanism, with a patience of 20, ended the
+training of all models before this limit (preventing overfitting and reducing unnecessary
+computation). Only the best-performing model was saved.
+The model was trained using the Adam optimizer with an initial learning rate of 0.0001.
+A learning rate schedule was also used, monitoring the validation accuracy. The learning
+rate was reduced by a factor of 0.2 if no improvement was observed over 10 epochs, with a
+cooldown period of 5 epochs and a minimum learning rate of 0.000001. The batch size was
+set to 64.
+4. Results
+To analyze the model performance, this work considered standard performance met-
+rics for multi-class problems (in this case, seven classes with image analysis and transfer
+learning [ 40]). Specifically, the results obtained for each implemented architecture were
+analyzed, using standard metrics, namely, macro accuracy (ACC Macro), overall accuracy
+(Overall ACC), F1 Macro, and the Matthews correlation coefficient (MCC).
+These specific metrics were selected due to the multi-class nature and substantial class
+imbalance present in the dataset. Overall ACC provides a general performance overview
+but can be misleading in imbalanced scenarios as it may be dominated by the majority
+classes. Therefore, ACC Macro was included to ensure equal weighting of all classes
+regardless of their frequency, providing a more balanced assessment across all classes.
+The F1 Macro score complements this approach by harmonically averaging precision and
+recall for each class before taking the mean, thus accounting for both false positives and false
+negatives while maintaining class balance considerations. Then, the MCC was incorporated
+as it is particularly robust for imbalanced datasets, providing a single metric that considers
+true and false positives and negatives across all classes.
+In addition to these standard classification metrics, this study also evaluates model
+performance using Top-k ACC Macro metrics, specifically Top-1, Top-2, and Top-3 accuracy.
+Top-k accuracy measures whether the correct class label appears among the k highest-
+probability predictions made by the model. Top-1 accuracy is equivalent to the standard
+Overall ACC mentioned above, representing the percentage of instances where the model’s
+highest-confidence prediction is correct. Top-2 accuracy expands this criterion to include
+cases where the correct label appears in either the first or second highest-probability
+Electronics 2025 ,14, 2785 12 of 24
+predictions, while Top-3 accuracy considers the top three predictions. These metrics are
+particularly relevant in multi-class scenarios as they provide insight into the model’s
+confidence distribution and its ability to rank the correct class highly, even when it may not
+be the top prediction. Thus, Top-k metrics are especially relevant for this work as multiple
+classes are similar and it is likely that the model might confuse them.
+The models were trained in the NVIDIA A100 graphics processing unit, and all
+code was developed in Python version 3 with TensorFlow. The code is available at https:
+//github.com/Jonathan-Vieira25/skin-lession-app.git (accessed on 9 July 2025).
+4.1. Feature Extraction Model Evaluation
+The performance of all examined architectures on the test dataset is presented in
+Figure 5 and, in more detail, in Table A1. It is clear that the ConvNeXtXLarge model
+demonstrated superior performance across all evaluation metrics, achieving the highest
+values in ACC Macro (96.46%), F1 Macro (76.15%), Overall MCC (75.81%), and Overall
+ACC (87.62%).
+Analyzing Table A1 in more detail, some notable performance patterns are observed
+across different model families. Specifically, the ConvNeXt family consistently achieved
+the highest performance metrics, with ConvNeXtXLarge leading in all four metrics. The Ef-
+ficientNet models also performed well, particularly the EfficientNetB0, EfficientNetB1,
+and EfficientNetV2_B2 variants. In contrast, models such as InceptionResNetV2, Incep-
+tionV3, and NASNetLarge showed relatively lower performance, especially in the F1 Macro
+metric, suggesting a poorer balance between precision and recall for these architectures.
+The ResNet models demonstrated moderate performance, with ResNet50 achieving the
+best results among that family. Among the more lightweight models, the EfficientNet
+family generally outperformed MobileNet and MobileNetV2 variants.
+The superior performance of the ConvNeXt family, particularly ConvNeXtXLarge,
+can be attributed to its advanced architecture that combines the strengths of CNNs with
+transformer-inspired design elements (it can even surpass transformer-based models such
+as Swin transformer [ 26]), allowing for better feature extraction from the used databases,
+which have complex images of dermatological images with varied lesion morphologies. It
+is also likely that the model’s larger parameter count enables it to capture more subtle visual
+patterns that allow distinguishing between similar-appearing skin lesions. EfficientNet
+models likely performed well due to their compound scaling method that optimally bal-
+ances network depth, width, and resolution according to available computational resources,
+making them particularly suitable for this problem, as detail preservation is needed. The rel-
+atively poor performance of Inception-based architectures suggests that their Inception
+modules, while effective for general object recognition, may not optimally capture the
+subtle textural and color variations characteristic of dermatological lesions. The moder-
+ate performance of ResNet models aligns with expectations as it is similar to the results
+reported in other works although in dissimilar context [ 28], but their relatively simpler
+architecture compared to ConvNeXt lacks the specialized pattern recognition capabilities
+needed for fine-grained skin lesion classification.
+Another relevant analysis is the efficiency of the examined models, calculated by
+the ratio of Overall ACC to total parameter count. Figure A1 presents a scatter plot
+of this analysis. Based on this efficiency metric, the models rank from highest to
+lowest efficiency in the following order: VGG16; VGG19; DenseNet121; MobileNet;
+EfficientNetB0; EfficientNetV2_B0; NASNetMobile; ConvNeXtTiny; MobileNetV2; Ef-
+ficientNetB1; EfficientNetV2_B1; InceptionV3; DenseNet169; EfficientNetV2_B2; Effi-
+cientNetB2; DenseNet201; ResNet50; ResNet50V2; EfficientNetV2_S; InceptionResNetV2;
+ResNet101; EfficientNetB3; EfficientNetV2_B3; ConvNeXtSmall; ResNet152; ResNet101V2;
+Electronics 2025 ,14, 2785 13 of 24
+ResNet152V2; ConvNeXtBase; EfficientNetV2_M; Xception; EfficientNetB4; Efficient-
+NetV2_L; ConvNeXtLarge; EfficientNetB5; ConvNeXtXLarge; NASNetLarge; Efficient-
+NetB6; EfficientNetB7.
+Figure 5. Performance of the examined model architectures.
+This ranking reveals that simpler architectures like VGG and lightweight models such
+as MobileNet achieve the best accuracy-to-parameter ratios, while the larger models demon-
+strate lower parameter efficiency despite achieving the best performance. Particularly Con-
+vNeXtXLarge exhibits one of the worst parameter efficiency scores yet provides the best
+performance, suggesting that larger models follow a pattern of diminishing returns, where
+performance gains come at the cost of increasingly inefficient parameter utilization. This
+trend indicates that while scaling up model size can improve accuracy, the marginal benefit
+Electronics 2025 ,14, 2785 14 of 24
+per additional parameter decreases substantially, potentially approaching a performance
+plateau where further parameter increases yield minimal performance improvements.
+4.2. Best Model Evaluation
+The best-performing model was further examined to better understand its perfor-
+mance per class. Thus, the number of correctly classified images in the test dataset, using
+ConvNeXtXLarge as feature extractor, is indicated in Table A2. The confusion matrix of
+this analysis is presented in Figure 6. Examining these classification results reveals distinct
+patterns in the model’s performance across different lesion types. The easiest classes to
+classify were nv with a 95.83% hit rate, followed by bcc, and both bkl and vasc. In con-
+trast, the model struggled more with df, akiec and mel, which showed moderate but still
+challenging classification rates.
+Regarding Top-k, Overall ACC, Top-1, Top-2, and Top-3 were 87%, 96%, and 99%,
+respectively. These results indicate that the model demonstrates strong performance with
+improvements as k increases. The jump from 87% (Top-1) to 96% (Top-2) accuracy suggests
+that in many cases where the model’s primary prediction was incorrect, the correct class
+was the second-highest probability predictions. This improvement indicates that the model
+often places the correct class as its second choice when it fails to rank it first. The further
+improvement to 99% at Top-3 demonstrates that nearly all correct classifications fall within
+the model’s top three predictions. This pattern indicates good class discrimination capabili-
+ties, with the model successfully capturing the correct class within its highest-confidence
+predictions in 99% of cases, leaving only 1% representing the most challenging instances in
+the dataset.
+Figure 6. Confusion matrix of the best-performing model on the test dataset considering the Top-
+1 approach.
+Regarding the performance disparities between classes, these can likely be explained
+by several factors. The superior performance on nv is possibly due to its substantial
+Electronics 2025 ,14, 2785 15 of 24
+representation in the training dataset, providing the model with diverse examples to learn
+from. Additionally, nv typically presents with more consistent and distinctive patterns
+compared to other lesions. bcc and vasc often exhibit characteristic features that make them
+visually distinctive. Conversely, the poor performance on df can likely be attributed to its
+underrepresentation in the dataset (especially considering that it was mostly confused with
+nv, the most prevalent class) and its variable clinical presentation, as it may lack consistently
+distinctive features, complicating classification even for experienced dermatologists.
+The moderate performance on mel is particularly concerning from a clinical perspec-
+tive, as this is the most dangerous skin cancer category, but it is notoriously challenging
+to classify due to its variable appearance and tendency to mimic benign lesions (it was
+again mostly confused with nv likely for the same reason as indicated before). The similar
+difficulty with akiec may be due to its often subtle presentation and resemblance to normal
+skin variations or benign keratoses. These results indicate how class imbalance in the
+training data, coupled with the inherent visual similarity between certain dermatological
+conditions, creates substantial challenges for automated classification systems.
+To further validate the best-performing model, a cross-database validation was con-
+ducted using the ISIC 2019 test dataset [ 41,42], using only data for the same seven classes
+of HAM10000. The number of samples for akiek, bcc, bkl, df, mel, nv, and vasc was,
+respectively, 374, 975, 660, 91, 1327, 2495, and 104, totaling 6020 samples. The attained
+confusion matrix is presented in Figure 7, where the Top-k Overall Acc for Top-1, Top-2,
+and Top-3 was, respectively, 56%, 74%, and 86%.
+Figure 7. Confusion matrix of the best-performing model on the ISIC 2019 test dataset considering
+the Top-1 approach.
+The cross-database validation results reveal a performance drop compared to the
+original test set, with Top-1 decreasing. This decline is expected and indicative of domain
+shift challenges when applying models trained on one dataset to another with different
+imaging conditions, patient populations, or data acquisition protocols. However, the model
+Electronics 2025 ,14, 2785 16 of 24
+maintains its ability to improve with increased k values, showing an 18% improvement
+from Top-1 to Top-2 (56% to 74%) and a further 12% gain to Top-3 (86%). This pattern
+suggests that while the model struggles with confident primary predictions in the cross-
+database setting, it retains ranking capabilities, with the correct class frequently appearing
+among the top three predictions. The 86% Top-3 accuracy demonstrates that the model’s
+learned representations maintain generalizability across datasets, though the reduced Top-1
+performance highlights the importance of domain adaptation techniques for real-world
+deployment across different clinical settings.
+Further analysis of the confusion matrices reveals that the performance drop was
+primarily caused by the degradation in akiec classification. The model predominantly
+misclassified akiec as bkl (204 cases) and nv (100 cases), suggesting that the visual charac-
+teristics of akiec lesions in the ISIC 2019 dataset might differ substantially from those used
+for training the model. Other classes showed more moderate performance drops, with df
+and vasc maintaining relatively stable performance despite the domain shift.
+4.3. Comparison with the State of the Art
+Table 3 presents a comparison of the models and metrics achieved in this study and
+the results from the state of the art. It is difficult to perform a direct comparison between
+the works, as different sample sizes and numbers of classes were used. It is also important
+to note that comparing models across studies is inherently prone to bias. For instance, some
+studies directly use dermoscopic images, while others apply image-enhancing techniques
+that influence model performance. Additionally, class definitions and grouping criteria can
+differ, which impacts the difficulty of the classification task. Thus, comparisons in Table 3
+should be interpreted as indicative rather than definitive. Nonetheless, an initial analysis
+can be performed, and it is notable that the developed work is aligned with state-of-the-art
+performance despite using a larger dataset and more classes.
+Specifically, the studies examined in Table 3 demonstrate considerable heterogeneity
+in classification complexity, ranging from binary classification tasks to multi-class problems
+with up to twelve distinct categories. Binary classification approaches, such as those
+employed by Ech-Cherif et al. [ 16] (benign vs. malignant) and Francese et al. [ 18] (melanoma
+vs. non-melanoma), inherently present less complex decision boundaries compared to
+multi-class scenarios. Ech-Cherif et al. achieved 91.33% accuracy using MobileNetV2 for
+binary classification, while Francese et al. reported 78.8% accuracy for melanoma detection.
+These results, while seemingly comparable to the present work’s 87.62% accuracy, must be
+contextualized within the significantly reduced classification complexity of binary tasks.
+In contrast, studies addressing multi-class classification problems more closely ap-
+proximate the complexity of the present work. Akter et al. [ 13] examined the same dataset
+as used in this work and reported an accuracy of 90% with InceptionV3. However, it is
+not clear how the model was trained or if augmentation was used. Thus, this comparison
+would require consideration of dataset preprocessing, augmentation strategies, and valida-
+tion methodologies. Similarly, Al-Rasheed et al. [ 9] reported accuracies ranging from 87.7%
+to 90.0% when using a single model or an ensemble of models, aligning with the attained
+performance of this work. Nunez and Li [ 15] also reported an accuracy of 90%, though it is
+not clear how this metric was calculated as no test data was specified.
+Electronics 2025 ,14, 2785 17 of 24
+Table 3. Comparison results with the state of the art, sorted according to the number of user classes
+(used classes are indicated in the footnote).
+Author Models Dataset Results
+Francese et al. [18]1Custom CNN Custom dataset with 2 classes and 1600
+test imagesAccuracy: 78.8%; sensitivity: 91.3%; specificity: 73.0%
+Agarwal and Singh [ 12]2DenseNet201, XceptionNet,
+ResNet50, and MobileNetSubset of subset of the ISIC with 2 classes
+and 350 test imagesAccuracy: DenseNet201–86.0%, ResNet50–86.57%,
+XceptionNet–82.57%, MobileNet–80.86%; precision:
+DenseNet201–85.66%, ResNet50–86.48%, XceptionNet–
+82.56%, MobileNet–81.31%; recall: DenseNet201–85.83%,
+ResNet50–86.0%, XceptionNet–73.99%, MobileNet–
+79.17%; F1 score: DenseNet201–85.75%, ResNet50–86.24%,
+XceptionNet–78.03%, MobileNet–80.22%
+Ech-Cherif et al. [16]2MobileNetV2 Images from DermNet, ISIC, and Dermofit
+Image Library with 2 classes and 1000 test
+imagesAccuracy: 91.33%
+Mahbod et al. [7]3Fusion of AlexNet, VGG16,
+and ResNet18 with classifi-
+cation using a support vec-
+tor machineISIC 2016 and 2017 with 3 classes and
+150 validation images (no test data speci-
+fied)AUC: 83.83% (for mel) and 97.55% (for akiec )
+Soenksen et al. [10]4Multiple CNNs (including
+transfer learning based on
+VGG16 and Xception)Custom dataset with 3 classes and 6796
+test imagesSensitivity: 90.3%; specificity: 89.9%
+Hameed et al. [19]5SqueezeNet DermIS, DermQuest, DermNZ, 11K hands,
+and one custom dataset with 4 classes and
+556 test images (no validation data speci-
+fied)Accuracy: 97.21%; sensitivity: 94.42%; specificity: 98.14%
+Hekler et al. [8]6ResNet50 with human inter-
+ventionISIC (most images came from the
+HAM10000) with 5 classes and 300 test
+imagesAccuracy: 82.95%
+Oztel et al. [17]8ResNet18 PAD-UFES-20 and MSLD with 7 classes
+and 480 test images (no validation data
+specified)Accuracy: 74.27%; precision: 76.78%; recall: 71.40%; F1 score:
+73.63%
+Al-Rasheed et al. [9]7VGG16, ResNet50,
+ResNet101, and Ensem-
+ble modelHAM10000 with 7 classes and 2000 test
+imagesAccuracy: VGG16–87.7%, ResNet50–87.9%, ResNet101–
+88.15%, Ensemble model–90.0%; recall: VGG16–75.1%,
+ResNet50–75.6%, ResNet101–76.0, Ensemble model–80.7%;
+precision: VGG16–84.7%, ResNet50–81.7%, ResNet101–84.5,
+Ensemble model–88.1%; F1 score: VGG16–79.1%, ResNet50–
+78.0%, ResNet101–79.6, Ensemble model–83.8%
+Akter et al. [13]7ResNet50, VGG16,
+DenseNet, MobileNet,
+InceptionV3, Xception,
+and custom CNNHAM10000 with 7 classes and 1103 test
+imagesAccuracy: InceptionV3–90%, Xception–88%, DenseNet–88%,
+MobileNet–87%, ResNet50–82%, VGG16–73%, CNN–77%;
+precision: InceptionV3–90%, Xception–88%, DenseNet–88%,
+MobileNet–88%, ResNet50–80%, VGG16–71%, CNN–73%;
+recall: InceptionV3–90%, Xception–88%, DenseNet–88%,
+MobileNet–87%, ResNet50–82%, VGG16–73%, CNN–77%;
+F1 score: InceptionV3–90%, Xception–87%, DenseNet–87%,
+MobileNet–86%, ResNet50–81%, VGG16–71%, CNN–73%
+Nunez and Li [15]7DenseNet121, VGG16,
+and ResNet50HAM10000 with 7 classes and 2003 valida-
+tion images (no test data specified)Accuracy: DenseNet121–91%, VGG16–91%, ResNet50–92%
+Mendes and Silva [11]9ResNet152 MED-NODE, Edinburgh Dermofit Im-
+age Library, and a custom dataset with
+12 classes and 956 test imagesAUC: 96% (for mel) and 91% (for bcc)
+This work6ConvNeXtXLarge HAM10000 with 7 classes and 1503 test
+imagesAccuracy: 87.62%; F1 score: 75.82%
+1Melanoma and not melanoma.2Benign and malignant.3Malignant melanoma, seborrheic keratosis, and benign
+nevi.4Distinguish between suspicious pigmented lesions, non-suspicious, and complex backgrounds.5Healthy
+skin, acne, eczema, and psoriasis.6Class 1 (including actinic keratosis, intraepithelial carcinoma, squamous cell
+carcinoma), basal cell carcinoma, class 3 (benign keratosis, seborrhoeic keratosis, lichen planus–like keratosis, solar
+lentigo), melanocytic nevi, and melanoma.7Actinic keratosis (AKIEC), basal cell carcinoma (BCC), benign kerato-
+sis (BKL), dermatofbroma (DF), melanoma (MEL), nevus (NV), and vascular lesion (VASC).8Actinic keratosis
+(ACK), basal cell carcinoma (BCC), melanoma (MEL), nevus (NEV), squamous cell carcinoma (SCC), seborrheic
+keratosis (SEK), and monkeypox (MPX).9Actinic keratosis, basal cell carcinoma, melanocytic nevus (mole),
+seborrhoeic keratosis, squamous cell carcinoma, intraepithelial carcinoma, pyogenic granuloma, hemangioma,
+dermatofibroma, malignant melanoma, lentigo, and wart.
+It is important to note that the dataset scale variations across studies substantially
+impact the validity of performance comparisons. The present work utilizes a dataset with
+over 10,000 images, whose training images then passed through an augmentation process,
+representing one of the larger-scale studies in the comparison. In contrast, several works
+employed substantially smaller datasets; for example, Mahbod et al. [ 7] used 150 images
+Electronics 2025 ,14, 2785 18 of 24
+for validation (without specifying the test data), while Soenksen et al. [ 10] employed a
+dataset with 38,283 lesions. The substantial difference in dataset scale introduces questions
+regarding model generalizability and robustness, as larger datasets typically provide a
+more comprehensive representation of lesion variability, potentially leading to more robust
+models, although they may also present increased classification challenges due to greater
+intra-class variation.
+The architectural choices across studies reveal performance patterns that provide
+context for the present work’s results. Multiple studies demonstrate the effectiveness of
+ResNet architectures (the most commonly used architecture in the examined works): Hek-
+ler et al. [ 8] achieved 82.95% accuracy with ResNet50 combined with human intervention,
+while Mendes and Silva [ 11] reported AUC values of 96% for melanoma and 91% for basal
+cell carcinoma using ResNet152. These results suggest that ResNet architectures maintain
+competitive performance for dermatological classification tasks.
+Other commonly used architectures, such as the EfficientNet family, are not extensively
+represented in the comparison studies, but still demonstrate considerable performance in
+the present work. Furthermore, the absence of ConvNeXt architectures in previous com-
+parative studies highlights the novelty of applying these architectural designs. The 87.62%
+accuracy achieved with this architecture for seven-class classification represents competi-
+tive performance, particularly considering the dataset scale. The diversity of evaluation
+metrics employed across studies also complicates direct performance assessment. While
+accuracy serves as a common metric, its interpretation varies depending on dataset balance
+and classification complexity.
+4.4. Smartphone Application
+The application, as a proof of concept, provides an option on the screen that allows
+the classification of the image. After selecting the image, a button with the “Classify Image”
+option is available, which communicates with the server, encrypting the selected image.
+Upon capturing or selecting an image, the user initiates the classification request. The back-
+end server, which hosts the ConvNeXtXLarge model (identified as the best-performing
+model), processes the image and returns the predicted class probabilities for each of the
+seven lesion categories. These probabilities are visualized on the device using a bar graph,
+providing an intuitive representation of the model’s confidence levels. This output format
+allows non-specialist users to easily understand the examination outcome.
+Figure 8a shows the interface with an example of an image to be classified. The clas-
+sification result is presented in a bar graph with the corresponding classification for each
+type of lesion, as shown in Figure 8b.
+The simplified design approach adopted for this proof of concept was intentionally
+chosen to prioritize accessibility and usability, particularly for non-technical users and
+older adults. Such was achieved presenting only the essential elements, the clean and
+minimalistic interface reduces cognitive load, enabling users to concentrate on the core
+functionality without becoming overwhelmed. This consideration is especially relevant
+for elderly users, who may have limited experience with digital technologies. It is also
+important to note the interface choices with large buttons, minimal text, and simplified
+visual feedback. As a proof of concept, the primary objective is to demonstrate the core
+functionality of skin lesion classification by providing the general public with an accessible
+tool for the preliminary evaluation of skin lesions.
+As a result, the proposed approach aims to support early-stage detection, democratize
+access and contribute to making dermatological evaluation more inclusive and widely
+available to the general population. Therefore, in addition to its role as a functional
+Electronics 2025 ,14, 2785 19 of 24
+demonstrator, the proposed smartphone application represents a prototype for possible
+real-world clinical support tool aimed at the early detection of dermatological anomalies.
+(a)
+ (b)
+Figure 8. Application screens: ( a) image selection for classification; ( b) result after classification.
+5. Conclusions
+In recent years, there has been a substantial increase in skin cancers, and providing
+open tools that assist in detecting lesions can facilitate the detection in the early stages,
+democratizing access to a screening tool and making the process accessible to the gen-
+eral population.
+This work contributes by performing CNN family architectural evaluation for skin
+lesion classification, providing a benchmarking of 38 deep neural network architectures
+across ten CNN families. The ConvNeXtXLarge model achieved the best performance
+with 87.63% Overall ACC (on the used HAM10000 test set) and this performance falls
+within the range of the examined HAM10000-based studies (74–92%), demonstrating the
+practical viability of applying transfer learning on standard CNN models for dermatologi-
+cal image classification. The systematic evaluation represents, to the authors’ knowledge,
+the most extensive comparative study in this domain. While achieving state-of-the-art
+performance was not the primary objective (the focus being on comparative benchmarking
+under standardized architectural conditions rather than models), the results demonstrate
+competitive classification capability. Analysis of the accuracy-to-parameter ratio revealed
+that ConvNeXtXLarge, despite achieving the highest performance, exhibited one of the
+lowest efficiency ratios, indicating diminishing returns with increased model complexity.
+This suggests that performance gains from larger architectures come at the cost of substan-
+tially reduced parameter efficiency, potentially approaching performance plateaus where
+additional parameters yield minimal improvements. A mobile-based implementation was
+Electronics 2025 ,14, 2785 20 of 24
+also developed, as proof of concept, to allow a user-friendly experience when accessing
+injury classification.
+The cross-database validation using the ISIC 2019 test dataset demonstrated model
+generalizability despite expected performance degradation due to domain shift. The Con-
+vNeXtXLarge model achieved Top-1, Top-2, and Top-3 accuracies of 56%, 74%, and 86%,
+respectively. While Top-1 accuracy declined compared to the HAM10000 test set, the sub-
+stantial improvement with increased k values (18% gain from Top-1 to Top-2, 12% from
+Top-2 to Top-3) indicates preserved ranking capabilities. Performance degradation was
+primarily attributed to akiec classification challenges, with frequent misclassifications as
+bkl (204 cases) and nv (100 cases), suggesting dataset-specific visual characteristic varia-
+tions. The 86% Top-3 accuracy demonstrates that the model learned representations across
+different imaging conditions and acquisition protocols, while highlighting the importance
+of domain adaptation for cross-clinical deployment.
+This work is focused on the use of CNN-based models. Nevertheless, transformer-
+based models could also provide good performance and are, therefore, indicated as a future
+work, suggesting that they be examined in a systematic way, with multiple transformer
+architectures. It is also recommended to examine larger datasets and to validate the mobile
+application, especially with usability tests. Furthermore, there is a need to examine the
+effect of each augmentation in the model performance to assess which augmentations are
+more relevant. A future work will also focus on validating the usability of the developed
+application, here used as a proof of concept to illustrate the feasibility of integrating the
+proposed models into an application.
+It is also needed to develop a standardized evaluation protocols to enable more
+meaningful cross-study comparisons. Specifically, this comparative analysis acknowledges
+several limitations that constrain definitive performance ranking. The heterogeneity in
+experimental protocols, dataset preprocessing approaches, and evaluation methodologies
+across studies prevents direct statistical comparison. Additionally, the temporal distribution
+of studies introduces technological advancement biases, with more recent architectures
+(such as ConvNeXt) potentially benefiting from accumulated knowledge and improved
+training methodologies.
+Author Contributions: Conceptualization, J.V ., F.M. and F.M.-D.; methodology, J.V .; investigation,
+software, and writing—original draft preparation, J.V .; supervision, validation, and writing—review
+and editing, F.M. and F.M.-D. All authors have read and agreed to the published version of the
+manuscript.
+Funding: This work was supported by ITI/LARSyS projects 0.54499/LA/P/0083/2020, 10.54499/
+UIDP/50009/2020, and 10.54499/UIDB/50009/2020, funded by FCT (Fundação para a Ciência e
+a Tecnologia).
+Institutional Review Board Statement: Not applicable.
+Informed Consent Statement: Not applicable.
+Data Availability Statement: The data presented in this study are freely available online at https:
+//www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000 (accessed on 22 June 2025).
+Conflicts of Interest: The authors declare no conflicts of interest.
+Electronics 2025 ,14, 2785 21 of 24
+Appendix A
+Table A1. Performance metrics of the examined model architectures on the test dataset, examining
+the macro (M) and overall (O) metrics.
+Models ACC M F1 M O MCC O ACC
+ConvNeXtBase 0.95742 0.72600 0.70791 0.85096
+ConvNeXtLarge 0.96236 0.74302 0.74239 0.86826
+ConvNeXtSmall 0.94753 0.66321 0.63467 0.81637
+ConvNeXtTiny 0.94886 0.67731 0.63936 0.82102
+ConvNeXtXLarge 0.96464 0.76153 0.75819 0.87625
+DenseNet121 0.94031 0.65487 0.60431 0.79108
+DenseNet169 0.93023 0.58909 0.55124 0.75582
+DenseNet201 0.93898 0.63302 0.59708 0.78643
+EfficientNetB0 0.95533 0.72748 0.69736 0.84365
+EfficientNetB1 0.95552 0.70189 0.70735 0.84431
+EfficientNetB2 0.95191 0.69407 0.67283 0.83167
+EfficientNetB3 0.95038 0.66976 0.66665 0.82635
+EfficientNetB4 0.94829 0.65981 0.65031 0.81903
+EfficientNetB5 0.94563 0.65679 0.63176 0.80971
+EfficientNetB6 0.94335 0.61938 0.61042 0.80173
+EfficientNetB7 0.94430 0.59743 0.61723 0.80506
+EfficientNetV2_B0 0.95229 0.68594 0.67972 0.83300
+EfficientNetV2_B1 0.95229 0.69759 0.67153 0.83300
+EfficientNetV2_B2 0.95666 0.72285 0.70503 0.84830
+EfficientNetV2_B3 0.95229 0.69592 0.67461 0.83300
+EfficientNetV2_L 0.94430 0.63298 0.61146 0.80506
+EfficientNetV2_M 0.94240 0.64130 0.60185 0.79840
+EfficientNetV2_S 0.94620 0.67127 0.63028 0.81171
+InceptionResNetV2 0.87758 0.25886 0.28694 0.57152
+InceptionV3 0.90058 0.30434 0.38653 0.65203
+MobileNet 0.91065 0.44031 0.42384 0.68729
+MobileNetV2 0.90685 0.39160 0.36837 0.67399
+NASNetLarge 0.91161 0.21379 0.36595 0.69062
+NASNetMobile 0.90761 0.39608 0.39823 0.67665
+ResNet101 0.94487 0.66338 0.63466 0.80705
+ResNet101V2 0.91256 0.42049 0.47683 0.69395
+ResNet152 0.94430 0.63179 0.63600 0.80506
+ResNet152V2 0.90533 0.36629 0.45315 0.66866
+ResNet50 0.94753 0.64825 0.64815 0.81637
+ResNet50V2 0.91579 0.43954 0.47377 0.70526
+VGG16 0.93537 0.58059 0.58626 0.77379
+VGG19 0.93119 0.58272 0.57266 0.75915
+Xception 0.91313 0.44297 0.45657 0.69594
+Electronics 2025 ,14, 2785 22 of 24
+Table A2. Correct classification rate of the test dataset using the best-performing model with L2 regu-
+larization.
+Class Correct Classification Total Hit Rate
+akiec 29 49 59.18%
+bcc 64 77 83.12%
+bkl 135 165 81.82%
+df 7 17 41.18%
+mel 99 167 59.28%
+nv 964 1006 95.83%
+vasc 18 22 81.82%
+Figure A1. Efficiency of examined models, estimated by the ratio of Overall ACC to the total number
+of parameters.
+Figure A2. Architecture of the implemented macro model using ConvNeXtXLarge as an example in
+the transfer learning part, following the style presented by Chen et al. [37].
+Electronics 2025 ,14, 2785 23 of 24
+References
+1. Zhou, L.; Zhong, Y.; Han, L.; Xie, Y.; Wan, M. Global, regional, and national trends in the burden of melanoma and non-melanoma
+skin cancer: Insights from the global burden of disease study 1990–2021. Sci. Rep. 2025 ,15, 5996. https://doi.org/10.1038/s41598
+-025-90485-3.
+2. Slominski, R.M.; Kim, T.K.; Janjetovic, Z.; Bro ˙zyna, A.A.; Podgorska, E.; Dixon, K.M.; Mason, R.S.; Tuckey, R.C.; Sharma, R.;
+Crossman, D.K.; et al. Malignant Melanoma: An Overview, New Perspectives, and Vitamin D Signaling. Cancers 2024 ,16, 2262.
+https://doi.org/10.3390/cancers16122262.
+3. Almalki, S.G. The pathophysiology of the cell cycle in cancer and treatment strategies using various cell cycle checkpoint
+inhibitors. Pathol.-Res. Pract. 2023 ,251, 154854. https://doi.org/10.1016/j.prp.2023.154854.
+4. Punjabi, T.; Singh, V .; Rani, J.; Kaur, P . Multiple factors influence skin cancer development: A comprehensive review. J. Curr. Res.
+Food Sci. 2024 ,5, 116–122. https://doi.org/10.22271/foodsci.2024.v5.i2b.168.
+5. McMullen, E.; Kirshen, C. Solutions for Addressing the Dermatologist Shortage in Rural Canada: A Review of the Literature. J.
+Cutan. Med. Surg. 2024 ,28, 365–369. https://doi.org/10.1177/12034754241247521.
+6. Lan, Z.; Cai, S.; He, X.; Wen, X. FixCaps: An Improved Capsules Network for Diagnosis of Skin Cancer. IEEE Access 2022 ,10,
+76261–76267. https://doi.org/10.1109/ACCESS.2022.3181225.
+7. Mahbod, A.; Schaefer, G.; Wang, C.; Ecker, R.; Ellinge, I. Skin Lesion Classification Using Hybrid Deep Neural Networks. In
+Proceedings of the ICASSP 2019–2019 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP),
+Brighton, UK, 12–17 May 2019; pp. 1229–1233. https://doi.org/10.1109/ICASSP .2019.8683352.
+8. Hekler, A.; Utikal, J.S.; Enk, A.H.; Hauschild, A.; Weichenthal, M.; Maron, R.C.; Berking, C.; Haferkamp, S.; Klode, J.; Schadendorf,
+D.; et al. Superior skin cancer classification by the combination of human and artificial intelligence. Eur. J. Cancer 2019 ,
+120, 114–121. https://doi.org/10.1016/j.ejca.2019.07.019.
+9. Al-Rasheed, A.; Ksibi, A.; Ayadi, M.; Alzahrani, A.; Elahi, M. An Ensemble of Transfer Learning Models for the Prediction
+of Skin Lesions with Conditional Generative Adversarial Networks. Contrast Media Mol. Imaging 2023 ,2023 , 5869513. https:
+//doi.org/10.1155/2023/5869513.
+10. Soenksen, L.; Kassis, T.; Conover, S.; Marti-Fuster, B.; Birkenfeld, J.; Tucker-Schwartz, J.; Naseem, A.; Stavert, R.; Kim, C.; Senna,
+M.; et al. Using deep learning for dermatologist-level detection of suspicious pigmented skin lesions from wide-field images. Sci.
+Transl. Med. 2021 ,13, eabb3652. https://doi.org/10.1126/scitranslmed.abb3652.
+11. Mendes, D.B.; da Silva, N.C. Skin Lesions Classification Using Convolutional Neural Networks in Clinical Images. arXiv 2018 ,
+arXiv:1812.02316.
+12. Agarwal, K.; Singh, T. Classification of Skin Cancer Images using Convolutional Neural Networks. arXiv 2022 , arXiv:2202.00678.
+13. Akter, M.S.; Shahriar, H.; Sneha, S.; Cuzzocrea, A. Multi-class Skin Cancer Classification Architecture Based on Deep Convolu-
+tional Neural Network. In Proceedings of the 2022 IEEE International Conference on Big Data (Big Data), Osaka, Japan, 17–20
+December 2022; pp. 5404–5413. https://doi.org/10.1109/bigdata55660.2022.10020302.
+14. Skin Cancer MNIST: HAM10000, a Large Collection of Multi-Source Dermatoscopic Images of Pigmented Lesions. Available
+online: https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000/data (accessed on 24 October 2023).
+15. Nunez, D.A.V .; Li, Y. Skin Lesion Diagnosis Using Convolutional Neural Networks. arXiv 2023 , arXiv:2305.11125.
+16. Ech-Cherif, A.; Misbhauddin, M.; Ech-Cherif, M. Deep Neural Network Based Mobile Dermoscopy Application for Triaging Skin
+Cancer Detection. In Proceedings of the 2019 2nd International Conference on Computer Applications & Information Security
+(ICCAIS), Riyadh, Saudi Arabia, 1–3 May 2019; pp. 1–6. https://doi.org/10.1109/CAIS.2019.8769517.
+17. Oztel, I.; Yolcu Oztel, G.; Sahin, V .H. Deep Learning-Based Skin Diseases Classification using Smartphones. Adv. Intell. Syst. 2023 ,
+5, 2300211, https://doi.org/10.1002/aisy.202300211.
+18. Francese, R.; Frasca, M.; Risi, M.; Tortora, G. A mobile augmented reality application for supporting real-time skin lesion analysis
+based on deep learning. J. Real-Time Image Process. 2021 ,18, 1247–1259. https://doi.org/10.1007/s11554-021-01109-8.
+19. Hameed, N.; Shabut, A.; Hameed, F.; Cirstea, S.; Harriet, S.; Hossain, A. Mobile-based Skin Lesions Classification Using
+Convolution Neural Network. Ann. Emerg. Technol. Comput. 2020 ,4, 26–37. https://doi.org/10.33166/AETiC.2020.02.003.
+20. Advanced Encryption Standard. Available online: https://pt.wikipedia.org/wiki/Advanced_Encryption_Standard (accessed on
+10 December 2024).
+21. Flutter. Available online: https://flutter.dev/ (accessed on 6 November 2023).
+22. Flutter. Available online: https://pt.wikipedia.org/wiki/Flutter (accessed on 6 November 2023).
+23. Debelee, T.G. Skin Lesion Classification and Detection Using Machine Learning Techniques: A Systematic Review. Diagnostics
+2023 ,13, 3147. https://doi.org/10.3390/diagnostics13193147.
+24. Shetty, B.; Fernandes, R.; Rodrigues, A.P .; Chengoden, R.; Bhattacharya, S.; Lakshmanna, K. Skin lesion classification of
+dermoscopic images using machine learning and convolutional neural network. Sci. Rep. 2022 ,12, 18134. https://doi.org/10.103
+8/s41598-022-22644-9.
+Electronics 2025 ,14, 2785 24 of 24
+25. Aumento de Dados. Available online: https://www.tensorflow.org/tutorials/images/data_augmentation?hl=pt-br (accessed on
+24 October 2023).
+26. Liu, Z.; Mao, H.; Wu, C.Y.; Feichtenhofer, C.; Darrell, T.; Xie, S. A ConvNet for the 2020s. arXiv 2022 , arXiv:2201.03545.
+27. Huang, G.; Liu, Z.; van der Maaten, L.; Weinberger, K.Q. Densely Connected Convolutional Networks. arXiv 2018 ,
+arXiv:1608.06993.
+28. Tan, M.; Le, Q.V . EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks. arXiv 2020 , arXiv:1905.11946.
+29. Szegedy, C.; Liu, W.; Jia, Y.; Sermanet, P .; Reed, S.; Anguelov, D.; Erhan, D.; Vanhoucke, V .; Rabinovich, A. Going Deeper with
+Convolutions. arXiv 2014 , arXiv:1409.4842.
+30. Szegedy, C.; Ioffe, S.; Vanhoucke, V .; Alemi, A. Inception-v4, Inception-ResNet and the Impact of Residual Connections on
+Learning. arXiv 2016 , arXiv:1602.07261.
+31. Howard, A.G.; Zhu, M.; Chen, B.; Kalenichenko, D.; Wang, W.; Weyand, T.; Andreetto, M.; Adam, H. MobileNets: Efficient
+Convolutional Neural Networks for Mobile Vision Applications. arXiv 2017 , arXiv:1704.04861.
+32. Zoph, B.; Vasudevan, V .; Shlens, J.; Le, Q.V . Learning Transferable Architectures for Scalable Image Recognition. arXiv 2018 ,
+arXiv:1707.07012.
+33. He, K.; Zhang, X.; Ren, S.; Sun, J. Deep Residual Learning for Image Recognition. In Proceedings of the 2016 IEEE Conference on
+Computer Vision and Pattern Recognition (CVPR), Las Vegas, NV , USA, 27–30 June 2016; pp. 770–778. https://doi.org/10.1109/
+CVPR.2016.90.
+34. Simonyan, K.; Zisserman, A. Very Deep Convolutional Networks for Large-Scale Image Recognition. arXiv 2015 , arXiv:1409.1556.
+35. Chollet, F. Xception: Deep Learning with Depthwise Separable Convolutions. arXiv 2017 , arXiv:1610.02357.
+36. O que é Overfitting? Available online: https://www.ibm.com/br-pt/topics/overfitting (accessed on 20 November 2024).
+37. Chen, S.; Ogawa, Y.; Zhao, C.; Sekimoto, Y. Large-scale individual building extraction from open-source satellite imagery
+via super-resolution-based instance segmentation approach. ISPRS J. Photogramm. Remote Sens. 2023 ,195, 129–152. https:
+//doi.org/10.1016/j.isprsjprs.2022.11.006.
+38. Cortes, C.; Mohri, M.; Rostamizadeh, A. L2 Regularization for Learning Kernels. arXiv 2012 , arXiv:1205.2653.
+39. Ph.D., J.M.; Kavlakoglu, E. What Is Ridge Regression? Available online: https://www.ibm.com/think/topics/ridge-regression
+(accessed on 12 December 2024).
+40. Kumar, R.; Corvisieri, G.; Fici, T.F.; Hussain, S.I.; Tegolo, D.; Valenti, C. Transfer Learning for Facial Expression Recognition.
+Information 2025 ,16, 320.
+41. Codella, N.C.F.; Gutman, D.; Celebi, M.E.; Helba, B.; Marchetti, M.A.; Dusza, S.W.; Kalloo, A.; Liopyris, K.; Mishra, N.; Kittler,
+H.; et al. Skin Lesion Analysis Toward Melanoma Detection: A Challenge at the 2017 International Symposium on Biomedical
+Imaging (ISBI), Hosted by the International Skin Imaging Collaboration (ISIC). In Proceedings of the 2018 IEEE 15th International
+Symposium on Biomedical Imaging (ISBI 2018), Washington, DC, USA, 4–7 April 2018.
+42. Hernández-Pérez, C.; Combalia, M.; Podlipnik, S.; Codella, N.C.F.; Rotemberg, V .; Halpern, A.C.; Reiter, O.; Carrera, C.; Barreiro,
+A.; Helba, B.; et al. BCN20000: Dermoscopic Lesions in the Wild. Sci. Data 2024 ,11, 641. https://doi.org/10.1038/s41597-024-033
+87-w.
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.

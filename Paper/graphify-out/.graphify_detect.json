@@ -1,0 +1,29 @@
+{
+  "files": {
+    "code": [],
+    "document": [],
+    "paper": [
+      "1-s2.0-S2666521224000589-main.pdf",
+      "3330482.3330525.pdf",
+      "aad4ac50-e564-443d-945d-f8f4969f2fe8.pdf",
+      "healthcare-10-01183-v2.pdf",
+      "healthcare-11-00415.pdf",
+      "ijerph-18-05479.pdf",
+      "JBPE-12-559.pdf",
+      "Nahata_Satya.pdf",
+      "paper_4074c62adad55a93bd6eb3c416284a40.pdf",
+      "PID6365049.pdf",
+      "ShowPDF_Paper.aspx.pdf",
+      "Skin_cancer_detection_and_classification.pdf",
+      "Skin_Cancer_Detection_Using_Combined_Decision_of_Deep_Learners.pdf"
+    ],
+    "image": [],
+    "video": []
+  },
+  "total_files": 13,
+  "total_words": 0,
+  "needs_graph": false,
+  "warning": "Corpus is ~0 words - fits in a single context window. You may not need a graph.",
+  "skipped_sensitive": [],
+  "graphifyignore_patterns": 0
+}

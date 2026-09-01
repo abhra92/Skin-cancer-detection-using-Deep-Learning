@@ -1,0 +1,853 @@
+Transformer-aided skin cancer 
+classification using VGG19-based 
+feature encoding
+Fallah H. Najjar1,2, Zaid Nidhal Khudhair1,3, Farhan Mohamed1,4,  
+Mohd Shafry Mohd Rahim1,4, Vei Siang Chan1,4 & Ali Hilal Ali5
+Skin cancer is among the most widely distributed, deadliest cancers around the globe, and early 
+diagnosis becomes vital to enhance patient survival. Deep learning has demonstrated high potential 
+for automatic skin lesion classification. However, existing Convolutional Neural Networks (CNNs) are 
+still unsatisfactory in terms of dataset reliance, subjection to orientations, and the inability to model 
+long-range global context. To solve this problem, we propose a hybrid model named the VGG19-
+RSPDA-ViT with the fine-grained local feature captured by VGG19 and the global context provided by 
+Vision Transformers (ViT). The proposed RSPDA enforces rotation invariance and enriches the feature 
+space, which further strengthens generalization on a small training set. To the best of our knowledge, 
+this is the first work to systematically combine feature-map-level rotation/shift augmentation with 
+a CNN-Transformer hybrid model for dermoscopic skin cancer detection. Performance was validated 
+on three benchmark datasets: the Melanoma Skin Cancer Dataset of 10,000 Images (MSK10000) for 
+binary classification and the Human Against Machine with 10,000 training images (HAM10000) and 
+Hospital Pedro Hispano (PH2) for multi-class classification. Our model achieved accuracies of 97.9%, 
+97.1%, and 98.67% on MSK10000, HAM10000, and PH2 datasets, respectively , with consistently high 
+macro-averaged precision, recall, specificity, and F1 scores across both datasets. VGG19-RSPDA-ViT 
+outperformed existing state-of-the-art methods with superior generalization capabilities. These results 
+demonstrate that our proposed model is effective for skin lesion classification and has significant 
+potential for clinical application as an automated diagnostic tool in dermatology .
+Keywords Skin cancer, VGG19-RSPDA-ViT, Image augmentation, Skin lesion classification
+Skin cancer is a major global health challenge and is one of the most common cancers worldwide1. The World 
+Health Organization (WHO) reports that millions are diagnosed every year, with melanoma responsible for 
+a significant number of skin cancer deaths2. Melanoma is an especially aggressive type of skin cancer that 
+can quickly spread to other parts of the patient’s body if it is not detected early3. Diagnosis of this syndrome 
+depends on dermoscopic imaging, but a large variation in the shape, color and texture of the lesion makes expert 
+evaluation difficult4,5. Deep learning techniques, notably Convolutional Neural Networks (CNNs) like VGG, 
+ResNet, and Inception, achieve the state-of-the-art performance on benchmark datasets like the International 
+Skin Imaging Collaboration (ISIC), Melanoma Skin Cancer Dataset of 10,000 Images (MSK10000), the Human 
+Against Machine with 10,000 training images (HAM10000), and Hospital Pedro Hispano (PH2). These models 
+perform well for local texture and edge patterns, reaching classification accuracy that is nearly comparable to 
+expert dermatologists6. Recently, a Vision Transformer (ViT) has been proposed for medical image analysis, 
+including dermoscopy and other skin imaging tasks, utilizing a global self-attention mechanism for learning the 
+long dependencies among patches. There has also been promising work on hybrid CNN-Transformer models 
+(e.g., TransMed, Swin-UNet), mostly in the segmentation and multimodal settings.
+Nevertheless, Dermoscopic images, providing a detailed view of the skin surface micropatterns, are often 
+used to diagnose skin lesions7. Furthermore, dermoscopic analysis remains challenging because skin lesions 
+1Department of Emergent Computing, Faculty of Computing, Universiti Teknologi Malaysia, Johor Bahru 81310, 
+Johor, Malaysia. 2Department of Computer Networks and Software Techniques, Technical Institute of Najaf, Al-
+Furat Al-Awsat Technical University, Najaf 54001, Iraq. 3Computer Techniques Engineering Department, Faculty 
+of Information Technology, Imam Ja’afar Al-Sadiq University, Baghdad, Iraq. 4Media and Game Innovation Center 
+of Excellence, Institute of Human Centered Engineering, Universiti Teknologi Malaysia, Johor Bahru 81310, Johor, 
+Malaysia. 5Electronic and Communications Department, Faculty of Engineering, University of Kufa, PO. Box 21, 
+Najaf 54001, Iraq. email: fallahnajjar@atu.edu.iq; farhan@utm.my
+OPEN
+Scientific Reports  |        (2025) 15:40204 1 | https://doi.org/10.1038/s41598-025-24081-w
+www.nature.com/scientificreports
+
+exhibit considerable morphological variation8,9, such as shape, size, color, and texture. For example, nevi (moles) 
+belong to benign lesions but can resemble early-stage melanomas, complicating the interpretability10. Other 
+variables include skin tone, lighting conditions, and the anatomical location of the lesion. These variations 
+necessitate more accurate and automated skin lesion classification systems to aid dermatologists in decision-
+making. Recently, deep learning has become a state-of-the-art method to automate skin cancer diagnosis with 
+accuracy comparable to that of trained dermatologists in image classification tasks11.
+CNNs make an impressive contribution to medical imaging based on their hierarchical level depth of input 
+image learning, allowing deep representation of the learning approach12,13. CNNs can learn how to recognize 
+each type of skin lesion automatically from low-level features, such as local edges, textures, and patterns14–17. 
+Models like ResNet, Inception and VGGs have been widely applied in skin lesion classification and achieved state-
+of-the-art results on benchmark datasets, such as the International Skin Imaging Collaboration (ISIC) archive18. 
+One of the most adopted networks for feature extraction is VGG19, proposed by the Visual Geometry Group at 
+the University of Oxford, which is simple and powerful19. VGG19 has 19 layers, of which 16 are convolutional, 
+and three are fully connected, making it ideal for extracting fine-grained features from dermoscopic images. Its 
+consistent design with a small 3×3 convolutional filter size enables deeper levels of feature learning, which is 
+useful in image characteristics measurement20.
+Nevertheless, although their filters can extract important visual structures and fine-grained local features, 
+VGG19 and other CNNs fundamentally lack global context due to their localized convolution filters. Adding 
+more layers in CNNs can partially resolve this constraint by extending the receptive field21. However, this 
+approach also risks overfitting and increased computational cost, particularly when the datasets are small or 
+highly variable22.
+In order to overcome the limitations of CNNs, ViT has been proposed as a new paradigm for image 
+classification23. Initially motivated by the advances of transformers in Natural Language Processing (NLP), ViT 
+demonstrated that self-attention mechanisms can be successfully transferred to the image analysis domain24. 
+In contrast to CNNs, ViT passes a convolutional kernel over the input image slidingly and treats an image as a 
+sequence of patches. Fixed-size patches are used to partition each image, which is then flattened and linearly 
+embedded into tokens for the transformer to process using multi-head self-attention25. ViT’s global attention 
+mechanism enables it to learn long-range dependencies between patches, capturing information on the entire 
+image context, which is often tougher for CNNs to learn. For diverse medical images, in which the spatial 
+relationships between regions are critical, ViT can effectively master intricate relationships among regions 
+throughout the whole image. Despite its advantage, applying ViT directly to medical image analysis remains a 
+challenge26.
+One of the major limitations is their large data requirement: ViT often requires large-scale datasets to learn 
+better representations. Medical imaging datasets, such as skin lesions, are generally small since acquiring and 
+annotating high-quality medical images is meticulous27. Moreover, ViT can be more sensitive to image orientation 
+and scale since they do not have the inductive bias that makes CNNs robust to such variances28. This sensitivity 
+can be especially problematic when dealing with skin lesions, which can be inspected in multiple orientations, 
+i.e., the same lesion can be imaged in many ways when looking at either arm or the scale. Moreover, delicate 
+skin image details might get lost due to differences in distance or angle used to capture the image. Consequently, 
+the performance of a ViT-based method is highly contingent on the augmentation and preprocessing methods 
+employed29.
+Data augmentation is a common technique for enhancing model generalization by introducing variation in 
+training data. Augmentations, such as rotations, flips, color adjustments, and translations, have been used in skin 
+lesion classification to make the model more robust to variations30. On the other hand, simple augmentation fails 
+to derive spatial correlation between different lesion areas. For instance, a melanoma lesion may have wavering 
+edges and a color variegation pattern that must be scanned in multiple directions to ascertain that the model 
+captures the subtle malignancy features31. Flexibility in dimensions becomes an obstacle in the localization 
+task as the spatial aspect is still a key point, and the scarcity of data presents a difficulty for both CNNs and 
+transformers.
+To mitigate these problems, we have developed a compound model for skin lesion classification, denoted 
+as VGG19-RSPDA-ViT. First, a pretrained VGG19 is used as a backbone to capture fine-grained dermoscopic 
+features. Then, our new RSPDA can produce orientation-invariant feature-map views in the second-hand 
+stage to increase spatial diversity. These augmented features are tokenized and fed into a light ViT encoder that 
+learns contextual relationships among lesion areas. Finally, a fully connected classifier heads that predict lesion 
+category in both binary and multi-class. This model combines the strengths of CNNs and Transformers while 
+addressing their weaknesses.
+Our main contributions are: (i) introducing Rotated and Shifted Patch Data Augmentation Vision Transformer 
+(VGG19-RSPDA-ViT), a novel hybrid model that combines VGG19 and ViT to enhance the accuracy of skin 
+lesion classification. (ii) Integrate the well-established VGG19 architecture to extract rich local features that 
+capture the fine-grained textural details of skin lesions. (iii) Incorporate the RSPDA tokenization strategy 
+within the ViT, which enables the processing of augmented feature maps through rotation and shift operations 
+that enhance training data diversity and introduce rotational invariance. Finally, significant improvements in 
+skin lesion classification accuracy were demonstrated through: (iv) Minimizing overfitting while maintaining 
+consistency across different benchmark datasets, and (v) effectively addressing orientation sensitivity and the 
+limited availability of annotated data.
+Although few hybrid CNN-Transformer architectures have been applied in medical imaging (e.g., TransMed, 
+MedT, Swin-UNet), they are mostly focused on segmentation tasks or multimodal analysis, which involves 
+working with more than one type of information and is dependent on complex hierarchical transformer 
+structures. Thus, our work focuses on dermoscopic skin lesion classification, addressing two main challenges: (i) 
+Scientific Reports  |        (2025) 15:40204 2 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+fine-grained local feature extraction using VGG19 for its robust performance in dermoscopy, and (ii) orientation 
+ambiguity of skin lesions through integrating RSPDA-augmented features into ViT to ensure rotational 
+invariance and improve performance gains with fewer data samples. Additionally, while other recent works tend 
+to overfit to a single dataset, we show effectiveness on three datasets: the MSK10000, binary classification, and 
+the HAM10000 and PH2, multi-class classification, with competitive cross-dataset performance.
+Related works
+In the evolving field of skin cancer diagnosis, researchers have developed various methods, including deep 
+learning and machine learning approaches, to improve the accuracy and speed of melanoma detection. The 
+innovation process begins with the work of Subhayu Ghosh et al.32, who proposed an ensemble model to combine 
+the advantages of DCNNs, Capsule Networks (Caps-Net), and ViT for the process of feature extraction. These 
+extracted features were used as input to classical classifiers (Random Forest, SVM, XGBoost), and an ensemble 
+model, achieving 91.6% accuracy on the MSK10000 dataset. However, while the model relies on handcrafted 
+ensemble mechanisms that are difficult to interpret, this dependency may limit real-time adaptability in clinical 
+applications. Focusing on multimodal learning, Adebiyi et al.33 filled the gap for such a context by introducing 
+dermoscopic images and patient metadata as a multimodal input to a deep learning model. Tested on 
+HAM10000 and ISIC2017 datasets, their model achieved superior performance compared to unimodal models 
+with an accuracy of 94.11% and an AUC of 0.9426 on HAM10000. Although this method offers valuable real-life 
+applicability, incomplete clinical information may limit its effectiveness in resource-constrained settings.
+Furthermore, Ingle and Shaikh compared the performance of plain CNNs with VGG16 on HAM10000 
+data. The authors found that VGG16 performed better with the use of data augmentation and regularization, 
+achieving an accuracy of 88.83%. This study revealed the strength of transfer learning and increased network 
+depth for multi-class categorization problems, although class imbalance and inter-class overlap continue to 
+pose difficulties34. Similarly, Wicaksana et al. investigated the single-stage detection model YOLOv11 with the 
+HAM10000 dataset. YOLOv11x-cls attained 84.74% accuracy, while VGG19 achieved 89.68%, demonstrating 
+that multi-stage architectures are superior in fine-grained classification. Their results also highlighted the effect 
+of data augmentation in addressing class imbalance and revealed the limitations of single-stage networks35.
+In contrast, Sinchana et al.36 proposed a hybrid CNN model with ResNet and VGG backbones using transfer 
+learning on the MSK10000 training dataset. They investigated the choice of optimizer (RMSProp, Adam or 
+SGD) and the performance measure (specificity, sensitivity). Although the model showed robust performance, 
+its generalizability remained uncertain, requiring validation on external cohort datasets. Furthermore, Sabir and 
+Mehmood37 conducted a comparative study of CNN, ResNet-18, and EfficientNet-B0. EfficientNet-B0 appeared 
+to be the most promising and performed with an accuracy of 97%, a precision of 95%, and a sensitivity of 99%. 
+This work confirmed the potential of the model and also observed its sensitivity to hyperparameter settings 
+and quality of preprocessing with rigorous metric analysis. Al Huda et al.38 developed DeepMelaNet, designed 
+for early-stage melanoma detection. This model, trained on the MSK10000 dataset, achieved 93.40% accuracy. 
+Their novel deep-learning architecture achieved balanced F1-scores across all classes. However, the study also 
+reported several difficulties in stage-specific categorization and dataset diversity.
+Bhuvaneswari and Raman evaluated AlexNet, and it achieved only 91.1% compared with InceptionV3 and 
+VGG19. Although this work demonstrated the continuing utility of AlexNet in medical imaging, which represents 
+lesion complexity due to a small field of view and retained features, its relatively shallow depth and hard feature 
+extraction hamper its ability to address complex lesion patterns39. Srivastava et al.40 made significant advances 
+in ensemble learning through VCCINet, a multi-model ensemble combining CNN, CapsNet, InceptionV3 and 
+feature-extracted VGG16. Their refined model, FT-VCCINet, integrated pre-trained knowledge and achieved 
+better performance than the single model. The ensemble model delivered consistent but marginal gains across 
+precision, recall, F1-score, and specificity, although the performance fluctuations across training epochs revealed 
+the model’s sensitivity to training schedules.
+To balance local texture encoding and global context modeling in dermoscopic image analysis, recent studies 
+have progressively integrated convolutional and transformer paradigms. Aruk et al.41 combined a ConvNeXt-
+CAFormer hybrid, whereby ConvNeXt blocks extract fine-grained local patterns and transformer stages capture 
+long-range dependencies. Under identical training conditions to strong CNN and ViT baselines on HAM10000 
+and ISIC 2019, the authors report that this hybrid achieves 94.30% accuracy and 91.11% F1 on HAM10000, and 
+92.50% accuracy and 90.38% F1 on ISIC 2019, outperforming more than twenty competitors.
+In contrast, Y ang et al.42 proposed the ViTfSCD pipeline, a ViT-based architecture customized for dermoscopy 
+comprising four phases: data augmentation and class rebalancing, patch tokenization, transformer encoder, and 
+batch normalization regularized classifier. They attained 94.1% accuracy with HAM10000, demonstrating that 
+oversampling/undersampling combined with duplicate removal are critical. They also highlighted ViT’s data-
+efficiency limitations, which often demand large-scale pre-training and illustrate open issues in robustness as 
+well as generalization beyond curated dermoscopy. All together, these results establish class rebalancing and 
+duplication control among the first-order considerations for deploying a transformer in dermatology.
+Besides CNN-based methods, several hybrid CNN-Transformer architectural designs have been recently 
+introduced in the field of medical imaging. There had already been some successful examples demonstrating 
+the advantages of integrating CNNs with Transformers for multimodal learning (e.g., TransMed, MedT) and 
+medical image segmentation tasks. At the same time, hierarchical self-attention has also successfully been applied 
+to medical images through Swin-UNet variants. While useful in their own right, these techniques are largely 
+targeted either for segmentation or multimodal tasks and rely on deeper hierarchical architectures. In contrast, 
+our skin lesion classification for dermoscopy does not require ImageNet pre-training, uses a low-resource and 
+interpretable design (incorporating VGG19 feature extraction into the proposed lightweight Vision Transformer 
+powered with RSPDA), demonstrating promising results on both robustness and generalization.
+Scientific Reports  |        (2025) 15:40204 3 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+Lastly, Waheed et al.7 introduced a CNN-based architecture designed for melanoma diagnosing. They 
+attempted to solve the problem by preprocessing and augmenting the noisy and various image inputs. The 
+approach yielded high diagnosis accuracy and was promising for low-resource implementation. However, its 
+internal validation introduces the potential for overfitting and external generalizability.
+Further, previous works have shown significant results in skin lesion classification, but they still have 
+limitations. Ensemble-based methods, such as those by Ghosh et al.32, achieve high accuracy but face challenges 
+in interpretability and increased computational burden, making them unsuitable for clinical deployment. 
+Multimodal approaches by Adebiyi et al.33 demonstrated the importance of clinical metadata. Nevertheless, 
+the requirement for complete clinical data, coupled with patient privacy considerations, may limit practical 
+applicability in resource-constrained settings34.
+Wicaksana et al.35 showed that deeper architectures like InceptionV3 and GoogLeNet achieve superior 
+performance by capturing fine-grained lesion texture patterns; these models remain biased due to class imbalance 
+and have difficulty generalizing to underrepresented lesion types. Regarding transfer learning approaches, 
+studies by Sinchana et al.36 and Sabir and Mehmood37 showed high recall, but their generalizability on external 
+validation datasets remains unknown.
+Recent works have presented some results on PH2. For example, Ghazouani43 proposed the Multi-Residual 
+Attention Network (MuRANet), which combines multi-scale dilated, spatial, channel-wise and squeeze-and-
+excitation attention strategies. Their method attained 97–98% accuracy and F1-score on PH2, which was 
+considered one of the best. In contrast, Golkarieh et al.44 achieved lower accuracy with 89.53% and a recall of 
+90.97%, as well as an F1-score of 90.62%, which suggests that it is not feasible to incorporate lesion variability 
+properly.
+In comparison to these works, our VGG19-RSPDA-ViT obtained an accuracy of 98.67% and a F1-score of 
+97.72% on PH2, which is slightly superior to MuRANet. These comparisons demonstrate the competitiveness 
+of attention-augmented deep learning strategies on PH2 and the effectiveness of our hybrid CNN-Transformer 
+framework for modelling local and global lesion features. Finally, our developed VGG19-RSPDA-ViT method 
+addresses these limitations by combining fine-grained CNN feature extraction with transformer-based 
+global context modeling. The RSPDA augmentation strategy provides rotational invariance while improving 
+classification performance on imbalanced datasets.
+Methodology
+The proposed VGG19-RSPDA-ViT model combines the strengths of CNNs and ViT to improve skin lesion 
+classification. The methodology comprises three primary stages: feature extraction using the VGG19 backbone, 
+rotated and shifted patch tokenization, and ViT encoding. A visual overview of this architecture is presented in 
+Fig.  1. Below, we describe each stage in detail and the associated mathematical formulations.
+The input image is first processed through the VGG19 network, generating feature maps. The RSPDA method 
+then generates multiple rotated and shifted versions of the feature map, which are concatenated and tokenized 
+into patches. These patches are fed into ViT, which applies self-attention and Feed-Forward Network (FFN) to 
+learn complex spatial relationships. The final representation is passed through a dense layer for classification to 
+predict the skin lesion category.
+Data preprocessing and augmentation
+All images are rescaled to 168 × 168 and normalized using the mean/variance calculated from the training 
+set. Normalization is always used for training, validation and test pipelines. We randomly apply stochastic 
+augmentations during training and validation to improve generalization and alleviate overfitting. These 
+augmentations consist of random horizontal flips, small-angle random rotations up to ± 0.02 (about ± 7°) and 
+random zooms of up to 20% in height and width. Figure  2 displays an example of the applied augmentations 
+and demonstrates how one dermoscopic image can appear under different augmentation settings. The test set 
+underwent only resizing and normalization to make the evaluation unbiased.
+To prevent data leakage, we ensure that patient-level splitting is followed strictly, i.e., images belonging to 
+the same patient do not occur in more than one subset. This process involves two steps: 80% of the dataset for 
+training, and the remaining 20% is auxiliary data, which is further split between 10% validation and 10% test 
+datasets. The process is randomized but reproducible using a fixed seed (random_state = 101). This approach is 
+designed such that when performance metrics are used to evaluate model generalization, they verify the model’s 
+ability to generalize to unseen patients rather than memorizing different views from the same patient.
+VGG19 feature extraction
+In the first stage of our model, feature extraction is performed using a pre-trained VGG19 network. We selected 
+the VGG19 model for its ability to extract detailed image features, which is critical for medical images where 
+textural properties provide valuable diagnostic information. The input image x∈RH×W×3, where H and 
+W denote the height and width of the input image, respectively, is passed through the VGG19 network.
+ F(x)=V GG19( x) (1)
+The F(x)∈RH′×W′×D represents the extracted feature map, where D is the number of channels. The 
+VGG19 comprises multiple convolutional layers, Rectified Linear Unit (ReLU) activation functions, and max-
+pooling layers to extract low-level (i.e., edges) and high-level (i.e., patterns) features from the input image. Then, 
+we use the feature output from the last convolutional block F(x) for further analysis. Figure  3 displays the 
+architecture of the VGG19.
+Scientific Reports  |        (2025) 15:40204 4 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+Fig. 3 . VGG19 architecture. 
+Fig. 2 . Illustration of the data augmentation process applied to dermoscopic images. 
+Fig. 1 . Overview of the VGG19-RSPDA-ViT architecture. 
+Scientific Reports  |        (2025) 15:40204 5 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+Rotated and shifted patch data augmentation (RSPDA)
+In the second stage, the extracted feature map F(x) is processed using a Rotated and Shifted Patch Data 
+Augmentation (RSPDA) strategy. This stage introduces rotational invariance and enhances the spatial context 
+for the transformer. The RSPDA method includes the following steps.
+Firstly, the feature map F(x) is rotated by angles θ∈(0◦,90◦,180◦,270◦), see Fig.  4. Let the feature 
+map Rθ(F(x))denote the rotation procedure:
+ Rθ(F(x)) = rotate((F (x)),θ) (2)
+For shifting the rotated feature map Rθ(F(x)), a four-directional shift is employed with dx and dy that 
+represent the x-dimension and y-dimension, respectively. We also examine how rotation and translation affect 
+spatial feature uniformity. Equation 3 is used to calculate the S(dx,dy):
+ S(dx,dy)(Rθ(F(x))) = shift (Rθ(F(x)),dx,dy) (3)
+The rotated and shifted versions of the feature map are then concatenated with the channel dimension to form 
+a single augmented feature map F(aug ), as denoted in Eq.  4:
+ F(aug )=shift (Rθ(F(x)),dx,dy) (4)
+This process generates a feature map F(aug )∈RH′×W′×D×N, where N is the total number of augmented 
+versions generated through rotation and shift of the feature map. Figure  5 shows the RSPDA augmentation 
+samples, which add valuable complexity to the input data, enabling the ViT to learn spatial relationships better 
+and improve robustness.
+The augmented feature map F(aug ) is divided into patches of size P×P. Each patch is flattened and 
+projected into a vector space using the linear layer, as defined in Eq.  5:
+ zi
+0=linear (Pi)+Ei
+posfori =1,...,M  (5)
+where Pi represents the i-th patch, Ei
+pos is the position embeddings, and M denotes the number of patches. 
+The linear layer maps each patch to a d-dimensional token, and this sequence of tokens is then passed as input 
+to the ViT.
+ViT encoding
+In the third stage, we feed the sequence of patch tokens through the ViT. The ViT leverages self-attention 
+mechanisms to capture the long-range correlations between patches, allowing the model to capture global spatial 
+information within the skin lesion. Additionally, the self-attention mechanism enables each patch to attend to all 
+the other patches in the sequence, thereby modeling their inter-patch relationships. Let zi
+0 denote a given token, 
+the attention score is calculated as Eq.  6:
+Fig. 5 . RSPDA samples. 
+Fig. 4 . Rotated samples. 
+Scientific Reports  |        (2025) 15:40204 6 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+ Attention (Q ,K ,V )=SoftMax(
+QKT
+√dk)
+V (6)
+where Q=zi
+0WQ,K=zi
+0WK,V=zi
+0WV represent the query, key, and value, respectively, and dk 
+represents the dimensionality of the keys. The self-attention layer uses multiple heads to capture different aspects 
+of the relationships between tokens using Eq.  7:
+ MHA (z0)=Concat (head 1,...,h e a d h)WO (7)
+where head i=Attention (Q i,K i,V i)for i∈(1,. . .,M ).
+After the self-attention layer, the position-wise FFN is applied and calculated by using Eq.  8:
+ FFN (x)=ReLU (W1x+b1)W2+b2 (8)
+where W1and W 2 represent the learned weights and b1and b 2 represents the biases. The output of the FFN is 
+added to the input using the residual connection by Eqs.  9 and  10.
+ zi
+1=NormalizationLayer (zi
+0+MHA(zi
+0)
+) (9)
+ zi
+2=NormalizationLayer (zi
+1+FFN(zi
+1)
+) (10)
+The process is repeated for L transformer layers, producing the final representation of each patch token zL. The 
+architecture of the ViT block is displayed in Fig.  6.
+Classification head
+The output from the transformer is aggregated using Global Average Pooling (GAP), which produces a fixed-size 
+vector representing the entire image. The GAP  is calculated by using Eq.  11:
+ zfinal =GAP (zL) (11)
+This pooled representation zfinal   is then passed through a dense layer with SoftMax activation to produce the 
+class probabilities using Eq.  12:
+ /hatwidey=SoftMax(W zfinal +b) (12)
+where /hatwidey represents the predicted probability distribution over C lesion classes, C represents the number of 
+lesion classes, W represents the weight matrix, and the notation b represents the bias term.
+Loss function and optimization
+In this study, we used the standard cross-entropy loss without class weighting. Although techniques such as 
+weighted cross-entropy, focal loss, or oversampling could help balance the dataset, we aimed to analyze VGG19-
+RSPDA-ViT’s ability to handle orientation invariance and generalization.
+ ℓ=−C/summationdisplay
+c−1yclog/parenleftbig/hatwideyc/parenrightbig
+ (13)
+where yc  is the true label (one-hot encoded) and /hatwideyc is the predicted probability for class C. The Adam optimizer 
+is used for training, with weight decay regularization to prevent overfitting:
+Fig. 6 . ViT block. 
+Scientific Reports  |        (2025) 15:40204 7 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+ Θ←Θ−η(∇Θℓ+λ∥Θ∥2
+2) (14)
+where Θ represents the model parameters, η is the learning rate, and λ is the weight decay parameter.
+Implementation details and hyperparameters
+For reproducibility and transparency, this subsection provides a consolidated description of model configuration, 
+optimization settings and training protocol used across all our experiments, see Table  1. Our final architecture 
+combines a VGG19 stem, the proposed RSPDA tokenizer, the ViT encoder and a multi-layer classifier head. A 
+complete overview is provided in Table  1, which consolidates the architectural, augmentation, optimization, and 
+training parameters.
+Results and discussion
+To evaluate the efficiency and the generalizability of the proposed deep learning model to classify skin lesions, 
+we performed the experiments on three publicly available dermatology datasets widely employed in the 
+literature: HAM10000, MSK10000, and PH2. All collections contain dermoscopic images of skin lesions with a 
+common clinical task. However, they differ in the sources of data collection, the visual content of images, and 
+the population of patients. Our experiments used the standard training, validation and test splits of HAM10000, 
+MSK10000, and PH2 to ensure no data overlap between partitions. Also, 5-fold validation splitting is used for 
+the PH2 dataset. There was no data leakage as duplicate or near-duplicate images were not shared across splits, 
+and data preprocessing steps were added independently within each portion. We also used a full set of threshold-
+dependent and threshold-independent evaluation metrics to assess model performance. Accuracy, precision, 
+recall, specificity, F1-score, and Receiver Operating Characteristic (ROC) were the main performance metrics.
+Training performance analysis
+The ability to fit the proposed model on three different datasets sheds light on its generalizability and adaptability 
+across diverse yet domain-related medical data. Figures  7, 8, 9 and 10 offer comprehensive insights into model 
+Category Setting Value / Notes
+Input Image size 168 × 168 × 3
+VGG19 stemPretrained ImageNet (True)
+Trainable False (frozen during training)
+Tap layer feature map 21 × 21 × 256 (downsample factor /8)
+RSPDA (views)Rotations k × 90° with k ∈ [0,1,2,3]
+Shifts (input space) (dy, dx) ∈ [(0,0), (7,0), (0,7), (7,7)] (via tf.roll, circular shift)
+Views total 16 (4 rotations × 4 shifts)
+RSPDA (patching)Patch kernel/stride (fm) 45,845
+Patch grid per view 3 × 3 = 9 tokens (from 21 × 21 feature map)
+Tokens total 144 (9 tokens/view ×16 views)
+Token dimension 256 (Conv2D projection + Dense)
+Embeddings Absolute position (1,144,256); rotation (4,1,256); shift (4,1,256)
+ViT encoderDepth 4 transformer blocks
+Attention 4 heads, key_dim = 64
+MLP per block 256 units (GELU)
+Dropout 0.1
+LayerNorm ϵ (1e−3)
+Classifier headToken pooling GAP
+Dense head [2048, 1024] with GELU + Dropout 0.3
+OptimizationOptimizer AdamW (TensorFlow ≥ 2.11), fallback Adam
+Learning rate 1e−4
+Weight decay 1e−4 (AdamW only)
+TrainingBatch size 16
+Epochs 50
+CallbacksEarlyStopping (patience 10, monitor = val_auc), 
+ModelCheckpoint (best by val_auc), ReduceLROnPlateau 
+(factor 0.5, patience 3, min_lr 1e−6)
+Loss / MetricsLoss Sparse categorical cross-entropy (integer class IDs)
+Metrics Accuracy, Precision, Recall, Specificity, F1-Score, and ROC
+Data split 80:10:10 Patient-level split; no overlap across train/val/test
+Table 1 . Consolidated hyperparameters and training settings for the proposed VGG19-RSPDA-ViT 
+architecture. 
+Scientific Reports  |        (2025) 15:40204 8 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+behavior, stability, and optimization trajectories over training epochs. However, in order to check on the behavior 
+of the model at the training and validation stages, we plotted the validation accuracy and loss curves for each 
+dataset.
+As demonstrated in Fig.  7, accuracy gradually improved as loss continuously decreased throughout training. 
+The highest validation accuracy of 0.96 was reached on HAM10000 at epoch 48, while for MSK10000, the 
+highest validation accuracy, 0.95, was obtained at epoch 50. The model showed consistent improvement in the 
+validation accuracy during the early epochs, especially until epoch 10, where the accuracy rose from 0.53 to 
+greater than 0.82.
+Subsequently, performance gains became less pronounced, and there were some minor oscillations between 
+20 and 40 epochs. The highest validation accuracy was around 0.96 at the 48th epoch, as indicated by the red dot 
+Fig. 10 . Accuracy and loss deltas (HAM10000, MSK10000, and PH2). 
+Fig. 9 . Delta precision values (HAM10000, MSK10000, and PH2). 
+Fig. 8 . Best validation accuracy epoch (HAM10000, MSK10000, and PH2). 
+Fig. 7 . Validation accuracy and loss per epoch (HAM10000, MSK10000, and PH2). 
+Scientific Reports  |        (2025) 15:40204 9 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+and dashed line, as illustrated in Fig.  8. This result indicates promising generalization with overfitting issues up 
+to the optimal epoch.
+Consistent with the HAM10000 observation, the performance gain of the model on the MSK10000 dataset 
+increases significantly in the first few epochs and achieves about 0.84 at the fifth epoch. We observed continued 
+gains in the subsequent training epochs: the highest validation accuracy of about 0.95 was obtained on the 
+50th epoch. This suggests that our model benefited from a comprehensive training schedule and converged 
+to a powerful solution. For generalization, we measured the differences between training and validation at the 
+best epoch of each dataset. As shown in Fig.  8, the small delta precision values between datasets suggest good 
+generalization with minimal overfitting.
+Figure 9 shows the delta distributions (epoch-to-epoch changes) of accuracy and loss for both datasets. In 
+MSK10000, the training and validation metrics are relatively concentrated and stable. The consistency between 
+epochs indicates a stable optimization trajectory and strong convergence. On the other hand, HAM10000 shows 
+larger interquartile ranges and a higher frequency of outliers, particularly in validation loss deltas, indicating less 
+stable generalization. Furthermore, to investigate the degree of overlap between loss and accuracy in the training 
+process, we also use a dual-axis plot in Fig.  10. This indicates that validation loss and accuracy are significantly 
+negatively correlated across both datasets, confirming that validation accuracy is a reliable convergence indicator.
+Figure 10 illustrates the accuracy and loss deltas of HAM10000 and MSK10000 datasets, which measure the 
+differences in model performance at the best epoch for each run. For both datasets, the accuracy deltas are close 
+to zero for training, and the validation datasets show that the learning process is stable and the generalization is 
+strong. The loss differences show slightly more variation, but within a reasonable range. For HAM10000 results, 
+the deltas of validation loss exhibit a greater spread, and lastly, there are a few outliers, indicating a small amount 
+of variation in the convergence of the optimization. These fluctuations did not result in large performance 
+variations, as the accuracy delta was consistent. In contrast, we observe that the delta distributions are relatively 
+narrow for all metrics, including validation accuracy for the MSK10000 dataset, which suggests that the training 
+procedure is highly congruent and reproducible. These experiments support the significance of the model and 
+reliable generalization on both datasets.
+Confusion matrix analysis
+Furthermore, to evaluate class-wise performance, confusion matrices were generated for each dataset. Figure  11 
+shows the confusion matrices of the three datasets to demonstrate the classification performance of the two 
+models.
+Our approach performed well for MSK10000, successfully differentiating between benign and malignant 
+cases with good class separation and had only a few misclassification cases. This demonstrates good binary 
+classification performance and the stability of the decision boundaries. For the HAM10000 dataset with a more 
+complex multi-class classification problem, the confusion matrix shows a good accuracy for the majority of the 
+classes. The model performed well in the detection of frequent classes of lesions, with some confusion between 
+some classes due to clinical similarities. This fine-grained performance is consistent with clinical diagnostic 
+challenges and indicates that the model can capture subtle variations in the dermatoscopic data. However, the 
+model still struggles with certain classes that are difficult to distinguish from one another.
+Detailed class performance metrics for both datasets are shown in Table  2. The model achieved consistent 
+balanced results for benign and malignant categories on MSK10000 with an overall accuracy, precision, recall, 
+specificity and F1-score of 97.9%. The model performed best for malignant types MEL (sensitivity 97.0%, 
+specificity 99.7%), BCC (sensitivity 96.2%, specificity 99.8%) and AKIEC (sensitivity 100%), all of which had an 
+AUC greater than 0.9 on HAM10000. The specificity was above 98% for all classes, demonstrating consistency 
+in distinguishing between benign and malignant lesions. For underrepresented cases such as V ASC, a lower 
+sensitivity (60%) was observed due to dataset imbalance, and still, high precision and specificity for this class 
+were attained (92.3% and 99.2%).
+Classification-specific metrics also provide more clinical interpretability. High sensitivity for malignant 
+lesions is important to avoid missed diagnoses, and high specificity ensures reliable identification of benign 
+lesions. The low sensitivity of V ASC lesions, given their rarity, emphasizes the challenge of handling data 
+Fig. 11 . Confusion matrix (HAM10000, MSK10000, and PH2). 
+Scientific Reports  |        (2025) 15:40204 10 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+imbalance in this domain, which could be tackled by a more balanced dataset, integrating other modalities or 
+increasing annotation size.
+Binary and multi-class classification analysis
+ROC curves and relative AUC values were also calculated to support these findings. For MSK10000, AUCs 
+reached 0.987 (Benign) and 0.978 (Malignant), respectively, with macro- and micro-averages of 0.983. For 
+HAM10000, per-class AUCs were in the range 0.915 (V ASC) to 0.977 (BCC, DF) with macro-average = 0.966 
+and micro-average = 0.965.
+From Fig.  12, the model achieved an AUC of 0.983 for both the macro and micro average AUC, with the benign 
+class having values of 0.987 and the malignant class having values of 0.978in terms of a binary classification task 
+(benign versus malignant) in the MSK10000 dataset. Our results support that the model we created may be 
+useful for clinicians in making binary diagnostic decisions about whether a lesion is or is not a melanoma (high 
+sensitivity combined with high specificity).
+The per-class AUCs for HAM10000 indicate the robustness of our model for malignant class separation 
+compared to other supervised approaches. This is expected as the underrepresented V ASC class has the lowest 
+AUC (0.915), which correlates with its substantially lower sensitivity in the per-class performance table, Table  2, 
+which reflects a common challenge in real-world dermatological datasets due to class imbalance.
+Model explanability analysis
+To further validate the robustness of our predictions, we visualize the interpretability of the VGG19–RSPDA–
+ViT framework through Grad-CAM. This technique produces visual explanations by marking the image areas 
+that contribute the most to the model’s predictions. This is an essential visual confirmation technique for clinical 
+AI applications; it helps clinicians confirm whether the automated system focuses on lesion areas or background 
+artifacts that are irrelevant. Figure  13 displays an example of the Grad-CAM visualization.
+To improve clinician trust and interpretability, we included explainability analysis based on Grad-CAM and 
+Transformer attention maps. The visualizations in Fig.  13 verify that the model focuses attention on the lesion 
+region, which correlates with features dermatologists might tend to look at. Crucially, any irrelevant background 
+structures (e.g., skin or hair) were largely disregarded, indicating that the model was making predictions based 
+on clinically significant features. These findings enhance the interpretability of our model and also show the 
+potential of integration of the model with a clinical workflow.
+Although the Grad-CAM visualizations generally captured the regions of the lesion, in certain images, 
+the heatmaps seemed to be more scattered, also reaching up to the background artifacts (e.g., hair), in line 
+with a known limitation of the current saliency-based methods. Future work will address this limitation by 
+examining other interpretable methods, such as the Transformer attention maps or the SHAP , for learning more 
+interpretable features.
+Fig. 12 . ROC curves (HAM10000, MSK10000, and PH2). Dataset Class TP TN FP FN Accuracy Precision Recall Specificity F1 Score
+MSK10000Benign 489 490 11 10 97.90 97.80 98.00 98.00 97.90
+Malignent 490 489 10 11 97.90 98.00 97.80 97.80 97.90
+HAM10000AKIEC 31 970 2 099.80 93.94 100 100 96.88
+BCC 51 948 1 299.70 98.08 96.23 99.79 97.14
+DKL 106 875 4 15 98.10 96.36 87.60 98.31 91.77
+DF 9972 3 099.70 75.00 100 100 85.71
+MEL 98 884 13 398.40 88.29 97.03 99.66 92.45
+NV 667 326 5 199.40 99.26 99.85 99.69 99.55
+VA S C 12 982 1 899.10 92.31 60.00 99.19 72.73
+PH2Atypical 79 2 1118 98.50 97.53 98.75 98.33 98.14
+Common 78 0 2120 99.00 100 97.50 100 98.73
+Melanoma 39 2 1158 98.50 95.12 97.50 98.75 96.30
+Table 2 . Summarization of per-class performance metrics for both HAM10000, MSK10000, and PH2 datasets. 
+Scientific Reports  |        (2025) 15:40204 11 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+Comparative analysis
+Finally, the performance of the proposed VGG19-RSPDA-ViT model is compared with the state-of-the-art 
+methods on the MSK10000, HAM10000, and PH2 datasets, as presented in Table  3. Although Table  3 summarizes 
+the results from MSK10000, HAM10000, and PH2, one should be aware that variations in dataset partitions, 
+preprocessing pipelines, and evaluation protocols across the studies may hinder comparability. Therefore, our 
+objective is not to claim superiority over all prior works, but to propose VGG19-RSPDA-ViT as a model that 
+can address the two benchmark datasets with consistently good performance under a single experimental setup.
+For the MSK10000 dataset, previous works have provided a mixed performance across different metrics, 
+suggesting different strengths in precision, recall, and specificity. Although some models performed well 
+according to individual metrics, few achieved consistently high performance across all key evaluation criteria. Authors. (year) Ref. Datasets Accuracy Precision Recall Specificity F1 score
+Sinchana et al. (2023)36MSK10000 94.57 87.00 89.00 87.00 -
+Bhuvaneswari and Raman (2023)39MSK10000 91.10 - 90.50 - -
+Waheed et al. (2023)7MSK10000 91.00 - - - -
+Adebiyi et al. (2024)33HAM10000 94.11 90.73 90.19 98.33 90.33
+Ghosh et al. (2024)32MSK10000 91.60 91.60 91.60 - 91.60
+Ingle and Shaikh (2024)34HAM10000 88.83 89.00 89.00 - 89.00
+Sabir and Mehmood (2024)37MSK10000 97.00 95.00 93.00 99.00 -
+Sadi Al Huda et al. (2025)38MSK10000 93.40 - - - -
+Srivastava et al. (2025)40MSK10000 93.86 93.97 93.86 96.72 93.85
+Aruk et al. (2024)41HAM10000 94.30 93.00 89.59 - 91.11
+Y ang et al. (2023)42HAM10000 94.10 - - - -
+Ghazouani (2025) PH2 97.00 - - - 97.00
+Golkarieh et al. (2025) PH2 89.53 - 90.97 - 90.62
+VGG19-RSPDA-ViT (ours)MSK10000 97.90 97.90 97.90 97.90 97.90
+HAM10000 97.11 91.52 91.89 99.52 90.89
+PH2 98.67 97.55 97.92 99.03 97.72
+Table 3 . Summarization of the overall performance metrics for both HAM10000 and MSK10000 Datasets. 
+Fig. 13 . Example Grad-CAM visualizations. 
+Scientific Reports  |        (2025) 15:40204 12 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+In comparison, our proposed method demonstrates good binary classification capability in terms of accuracy, 
+precision, recall, specificity and F1 score.
+Generally, previous works on HAM10000 have achieved variable performance due to the more complex 
+multi-class classification problem. Although some models achieved good precision and recall results, consistent 
+performance across all metrics was rarely observed. In contrast, the proposed approach shows comparable 
+performance with better results in specificity, precision, and recall. This outcome demonstrates its capability to 
+differentiate multiple types of skin lesions and has the potential for clinical use in various dermatologic scenarios.
+Also, the proposed VGG19-RSPDA-ViT model reported on 98.67% accuracy and a F1-score of 97.72%, with 
+all of the precision, recall and specificity crossing the range higher than 97% on the PH2 image dataset. This 
+result is better than the results obtained by Ghazouani, where accuracy and F1-score of 97.00%, but it also 
+overcomes Golkarieh et al. with 89.53% accuracy, 90.97% recall and 90.62% F1-score. For the state-of-the-art 
+former, a + 1.67% accuracy improvement with respect to Ghazouani is an indicator of the success for designing 
+a hybrid scheme; while a significant gain by more than 9% in accuracy and greater than 7% in F1-score with 
+Golkarieh et al. and its strength in dealing with the variation of lesions in the PH2 dataset. Furthermore, the 
+balanced distribution of precision, recall, and specificity indicates that the proposed model does not favor one 
+class over another, thereby ensuring consistent generalization across lesion categories.
+Recent TransMed, MedT and Swin-UNet variants of CNN-ViT hybrids have shown great potential in 
+medical image analysis. However, many of these architectures are specifically designed for segmentation or 
+are computationally intensive multimodal fusion pipelines, computational intensive processing modules that 
+might hinder interpretability and clinical utility. Our approach is distinct in three major ways: (i) it utilizes 
+the lightweight, yet easily-interpretable VGG19 backbone for dermoscopic feature extraction; (ii) augments 
+data through a novel RSPDA scheme that enhances rotational invariance and robustness beyond standard 
+augmentation; and (iii) exhibits task transferability between clinical scenarios, as shown by superior performance 
+in both binary and multi-class skin lesion classification tasks. These differences highlight the technical novelty 
+of the work we performed, in particular for clinical decision support systems where simplicity, robustness and 
+reproducibility are crucial. ROC analysis on both datasets was conducted further to assess the discriminative 
+power of the proposed VGG19-RSPDA-ViT. ROC curves for MSK10000 and HAM10000 are shown in Fig.  12. 
+The ROC curve is used to plot the True Positive Rate (Recall) against the False Positive Rate (1 - Specificity) over 
+all decision thresholds, which gives a threshold-independent evaluation of classifier performance.
+In spite of the good performance of the proposed VGG19-RSPDA-ViT model, there are some failure 
+cases reported in comparison to the multi-class HAM10000 dataset. Many misclassifications were between 
+clinically similar categories like melanoma and nevi or AKIEC with BCC, which mirrored the visual overlap in 
+dermoscopic patterns that challenge even dermatologists.
+Cross-validation classification
+To test the generalization performance of the proposed model and avoid overfitting to biased splits, we used a 
+5-fold cross-validation method in PH2. The data was partitioned into five different sets at random. Four of the 
+folds were used as training data on each iteration, and one fold was left for validation. This process was repeated 
+five times, so that each time a sample was used to validate one and the other four times for training. Mean and 
+Standard Deviation (SD) across the folds are reported as the last result metrics.
+The Validation curve shows that with repetitions, the model converged on average as expected over the folds. 
+Validation accuracy, Fig.  14, increased quickly starting from the first 10 epochs, beyond 90%, before leveling up 
+to at least converging to a range: 95–98%.
+Validation loss, Fig.  15, exhibited the same tendency, with all of them being consolidated around 95%, whereas 
+Validation F1-score, precision, and recall, Fig.  16a–f, showed equally good F1-score, precision, and recall levels.
+Validation-precision remains high throughout training, reaching values of more than 0.90, demonstrating that 
+the model can lower false positives. Validation recall is more variable in the beginning epochs; however, it also 
+converges to more than 0.90, indicating consistent sensitivity and less probable false negatives. The verification 
+F1-score also follows the tendency of precision and recall, reaching greater than 0.90, and becomes stable, which 
+Fig. 14 . Validation accuracy over 50 epochs across the five folds (left) and the Mean ± SD across folds (right). 
+Scientific Reports  |        (2025) 15:40204 13 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+indicates the model’s sensitivity matched with specificity. Furthermore, the cross-validation performance of the 
+proposed VGG19-RSPDA-ViT on the PH2 dataset is illustrated in Table  4.
+The Mean ± SD plot also shows that the variability between folds was characteristic in the early stages of 
+training, but significantly diminished upon convergence. This decrease in variance emphasizes that the response 
+is robust and stable after having cross-validation for different splits. Taken together, these findings demonstrate 
+that the model generalizes well, exhibiting high and stable validation scores across all three primary. Table  5 
+shows the performance of our proposed model using the 5-fold cross-validation. Training metrics were slightly 
+higher. However, these small differences between training and validation scores, together with low standard 
+deviations, suggest that the model generalizes well across folds with no sign of overfitting. The validation loss 
+converged to 0.12 ± 0.02, while the training loss remained around 0.05 ± 0.01, indicating stability of convergence Metric Training (Mean ± SD) Validation (Mean ± SD)
+Accuracy 97.5 ± 0.8 96.2 ± 0.9
+Precision 97.8 ± 0.7 96.0 ± 1.0
+Recall 97.3 ± 0.9 95.8 ± 1.1
+F1-score 97.6 ± 0.8 96.0 ± 0.9
+Loss 0.05 ± 0.01 0.12 ± 0.02
+Table 4 . Cross-validation performance of the proposed model on the PH2 dataset. 
+Fig. 16 . (a–c) Validation F1-score, precision, and recall over 50 epochs across the five folds and ( d–f) the 
+Mean ± SD across folds. 
+Fig. 15 . Validation loss over 50 epochs across the five folds (left) and the Mean ± SD across folds (right). 
+Scientific Reports  |        (2025) 15:40204 14 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+for all runs. This confirmed the model to hold high stability of classification performance irrelevant of different 
+PH2 dataset subsets evaluation metrics.
+Limitations and future work
+A limitation is that we have not performed cross-validation or validated our results with other independent 
+clinical cohorts. While our model provided strong performance on two benchmark datasets, indicating its 
+generalizability, validation in larger independent clinical cohorts or via using k-fold cross-validation would 
+provide more evidence of its generalizability. We see further exploration in this direction as important future work. 
+Finally, it is crucial to mention that the nature of the HAM10000 dataset is imbalanced by default, and certain 
+types of lesions are underrepresented. Most classes maintained a precision-recall balance with our approach, 
+although minority categories were sometimes misclassified; this is due to the difficulty of distinguishing between 
+rare lesion types. Although we did not use explicit balancing methods (e.g., weighted loss or focal loss) in our 
+framework, applying them might help to improve classification performance for imbalanced classes in future 
+work.
+The VGG19-RSPDA-ViT model may be further developed for incorporation into clinical pipelines as an 
+assistive decision-making system. This could also assist in daily dermoscopic workflows for dermoscopic 
+diagnosis by reducing inter-observer differences, providing a rapid and reproducible second opinion of the 
+dermoscopic interpretation. In teledermatology scenarios, automated triage of lesions could enable pre-filtering 
+of high-risk cases for priority expert review, thus facilitating quick diagnosis in underserved areas. Outside of 
+specialist use, the system may be mounted as a pre-screening module at the primary or community care level, 
+where it could aid non-expert clinicians in identifying lesions for referral. Several additional steps are needed 
+for safe clinical adoption, including prospective validation in a range of clinical cohorts, regulatory approval, 
+and the creation of user-friendly interfaces that can be easily added to the existing electronic health record and 
+imaging systems.
+Ethical considerations are essential in the development and implementation of AI-based skin cancer 
+diagnostic tools. While HAM10000 MSK10000, and PH2 are public benchmark datasets in which patient data 
+has been de-identified, real-world medical applications must adhere to strict privacy and consent regulations 
+(e.g., HIPAA, GDPR). In addition, all datasets present biases towards lighter skin tones and specific acquisition 
+devices, which could exacerbate algorithmic bias against underrepresented populations. Misdiagnosis also has 
+strong ethical implications, as false negatives could delay identification of malignant lesions, while false positives 
+could cause unnecessary patient anxiety and treatment. We therefore emphasise that the proposed system 
+should serve as a decision-support tool to dermatologists, not as a replacement for them. Prospective validation 
+in diverse cohorts with various skin tones and careful clinician oversight of any such system is essential to ensure 
+the system is equitable, transparent, and accountable.
+Ablation study
+To investigate the contribution of the proposed RSPDA, we compare two variations of our framework: (i) 
+VGG19-ViT and (ii) VGG19-RSPDA-ViT. This comparison allows us to examine RSPDA ’s influence on feature 
+representation and classification performance.
+Model structure comparison
+The VGG19-ViT model uses a VGG19 backbone and applies a basic patchification operation that extracts nine 
+tokens from a 3 × 3 grid across the feature map. These tokens are processed through 4 Transformer encoder 
+blocks, linearized, and fed through a two-layer MLP with 2048 and 1024 hidden units for classification. This 
+creates a compact structure with about 10.7  million parameters, of which 8.4  million are trainable. Most 
+parameters are concentrated in the classifier layers. The model is lightweight and efficient since the Transformer 
+blocks process only nine tokens. However, using only nine tokens limits spatial diversity, and the absence of 
+rotation or shift augmentations prevents learning orientation-invariant features.
+In contrast, the VGG19-RSPDA-ViT variant replaces simple patchification with a tokenizer that performs 
+four rotations and four pixel shifts, providing 16 different views per image. Each view generates 9 tokens, 
+resulting in 144 tokens total. They are then passed into the same four-layer Transformer encoder. However, the 
+quadratic complexity of self-attention significantly increases computational cost: while the baseline requires only 
+81 pairwise interactions per layer, RSPDA requires over 20,000. The size of the flattened feature representation 
+also grows significantly, from 2304 dimensions in the baseline to 36,864 in the RSPDA model. When flattened 
+into the 2048-unit dense layer, this yields a single weight matrix with over 75  million parameters, bringing 
+the total parameter count to 81.5 million, nearly eight times larger than VGG19-ViT. Consequently, VGG19-
+RSPDA-ViT has significantly higher memory and computational requirements than VGG19-ViT for both 
+training and inference. Table  5 presents the model complexity comparison between the VGG19-ViT and the 
+VGG19-RSPDA-ViT.Model Tokens Flattened features Parameters (Total) Trainable params Efficiency Training time per epoch
+VGG19-ViT 9 2,304 10,732,354 M 8.4 M Compact, efficient 845s
+VGG19-RSPDA-ViT 144 36,864 81,547,330 M 79.2 M Heavy, robust 3835s
+Table 5 . Model complexity comparison. 
+Scientific Reports  |        (2025) 15:40204 15 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+Confusion matrix analysis
+Figure 17a,c show the confusion matrices of the VGG19-ViT model on HAM10000 and MSK10000, while the 
+corresponding confusion matrices for our proposed VGG19-RSPDA-ViT model are shown in Fig.  17b,d.
+On MSK10000, the baseline model misclassified 35 benign lesions as malignant and 36 malignant lesions as 
+benign. In contrast, the RSPDA model made significantly fewer errors, maintaining a better balance between 
+sensitivity and specificity. For HAM10000, the baseline model showed particular confusion between melanoma 
+(MEL) and benign nevi (NV), as well as among rarer classes like AKIEC and BCC. RSPDA substantially reduced 
+inter-class misclassifications, improving recall for minority classes.
+VGG19-RSPDA-ViT outperformed VGG19-ViT in accuracy, recall, and F1-score despite its computational 
+overhead. The network learns robust orientation-invariant representations through rotated and shifted patches 
+while explicitly preserving enhanced spatial context. However, these benefits come at a significant computational 
+cost.
+Comparative results
+To evaluate RSPDA ’s specific contribution, we compared the baseline VGG19-ViT model with our proposed 
+VGG19-RSPDA-ViT. As shown in Table  6, RSPDA improves accuracy, precision, recall, specificity, and F1-score 
+on both MSK10000 and HAM10000 datasets. This demonstrates that RSPDA ’s robustness to orientation and 
+translation variations significantly contributes to the model’s superior performance.
+The results confirm the trade-off between efficiency and performance. The VGG19-ViT model is 
+computationally lighter and faster but lacks sensitivity and suffers from inter-class confusion. VGG19-RSPDA-
+ViT achieves substantial improvements in accuracy, recall, and robustness across both datasets.
+Conclusions
+In this study, we established a new hybrid VGG19-RSPDA-ViT model for automatic skin lesion classification 
+that leverages the fine-grained local feature extraction capabilities of VGG19 and the global contextual 
+learning capacity of ViT, enhanced by our proposed RSPDA scheme. Notably, unlike handcrafted image-level 
+augmentations, RSPDA systematically generates rotated and shifted feature-map views before tokenization, 
+enriching the sequence input to the transformer and enabling orientation-invariant representation learning. 
+Through extensive experiments on the HAM10000 and MSK10000 benchmark datasets, our model achieved 
+impressive performance with 97.1% and 97.9% accuracy, respectively. Ablation studies demonstrate that all 
+three components (VGG19 backbone, ViT integration and RSPDA augmentation) contribute significantly, with 
+RSPDA providing the most significant improvement.
+Our comprehensive evaluation included ROC curves, class-wise sensitivity/specificity, and interpretability 
+analyses. Grad-CAM visualizations demonstrate that the model consistently focuses on clinically relevant lesion 
+regions and suppresses irrelevant background structures. These results highlight both the predictive performance 
+and interpretability of our approach, which are essential for clinical adoption.
+However, several limitations should be acknowledged. First, while HAM10000 and MSK10000 differ in 
+acquisition conditions and demographics, our model shows limited generalization to rare lesion classes. Second, Model Dataset Accuracy Precision Recall Specificity F1 score
+VGG19-ViT MSK10000 92.90 92.90 92.90 92.90 92.89
+VGG19-RSPDA-ViT MSK10000 97.91 97.90 97.90 97.90 97.90
+VGG19-ViT HAM10000 92.33 79.36 81.31 98.34 79.95
+VGG19-RSPDA-ViT HAM10000 97.10 91.52 91.89 99.52 90.89
+Table 6 . Performance comparison of the VGG19-ViT model and our proposed VGG19-RSPDA-ViT model on 
+MSK10000 and HAM10000. 
+Fig. 17 . Confusion matrix analysis ( a) and ( c) VGG19-ViT (HAM10000 and MSK10000) and ( a) and ( c) 
+VGG19-RSPDA-ViT (HAM10000 and MSK10000). 
+Scientific Reports  |        (2025) 15:40204 16 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+larger, more diverse clinical validation cohorts, with broader skin tone representation and varied imaging 
+conditions, are necessary to validate generalizability fully. Additionally, we did not perform user studies, domain 
+expert evaluations, or pilot deployments, which are crucial for assessing usability and integration into real-world 
+clinical workflows. Finally, although inference speed on GPU is near real-time, further optimization would be 
+needed for resource-constrained scenarios (e.g., mobile dermoscopic).
+Future directions
+Based on this work, a few directions for future research would be worth pursuing. First, we aim to validate 
+in additional and diverse cohorts (Derm7pt, ISIC challenge datasets, as well as clinical in-house collections), 
+further to substantiate the robustness and generalization of our approach. Second, we seek to investigate semi-
+supervised and self-supervised learning approaches for more effectively using large unlabeled dermoscopic 
+images. Third, using multimodal information, such as patient metadata, clinical images, and histopathology, 
+for Desktop Routine may further improve diagnostic performance. Last but not least, optimization of the 
+framework for real-time clinical application and performing a reader study with dermatologists in a prospective 
+way are important intermediate steps toward clinical translation.
+Data availability
+The data supporting the findings of this study are completely available online. The Melanoma Skin Cancer Data -
+set of 10000 Images (MSK10000) dataset: [  h t t p s : / / w w w . k a g g l e . c o m / d a t a s e t s / h  a s n a i n j a v e d / m e l a n o m a - s k i n - c a n c 
+e r - d a t a s e t - o f - 1 0 0 0 0 - i m  a g e s] ( h t t p s : / / w w w . k a g g l e . c o m / d a t a s e t s / h  a s n a i n j a v e d / m e l a n o m a - s k i n - c a n c e r - d a t a s e t - o 
+f - 1 0 0 0 0 - i m  a g e s), the Human Against Machine with 10000 training images (HAM10000) dataset: [  h t t p s : / / d a t a v 
+e r s e . h a r v a r d . e d u / d a t a s e t . x h t m l ?   p e r s i s t e n t I d = d o  i : 1 0 . 7 9 1 0 / D  V N / D  B W 8 6 T ] ( h t t p s : / / d a t a v e r s e . h a r v a r d . e d u / d a t a 
+s e t . x h  t m l ?   p e r s i s t e n t I d = d o  i : 1 0 . 7 9 1 0 / D  V N / D  B W 8 6 T ), and the PH2 dataset:  [   h t t p   s  : / /  w  w w  . f  c . u  p . p t / a d d i / p  h 2 % 2  0 
+d a t a b a s e . h t m l     ] (   h t t p s : / / w  w w . f c . u p . p t / a d d i / p h 2 % 2 0 d  a t a b a s e . h t m l     ) .  
+Received: 18 July 2025; Accepted: 10 October 2025
+References
+ 1. Semerci, Z. M. et al. The role of artificial intelligence in early diagnosis and molecular classification of head and neck skin cancers: 
+a multidisciplinary approach.  Diagnostics  14 (14),  1477.  (2024).
+ 2. Pandala, M. L. & Periyanayagi, S. Analysis, prediction and classification of skin cancer using artificial Intelligence-A brief study 
+and review. Scalable Computing: Pract. Experience . 24 (3), 355–370 (2023).
+ 3. Kurva, A., Korikani, M., Mohan, V . & Kancha, R. K. Skin cancer. In Biomedical Aspects of Solid Cancers  235–252. (Springer, 2024).
+ 4. Dobre, E. G. et al. Skin cancer pathobiology at a glance: a focus on imaging techniques and their potential for improved diagnosis 
+and surveillance in clinical cohorts. Int. J. Mol. Sci.  24 (2), 1079 (2023).
+ 5. Brancaccio, G. et al. Artificial intelligence in skin cancer diagnosis: a reality check. J. Invest. Dermatology . 144 (3), 492–499 (2024).
+ 6. Noronha, S. S., Mehta, M. A., Garg, D., Kotecha, K. & Abraham, A. Deep learning-based dermatological condition detection: A 
+systematic review with recent Methods, Datasets, challenges and future directions. IEEE Access   (2023).
+ 7. Waheed, S. R. et al. Melanoma skin cancer classification based on CNN deep learning algorithms. Malaysian J. Fundamental Appl. 
+Sci. 19 (3), 299–305 (2023).
+ 8. Errichetti, E. & Stinco, G. Dermoscopy in general dermatology: a practical overview. Dermatology Therapy . 6, 471–507 (2016).
+ 9. Chauhan, P ., Meena, D. & Errichetti, E. Dermoscopy of bacterial, viral, and fungal skin infections: a systematic review of the 
+literature. Dermatology Therapy . 13 (1), 51–76 (2023).
+ 10. Zegair, F. A. et al. Application of machine learning in melanoma detection and the identification of ’ugly duckling’and suspicious 
+naevi: a review. https://arXiv.org/abs/2309.00265 .  (2023).
+ 11. Debelee, T. G. Skin lesion classification and detection using machine learning techniques: a systematic review.  Diagnostics  13 (19), 
+3147, (2023).
+ 12. Y ao, X., Wang, X., Wang, S. H. & Zhang, Y . D. A comprehensive survey on convolutional neural network in medical image analysis. 
+Multimedia Tools Appl.  81 (29), 41361–41405 (2022).
+ 13. Kumar, B. A. & Bansal, M. A transfer learning approach with mobilenetv2 for parkinson’s disease detection using hand-drawings. 
+In 14th International Conference on Computing Communication and Networking Technologies (ICCCNT)  1–7. (IEEE, 2023).
+ 14. Najjar, F. H. et al. A lightweight U-Net model for accurate skin lesion segmentation. Iraqi J. Comput. Sci. Math.  6 (2), 1 (2025).
+ 15. Hekmat, A., Zuping, Z., Bilal, O. & Khan, S. U. R. Differential evolution-driven optimized ensemble network for brain tumor 
+detection. Int. J. Mach. Learn. Cybern.   1–26, (2025).
+ 16. Khan, S. U. R. et al. ShallowMRI: A novel lightweight CNN with novel attention mechanism for multi brain tumor classification in 
+MRI images. Biomed. Signal Process. Control . 111, 108425 (2026).
+ 17. Bilal, O., Hekmat, A. & Khan, S. U. R. Automated cervical cancer cell diagnosis via grid search-optimized multi-CNN ensemble 
+networks. Netw. Model. Anal. Health Inf. Bioinf.  14 (1), 67 (2025).
+ 18. Wang, Y . et al. Toward efficient compressing of convolutional neural Nets with Low-rank tensor decomposition. ACM Trans. 
+Multimedia Comput. Commun. Appl.  21 (2), 1–23 (2024).
+ 19. Kumar, B. A. & Misra, N. K. Colon cancer classification and detection by novel CMNV2 model and methods of deep learning. 
+Neural Comput. Appl.  37 (1), 25–41 (2025).
+ 20. Zhou, Y ., Chang, H., Lu, Y ., Lu, X. & Zhou, R. Improving the performance of VGG through different granularity feature 
+combinations. IEEE Access.  9, 26208–26220 (2020).
+ 21. Abdullahi, M. et al. A systematic literature review of visual feature learning: deep learning techniques, applications, challenges and 
+future directions. Multimedia Tools Appl.   1–58, (2024).
+ 22. Montesinos López, O. A., Montesinos, A., López & Crossa, J. Overfitting, model tuning, and evaluation of prediction performance. 
+In Multivariate Statistical Machine Learning Methods for Genomic Prediction  109–139. (Springer, 2022).
+ 23. Maurício, J., Domingues, I. & Bernardino, J. Comparing vision Transformers and convolutional neural networks for image 
+classification: A literature review. Appl. Sci.  13 (9), 5521 (2023).
+ 24. Sultana, M., Naseer, M., Khan, M. H., Khan, S. & Khan, F. S. Self-distilled vision transformer for domain generalization. In 
+Proceedings of the Asian Conference on Computer Vision   3068–3085. (2022).
+ 25. Khan, A. et al. A survey of the vision Transformers and their CNN-transformer based variants. Artif. Intell. Rev.  56 (Suppl 3), 
+2917–2970 (2023).
+ 26. He, K. et al. Transformers in medical image analysis. Intell. Med.  3 (1), 59–78 (2023).
+Scientific Reports  |        (2025) 15:40204 17 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/
+ 27. Zhai, X., Kolesnikov, A., Houlsby, N. & Beyer, L. Scaling vision transformers. In Proceedings of the IEEE/CVF Conference on 
+Computer Vision and Pattern Recognition  12104–12113. (2022).
+ 28. Pinto, F., Torr, P . H. & Dokania, P . K. An impartial take to the cnn vs transformer robustness contest, in European conference on 
+computer vision , : Springer, pp. 466–480. (2022).
+ 29. Demiroğlu, U. Tumor detection by classification of brain MRI images using the vision Transformers. Adıyaman Univ. J. Sci.  14 (2), 
+140–156 (2024).
+ 30. Shorten, C. & Khoshgoftaar, T. M. A survey on image data augmentation for deep learning. J. Big Data . 6 (1), 1–48 (2019).
+ 31. Maguire, W . F. et al. Development and narrow validation of computer vision approach to facilitate assessment of change in 
+pigmented cutaneous lesions. JID Innovations . 3 (2), 100181 (2023).
+ 32. Ghosh, S. et al. Melanoma skin cancer detection using ensemble of machine learning models considering deep feature embeddings. 
+Procedia Comput. Sci.  235, 3007–3015 (2024).
+ 33. Adebiyi, A. et al. Accurate skin lesion classification using multimodal learning on the ham10000 dataset.  MedRxiv   05. 30.24308213.  
+(2024).
+ 34. Ingle, Y . & Shaikh, N. F. Deep learning for skin cancer classification: A comparative study of CNN and Vgg16 on HAM10000 
+dataset. SSRN  4787463 , (2024).
+ 35. Wicaksana, I. C., Pramunendar, R. A., Saraswati, G. W . & Trisnapradika, G. A. Skin lesion classification using YOLOv11 on the 
+HAM10000 dataset. Inform: Jurnal Ilmiah Bidang Teknologi Informasi dan. Komunikasi . 10 (1), 45–52 (2025).
+ 36. Sinchana, N., Jeevitha, K., Swamy, S. K., Kodipalli, A. & Rao, T. Analysis of skin lesions for identifying of skin cancer melanoma 
+using customized CNN model with transfer learning. In 2023 4th IEEE Global Conference for Advancement in Technology (GCAT)  
+1–6. (IEEE, 2023).
+ 37. Sabir, R. & Mehmood, T. Classification of melanoma skin cancer based on image data set using different neural networks. Sci. Rep.  
+14 (1), 29704 (2024).
+ 38. Al Huda, M. S. et al. DeepMelaNet: Advancing melanoma stage classification in skin cancer diagnosis.  Eng.  Technol. Appl.  Sci.  
+Res. 15 (1),  19627–19635, (2025).
+ 39. Bhuvaneswari, R. & Raman, P . C. V . S. Enhancing skin cancer diagnosis with AlexNet convolutional neural networks. In 2023 
+international conference on integrated intelligence and communication systems (ICIICS)   1–5. (IEEE, 2023).
+ 40. Srivastava, K., Istwal, A., Kaur, J. & Gambhir, P . VCCINet: a multi-model deep learning approach for melanoma skin cancer 
+detection. In 2nd International Conference on Advancement in Computation & Computer Technologies (InCACCT)    314–321. 
+(IEEE, 2024).
+ 41. Aruk, I., Pacal, I. & Toprak, A. N. A novel hybrid ConvNeXt-based approach for enhanced skin lesion classification. Expert Syst. 
+Appl.  127721, (2025).
+ 42. Y ang, G., Luo, S. & Greer, P . A novel vision transformer model for skin cancer classification. Neural Process. Lett.  55 (7), 9335–9351 
+(2023).
+ 43. Ghazouani, H. Multi-residual attention network for skin lesion classification. Biomed. Signal Process. Control . 103, 107449 (2025).
+ 44. Golkarieh, A., Razmara, P ., Lagzian, A., Dolatabadi, A. & Mousavirad, S. J. Semi-supervised GAN with hybrid regularization and 
+evolutionary hyperparameter tuning for accurate melanoma detection. Sci. Rep.  15 (1), 31977 (2025).
+Author contributions
+F. H. N. participated in the concept and design, model structure design, data preparation, and writing of the 
+original draft. Z. N. K. helped with the literature review, manuscript structuring, and validation results. F. M. 
+project oversight, overall study design, review and editing of the manuscript, model generation, data curation, 
+and formal analysis. M. S. M. R. contributed to optimizing deep learning, evaluating the models, data analysis, 
+visualization and resources. V . S. C. final manuscript review, proofreading, and critical revision. A. H. A gave 
+technical support and helped implement the proposed method and evaluation metrics.
+Declarations
+Competing interests
+The authors declare no competing interests.
+Additional information
+Correspondence  and requests for materials should be addressed to F.H.N. or F.M.
+Reprints and permissions information  is available at www.nature.com/reprints .
+Publisher’s note Springer Nature remains neutral with regard to jurisdictional claims in published maps and 
+institutional affiliations.
+Open Access   This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 
+4.0 International License, which permits any non-commercial use, sharing, distribution and reproduction in 
+any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide 
+a link to the Creative Commons licence, and indicate if you modified the licensed material. Y ou do not have 
+permission under this licence to share adapted material derived from this article or parts of it. The images or 
+other third party material in this article are included in the article’s Creative Commons licence, unless indicated 
+otherwise in a credit line to the material. If material is not included in the article’s Creative Commons licence 
+and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to 
+obtain permission directly from the copyright holder. To view a copy of this licence, visit  h t t p : / / c r  e a t i v e c o m m o 
+n s . o r g / l i c e n  s e s / b y - n c - n d / 4 . 0 /     .  
+© The Author(s) 2025 
+Scientific Reports  |        (2025) 15:40204 18 | https://doi.org/10.1038/s41598-025-24081-wwww.nature.com/scientificreports/

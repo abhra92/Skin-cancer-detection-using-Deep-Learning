@@ -1,0 +1,1429 @@
+ 
+VOLUME XX, 2017  1 
+Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.  
+Digital Object Identifier 10.1109/ACCESS.20 22.Doi Number  
+A GAN -based  Data Augmentation Method for 
+Imbalanced Multi-class Skin Lesion 
+Classification  
+QICHEN SU1, HAZA NUZLY ABDULL HAMED1, MOHD ADHAM ISA2, XUE HAO1, and  
+XIN DAI1 
+1 Department of Applied Computing and Artificial Inttelligence, Faculty of Computing, Universiti Teknologi Malaysia  (UTM) , Johor 81310, Malaysia  
+2 Department of Software Engineering , Faculty of Computing, Universiti Teknologi Malaysia  (UTM) , Johor 81310, Malaysia  
+Corresponding author s: QICHEN SU  (suqc1990 @ 163.com ) and HAZA NUZLY ABDULL HAMED  (haza@utm.my ) 
+ABSTRACT  Skin cancer is one of the most common types of cancer globally. Despite the remarkable 
+advancements of deep learning methods in computer vision, automatic diagnosis of skin diseases still faces 
+challenges such as limited data and class imbalance. Generative Adversarial Networks (GANs), which can 
+synthesi ze realistic data, ap pear as an alternative to mitigate these issues.  However, for imbalanced data, 
+unconditional GANs either generate uneven data distribution or neglect universal knowledge of the whole 
+dataset, while state-of-the-art (SOTA) conditional GANs suffer from performance degradation due to the 
+mode collapse of minority classes.  This paper proposes a two -stage GAN -based method to synthesize fine -
+grained and diverse 256× 256 pixels skin lesion images for the imbalanced dataset, named Self -Transfer 
+GAN (STGAN). STGAN first learns universal knowledge from all classes then transfer s this shared 
+knowledge to each class and fuse s it with class -specific knowledge to synthesize high -quality images. 
+Further more, based on STGAN, a framework to enhance the classification performance is established. Both 
+data generation and classification tasks are evaluated on HAM10000 dataset. In terms of Fré chet Inception 
+Distance (FID), Inception Score, Precision , and Recall, STGAN improved by 16%, 16%, 4%, 33% 
+compared with SOTA conditional StyleGAN2. For classification, the STGAN -based framework achieves 
+remarkable results, with an Accuracy of 98.23%, Sensitivity of 88.85%, Precision of 90.23%, F1 -score of 
+89.48%, and Specificity of 98.34%.  
+INDEX TERMS  Data augmentation, Data imbalance,  Generative adversarial networks, Skin lesion 
+classification .  
+I. INTRODUCTION  
+Skin cancer  has become one of the most prevalent types of 
+cancer worldwide, with approximately 9500 cases in the 
+United States every day [1]. It encompasses various types, 
+including basal cell carcinoma, squamous cell carcinoma, 
+melanoma, etc.  [2]. Among these, melanoma is the most 
+dangerous and accounts for the highest number of death s 
+[3]. However, studies have demonstrated that skin cancer 
+can be effectively treated when diagnosed at early stage 
+and managed appropriately [3], [4] . Therefore, early 
+detection is crucial for improving the survival rate of skin 
+cancer patients.   
+The most important aspect of the clinical diagnosis and 
+treatment of skin cancer lines in the observation of skin 
+lesions. Dermoscopy, a non -invasive imaging technique, 
+provides rich details and accurate color representation of skin lesions, making it widely applied in the diagnosis of skin 
+diseases. With the use of dermoscopy imaging, the diagnostic 
+accuracy can be boosted to 75% -84% [5]. However, the 
+visual examination of dermoscopy images by dermatologists 
+is commonly perceived as a challenging and time -consuming 
+task, often subject to errors and subjectivity [6]. Moreover, 
+for patients residing in remote areas, it is hard to access 
+specialized dermatologists. Hence, an automated computer -
+aided diagnostic system is highly demanded.  
+Despite the significant advancements achieved by recent 
+deep learning methods in visual data, they still face following 
+challenges  in automated skin disease diagnosis. First, the 
+available annotated data are severely limited, as image 
+acquisition and labeling require specialized equipment and 
+trained medical professionals. Taking the publicly available  This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+FIGURE 1.  Progression of discriminator outputs during training for 4 classes from HAM10000 dataset. Each vertical slice shows the raw logits output 
+by discriminator for real data (blue line) and generated data (green line). (a) NV. (b) AKIEC. (c) DF. (d) VASC  
+FIGURE 2.  Real Images and generated images by STGAN. (a) Real images. (b) Generated images by STGAN.  
+ 
+HAM10000 [7] dataset as an example, it consists of 10,015 
+images, while the widely used benchmark dataset in 
+computer vision, like ImageNet [8], contains around 1.3 
+million training images. Besides, due to variations in the 
+prevalence of different skin diseases, skin disease datasets often suffer from class imbalance issues. Class imbalance can 
+arise from either inter-class imbalance or intra-class 
+imbalance  [9]. Inter -class imbalance refers to situations 
+where the number of samples  in some classes  is significantly 
+smaller than in others , it can be quantified by imbalance ratio, 
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+which is calculated as the ratio between the number of 
+samples in the largest  class to the number of samples in the 
+smallest  class  [10]. The imbalance ratio of the HAM10000 
+dataset is 58.3.  The class with the largest sample size , 
+melanocytic nevus (NV) , has 6705 images , while the class 
+with the smallest sample size , dermatofibroma (DF) , only has 
+115 images . Traditional Convolutional Neural Networks 
+(CNN ) classifier architectures  are typically designed to work 
+well for balanced datasets, they tend to treat minority classes 
+as rare occurrences, or even as noise, when confronted with 
+inter-class imbalance  [11]. Intra-class imbalance refers to the 
+attribute bias within a class , it can be considered as a form of 
+inter-class imbalance in the context of fine -grained visual 
+categorization. Intra-class imbalance can also negatively 
+affect the performance of CNN classifiers . The presence of 
+intra-class imbalance is closely intertwined with  the “small 
+disjuncts problem ” [12], [13] , a problem that has been 
+demonstrated to significantly impair  classification 
+performance [14]. Small disjuncts  refers to classification 
+rules that cover only a limited number of training samples , 
+and the scarcity of samples renders rule induction more 
+susceptible to errors  [15], [16] .  
+Traditional Data Augmentation (TDA) techniques,  such as 
+color  space transformations  (e.g., adjusting  saturation, 
+contrast, brightness, and hue of the training image ), 
+geometric transformations  (e.g., flipping, cropping, rotation, 
+translation ), mixing images, and random erasing, can 
+effectively inflate  the size of training dataset, thereby 
+mitigat ing the issue s of limited labeled data and class 
+imbalanc e problem [17]. Geometric and color space 
+transformations are the most commonly employed data 
+augmentation techniques in skin disease classification tasks 
+[18]. Perez , et al.  [19] investigated 13 TDA scenarios for 
+skin lesion classification trained on CNN  classifiers , their 
+experiments revealed that color space transformations and 
+geometric transformations could enhance the classification 
+performance . However, image mixing and random erasing 
+did not yield improvements, this is attributed to the fact that 
+these two data augmentation techniques cannot guarantee 
+that the transformed  images retain the relevant skin lesion  
+features of the source images. The works in [20], [21] also 
+reported that the application of geometric transformations 
+and color space augmentations could improve the 
+performance of skin lesion classification.  Although TDA  
+techniques , like geometric and color space transformations, 
+can improve skin lesion  classification performance, it faces 
+some drawbacks. First, the transformed images with small 
+modifications have a similar distribution to the original 
+images  and do not bring any new visual features to the 
+training data , resulting in limited improvement in 
+performance  [22], [23] . Additionally, the associated 
+distortion magnitude parameter of geometric and color space 
+transformations need to be carefully chosen, since heavily 
+transformed  images could alter the semantic meaning of the 
+medical  images [17], [24] . Moreover, for imbalanced dataset, naï ve augmentive oversampling with basic image 
+transformations could cause overfitting on the minority class 
+[17]. 
+In contrast to TDA,  Generative Adversarial Networks 
+(GANs) [25] aim to  learn the underlying data distribution and 
+generate realistic  looking images . Recent advancements in 
+GANs indicate that their ability to represent complex and 
+high-dimensional data can serve as an advanced data 
+augmentation method  to increase the amount of training 
+samples and mitigate the imbalance problem of skin lesion 
+dataset  [22], [26], [27], [28], [29], [30] . Basically, there are 
+two GAN -based solutions for data augmentation, one is 
+unconditional GANs and the other is conditional GANs [31], 
+[32], [33] . As for unconditional GANs, there are two training 
+regime s. One regime  involves training a single unconditional 
+GAN model using the entire training set. A drawback of this 
+training regime  is that when the training data is imbalanced, 
+the distribution of generated data between different classes 
+remains imbalanced as well [34], leading to exacerbation of 
+the class imbalance issue in downstream classification tasks; 
+The other regime  is to train an unconditional GAN model for 
+each class separately. However, this regime  fails to utilize 
+global knowledge or information that may be available 
+across all classes.  
+On the contrary, conditional GANs incorporate class labels 
+during the training process, enables it to explore the universal  
+knowledge and class specific knowledge in one model, 
+making it a natural choice for multi -class image generation. 
+However, findings in [35] reveal that despite achieving 
+impressive results on metrics, samples generated by 
+conditional GANs lack diversity. Moreover, it has been 
+recently found that, state-of-the-art ( SOTA ) conditional 
+methods like BigGAN [36] and StyleGAN2 [37] with 
+augmentation, suffer performance degradation due to the 
+mode collapse of minority classes [38]. Furthermore, the 
+performance of conditional GANs degrade more in 
+comparison with unconditional GANs in imbalanced 
+scenario [39]. 
+For investigating the mode collapse phenomenon of 
+conditional GANs on minority classes further, we train the 
+recently SOTA conditional StyleGAN2 (cSG2) with 
+Adaptive Discriminator Augmentation (ADA) [40] on 
+HAM10000 dataset, and take a closer look at the outputs of 
+the discriminator for each class. Fig. 1 shows the output s 
+distributions of the discriminator on the majority class 
+melanocytic nevus  (NV) and three minority classes : actinic 
+keratosis (AKIEC), dermatofibroma (DF), and vascular 
+lesion (VASC). During the training progress,  for NV,  the 
+discriminator outputs of  real image s and generated image s 
+keep diverging from each other slowly and steadily. In 
+contrast, the discriminator's output s for the three minority 
+classes, both for real image s and generated image s, exhibits 
+substantial fluctuations around some value after 
+approximately 2.5k iterations. This suggests that the model 
+fails to acquire class -specific knowledge for these three This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+FIGURE 3.  An overview of the proposed STGAN -based framework for improving CNN -based classification results. STGAN is utilized to generate 
+synthetic images and then  the generated images and training set  is combined  to further train T -ResNet50. In the testing phase, TTA is employed . For a 
+given test image, various data augmentation methods are applied, and each augmented version is fed into the trained T -ResNet50 model.  The final 
+prediction is then aggregated from the outputs corresponding to these augmented images.  
+ 
+minority classes and only learns global knowledge through 
+the shared generator parameters. This is further evidenced by 
+the high precison and low recall (a.k.a mode collapse) of 
+minority classes in Table II.  
+Based on the reasons discussed above,  a two -stage GAN -
+based method for skin lesion image synthesis,  named 
+STGAN, is proposed in this study. STGAN  decouples the 
+learning of universal knowledge and class -specific 
+knowledge to mitigate the mode collapse of minority classes. 
+Specifically,  an unconditional GAN is first trained using all 
+samples to learn the shared universal knowledge of skin 
+lesion images, and then the learned  universal knowledge is 
+propagated to each class and fuse d with class -specific 
+knowledge to generate images for each class in second stage. 
+Furthermore, given the very limited number of samples for 
+some classes in the second stage,  self-supervised learning [41] and Freeze -D [42] are introduced in the  discriminator to 
+enhance sample efficiency.  
+In contrast to conditional GANs, STGAN builds upon the 
+knowledge transfer and separates the learning of global and 
+class -specific knowledge. This separation offers two 
+advantages. First, the global knowledge acquired by the 
+model in the first stage facilitates efficient learning of class -
+specific knowledge. Second, this separation allows for better 
+control over the learning of class -specific knowledge, thereby 
+mitigating mode collapse of the minority classes.  
+Furthermore, b ased on STGAN, a whole framework to 
+enhance the skin lesion diagnosis performance for limited 
+and imbalanced data is established (Fig. 3). First, STGAN is 
+utilized to generate diverse and visual -appealing images, then 
+the generated data and training data are combined to train a 
+ResNet50 [43] model, which is initialized with pre -trained 
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+weights on ImageNet. In the testing phase,  Test-Time 
+Augmentation technique (TTA) [19], [44], [45]  is employed 
+to further boost the classification results.  
+In summary, the following contributions  are proposed : 
+1. A two -stage GAN -based image synthesis method is 
+proposed for generating diverse and visually -appealing 
+dermoscopy images for both majority and minority 
+classes within an imbalanced skin lesion dataset.  (Fig. 
+2(b)). 
+2. Images generated by STGAN  contain high information 
+gain, which can improve the performance of CNN -
+based classifier for automated skin disease diagnosis.  
+3. A comprehensive framework for processing 
+dermoscopy images is developed, encompassing 
+image generation, classifier construction, and image 
+classification.  This framework can provide remarkable 
+classification results on limited and imbalanced 
+datasets.  
+The remainder of this paper is arranged as follows: in 
+Section II, related work is reviewed, followed by the 
+presentation of our methodology in Section III. 
+Experimental results are presented and analyzed in Section 
+IV, and the conclusion is provided in Section V.  
+II. RELATD WORK  
+In this section, the review and discussion of previous 
+research closely related to this study are conducted.  The 
+related work s are categorized  into three main themes: 
+imbalanced data, GAN transfer learning and GANs in skin 
+lesion image synthesis.  
+A. IMBALANCED DATA  
+Data imbalance refers to a situation in a dataset where one or 
+more classes have a much larger samples compared to other 
+classes. Numerous efforts have been devoted to developing 
+classification models for this uneven data distribution [13], 
+[46], [47], [48] . However, only a limited number of studies 
+have focused on learning generative models for imbalanced 
+data distribution. Rangwani , et al.  [38] proposed a group 
+Spectral Regularizer (gSR) for conditional GANs to alleviate 
+mode collapse. Rangwani , et al.  [49] introduced continuity in 
+class label embedding vectors to improve the quality of 
+generated images for minority classes. However, these 
+techniques are primarily designed for conditional GANs. 
+Rangwani , et al.  [39] found that the performance of 
+conditional GANs deteriorates more in the presence of data 
+imbalance compared to unconditional GANs and proposed 
+the use of a pre -trained classifier to guide an unconditional 
+GAN in generating high -quality images for each class. 
+Nonetheless, the prerequisites for a well -pretrained classifier 
+in [39] could potentially impose limitations.  
+B. GAN TRANSFER LEARNING  
+Transfer learning is a machine learning technique that utilizes 
+pre-trained parameters from other dataset as the initial 
+parameters, rather than random initialization. By adopting this approach, knowledge can be transferred from one dataset 
+(i.e., source domain) to another (i.e., target domain), resulting 
+in reduced training time and data size requirements. Several 
+researches have explored transfer learning in the context of 
+GANs [42], [50], [51], [52] . Wang , et al.  [52] is one of the 
+first to explore transfer learning in GANs. Their experimental 
+findings revealed that leveraging knowledge from pre -trained 
+models can lead to reduced training time and enhanced image 
+generation quality in scenarios with limited data. Noguchi 
+and Harada [50]  introduced a novel approach that involves 
+keeping all convolutional kernel parameters fixed and only 
+updating shift and scale parameters in the generator. Wang , 
+et al.  [51] proposed a miner network to identify a narrower 
+region of the prior distribution where images generated by 
+pre-trained model are similar to the target data, so as to ease 
+the following finetuing step on the target data. Mo, et al.  [42] 
+proposed a simple method, Freeze -D, which fixs the lower 
+layers’ parameters in discriminator when fine -tuning GANs.  
+While GAN -based transfer learning techniques are 
+effective in addressing the limited data problem, their effect 
+on imbalanced dataset have not been well explored.  Different 
+from GAN -based transfer learning, the proposed method 
+STGAN address the problem of imbalanced learning in 
+GANs. Moreover, despite both being built upon the concept 
+of knowledge transfer, STGAN involves transferring shared 
+knowledge between different classes to each individual class 
+in one domain, whereas current GAN -based transfer learning 
+focuses on transferring knowledge between different 
+domains.  
+C. GAN IN SKIN LESION IMAGE SYNTHESIS  
+Yi, et al.  [30] utilized categorical generative adversarial 
+network (catGAN) [53] with Wasserstein distance [54] for 
+dermoscopy images feature learning. They generate 64× 64 
+pixels images and achieve an average precision score of 
+0.424 with only 140 labeled images from the International 
+Skin Imaging Collaboration  (ISIC) 2016 Challenge dataset 
+[55]. Shoohi and Saud [56]  proposed using unconditional 
+DCGAN [57] to synthesis 64× 64 pixels samples for the 
+minority class for imbalanced Malaria dataset. However, skin 
+lesion images should be generated in a high -resolution (e.g., 
+256× 256 pixels) as it enables the identification of 
+malignancy markers that differentiate between benign and 
+malignant lesions with higher accuracy . 
+With the goal of synthesizing high -quality skin lesion 
+images, Baur , et al.  [58] proposed an unconditional deeply 
+discriminated GAN (DDGAN) to generate 256× 256 pixels 
+skin lesion image. The effectiveness of DDGAN was 
+compared with two other popular GAN architectures, namely 
+the DCGAN [57] and LAPGA [59]. The results showed that 
+both the DDGAN and LAPGAN are capable of learning the 
+distribution of the datasets and synthesizing realistic samples. 
+However, in the case of imbalanced data, the sample s 
+generated by DDGAN remains class imbalance as well, 
+making it unsuitable as a data augmentation method for This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+FIGURE 4.  An overview of STGAN. STGAN is a two -stage image generation method based on GAN transfer learning. In the first stage, an 
+unconditional GAN is used to learn the shared universal knowledge of skin lesion images. This pre -trained unconditional GAN serves as the 
+initialization for the second -stage, which continues training on images from each class. Meanwhile, in the second stage, STGAN employs Barlow 
+Twins to improve sample efficiency and Freeze -D to enhance knowledge transfer efficiency . 
+ 
+downstream classification tasks. Qin, et al.  [22] proposed 
+SL-StyleGAN to generate 256× 256 pixels skin lesion images 
+with modified style controlling method and simplified the 
+generator and discriminator architectures of StyleGAN [60]. 
+However, SL -StyleGAN was trained on individual class data 
+thus did not make the use of universal knowledge of the 
+whole dataset.  
+Abdelhalim , et al.  [26] proposed SPGGAN -TTUR, they 
+utilize d conditional Progressive Growing of GAN(cPGGAN) 
+[61] with a self -attention mechanism to generate 256× 256 
+pixels skin lesion images. However, SPGGAN -TTUR 
+ignored the  class imbalance problem in skin lesion dataset , 
+which can lead to a degradation in the quality of the 
+generated images for minority classes.  
+Different from these works, STGAN avoids the 
+performance degradation issue faced by GANs on imbalanced datasets. It can generate high resolution realistic 
+images with fine -grained detail for each class, thereby 
+enhancing the performance of downstream CNN classifiers 
+for skin lesion diagnosis.  
+III. METHODOLOGY  
+In this section, we introduce our method aim at improving 
+the CNN -based classification results of skin lesion image by 
+generating high -quality images to mitigate the impact of 
+limited labeled data and the imbalance between data classes 
+(see Fig. 3). The framework of the proposed STGAN is 
+shown in Fig. 4. STGAN first employs an unconditional 
+GAN model to learn universal knowledge of all training 
+samples (subsection III -A), and then transfer this shared 
+knowledge to each class and fuse  it with class -specific 
+knowledge for high -quality image generation (subsection III -
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+B). Finally, images generated by STGAN are combined with 
+real images to further train a ResNet50 model (subsection III -
+C). 
+A. UNSUPERVISED LEARNING OF UNIVERSAL 
+KNOWLEDGE  
+STGAN first employs an unconditional GAN to learn the 
+global knowledge of the entire dataset. The unconditional 
+GAN framework consists two adversarial neural networks: 
+the generator 
+G  and the discriminator 
+D . The generator 
+G  
+parameterized by 
+  takes random noise vector 
+Z  as input to 
+generate sample 
+() gX G Z = . On the other hand, the 
+discriminator 
+D functions like a classifer, it takes real data 
+rX
+and the generated data 
+gX  as input and tries to optimize 
+its parameters 
+  by learning to distinguish between these 
+two types of data.  
+The core idea of GAN lies in the interplay between the 
+generator and the discriminator: the generator attempts to 
+produce realistic data to deceive the discriminator, while 
+the discriminator strives to enhance its ability to distinguish 
+real data from generated data. This adversarial process 
+drives the generator to continually improve the quality of 
+generated data, thereby approximating the distribution of 
+real data.  
+The los s function of discriminator can be defined as:  
+ 
+~
+~[log ( )]
+                    [log(1 ( ( ))].rd
+ZD X p r
+ZpDX
+D G Z
+=−
+−−
+  (1) 
+The los s function of generator can be defined as:  
+ 
+~[log(1 ( ( ))].
+Z G Z p D G Z =−
+  (2) 
+And the complete two -player minimax game can be 
+formulated as  
+
+~
+~min max [log ( )]
+                      [log(1 ( ( ))]rd
+Zgan X p r
+ZpDX
+D G Z
+=
++−
+ (3) 
+where, 
+dp  is the true data distribution, and 
+Zp  is the 
+random noise distribution.  
+B. KNOWLEDGE TRANSFER AND FUSION  
+The discriminator and generator trained in the first stage 
+serve as the initialization for the second stage, where they are 
+further trained on data from each individual class to learn 
+class -specific knowledge. However, the binary classifiication 
+task in this stage could be too easy for the discriminator to 
+gain substantial discriminative capacity and providing 
+sufficient feedback to train the generator. Thus, a more 
+challenging task is assigned to the discriminator by 
+employing self -supervised learning in the second stage to 
+prevent overfitting. Furthermore, Freeze -D is also adopted to 
+enhance training stability and improve knowledge transfer 
+performance.  
+1) SELF -SUPERVISED LEARNING  
+Recent researches [62], [63], [64]  in self -supervised learning 
+have shown that maximizing the agreement of different views (where views refer to same image go through different 
+data augmentations) can facilitate the learning of informative 
+and rich semantic feature representations by model. Drawing 
+inspiration from this insight, STGAN  integrate self -
+supervised learning into the discriminator in second stage. 
+The advantage of employ self -supervised learning is twofold. 
+First, if the discriminator is able to learn semantically -rich 
+features, it will also be better at distinguishing real data from 
+generated data, thereby prompting the generator to produce 
+high-quality images. Second, enforcing the discriminator to 
+learn high -quality features elevates the difficulty of its 
+learning task, thereby preventing the discriminator from 
+memorizing data in very limited samples and mitigating the 
+risk of overfitting. By applying self -supervised learning, 
+STGAN  can effectively leverage the limited samples in 
+underrepresented classes, making the most out of the 
+available data and improving the performance  in handling 
+imbalanced dataset.  
+FIGURE 5.  The framework of Barlow Twins.  Two different data 
+augmentation methods are applied to both real samples and generated 
+samples. The two feature vectors extracted by the penultimate layer of 
+the discriminator are used to compute the cross -correlation matrix 
+(cross -corr.), which is then compared with the identity matrix (target 
+cross -corr.) to calculate the loss.  
+ 
+Specifically,  Barlow Twins [41] is intergrated int o the 
+discriminator (Fig. 5), as it offers simplicity and does not 
+require a large batch size. The core idea of Barlow Twins is 
+to ensure maximam similarity and minimal information 
+redundancy between feature vectors obtained from different 
+views through a shared feature extractor. For a given batch 
+input 
+()kX  from class k, two views 
+()k
+aX and 
+()k
+bX are 
+obtaind through two different data augmentations. These two 
+different views are further input to the discriminator to get 
+feature representations 
+()k
+aY  and 
+()k
+bY  (output of the 
+penultimate layer of the discriminator) . Note that w e assume 
+()k
+aY
+ and 
+()k
+bY  are mean -centered along the batch dimension 
+for notational convenience. These two feature representations 
+are then used to calculate the empirical cross -correlation 
+matrix given as:  
+ 
+()()( ) ( ) ( ) ( )
+( ) ( ) ( ) ( )( ) ( )
+,,
+2( , ) ( , )
+()
+,()
+2()
+,kk kk
+aa bb
+k k k k
+aa bbkk
+a i b j
+y y Y Y
+k
+ak
+ij
+k
+i
+y ybj
+Y Yyyy
+y
+ 
+C
+  (4) 
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+where 
+i ,
+j index the vector dimension. The loss is given as:  
+ 
+( ) ( ) 2 ( ) 2(1 ) ( ) ,
+ssk k k
+ii ij
+i i j i
+= − +  CC
+  (5) 
+where 
+  is a scaling factor.  
+The final training loss function of STGAN in stage two is:  
+ 
+( ) ( ) ( ),k k k
+GAN gan ss ss =+
+  (6) 
+where 
+ss  is a balancing hyperparameter.   
+2) FREEZE -D 
+Freeze -D [42] is employed to stabilize the training process in 
+the second stage and enhance the performance of knowledge 
+transfer. Freeze -D achieves this by freezing the top 
+n
+highes t-resolution layers of the discriminator during the 
+transfer process, which has recently demonstrated strong 
+results.  One thing should be noted that, Freeze -D was 
+originally proposed for knowledge transfer between different 
+domains, whereas STGAN  utilize it for transfer universal 
+knowledge to class -specific knowledge in one domain.  
+C. STGAN -BASED SKIN LESION CLASSIFICATION 
+FRAMEWORK  
+Fig. 3 shows an overview of the proposed STGAN -based 
+automated multi -class imbalanced skin lesion dermoscopy 
+image classification framework, where STGAN is employed 
+as a data augmentation method to improve the classification 
+results.  
+FIGURE 6.  Architecture of CNN classifier. (a) ResNet50. (b) T -ResNet50 . 
+ In this work, 50 -layer ResNet (Deep Residual Networks)  
+[43] is chosen as a CNN classifier. ResNet first introduced 
+residual connections in DNNs, which addresses issues such 
+as gradient vanishing and gradient explosion encountered in 
+DNNs. This enables the training of very deep neural 
+networks without compromising performance and has 
+demenstraed excellent performance on various computer 
+vision tasks, including skin lesion classification [65], [66], 
+[67], [68] . Instead of training ResNet50 from scratch, we 
+utilize transfer learning and initialize ResNet50 with 
+ImageNet pre -trained weights (T -ResNet50) . Additionally, 
+the original single fully connected layer in ResNet50 is 
+replaced with two fully connected layers.  The first fully 
+connected layer maps the 2048 -dimensional output from the 
+flatten layer to a 128 -dimensional vector, while the second 
+fully connected layer maps this 128 -dimensional vector to 7 
+logits corresponding to the 7 classes in the HAM10000 
+dataset (see Fig. 6(b)). 
+As shown in Fig. 3, the training set is used to train the 
+STGAN, and then the synthetic samples generated by 
+STGAN are combined with the training set to further train 
+the T -ResNet50 model. In the testing phase, instead of 
+presenting the trained T -ResNet50 with the origin testing 
+image, TTA is employed to further boost the classification 
+performance. Concretely, we repeatedly introduce the TDA 
+augmented images to the model, and compute the average 
+predictions for each corresponding image and utilize this 
+aggregated prediction as the ultimate inference.  
+IV. EXPERIMENTS AND RESULTS  
+Both image generation and classification experiments are 
+conducted to assess the effectiveness of the proposed method. 
+The recent state -of-the-art cSG2 is chosen as the baseline. In 
+subsection IV -E, quantitative and qualitative studies of 
+STGAN and the baseline in terms of image generation 
+performance are provided. In subsection IV -F, the 
+performance of the STGAN -based framework on skin lesion 
+image classification is investigated.  
+A. DATASET  
+ 
+TABLE  I THE CLASS DISTRIBUTION FOR HAM10000  DATASET  
+Category  Total  Train  Test 
+MEL 1113 890 223 
+NV 6705 5364 1341 
+BCC 514 411 103 
+AKIEC  327 262 65 
+BKL 1099 879 220 
+DF 115 92 23 
+VASC  142 114 28 
+ 
+The proposed  method  is evaluate d on HAM10000 dataset , 
+which is a publicly available dataset. The dataset is heavily 
+imbalanced. It consists of 10,015 dermoscopic skin lesion 
+images from seven skin diseases with a resolution of 
+600 450
+ pixels. For fair comparison, t his study  follow s 
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+[22], [27], [69], [70], [71]  and split the HAM10000 dataset  
+into a training and test set by the proportion of 8:2, each 
+containing 8012 images and 2003 images, respectively 
+(Table I).  These works are followed  based on two reasons. 
+First, s imilar to this research , the works in [22], [27]  also 
+employed GAN -based data augmentation method to mitigate 
+limited data and class imbalance problem.  Second, very 
+recent works in [69], [70], [71]  have demonstrated notable 
+performance in the field of skin lesion classification.    
+B. EVALUATION METRICS OF GAN  
+In this work, following metrics are used for quantitative 
+assessment of the performance introduced by STGAN in 
+image generation.  
+1) FRÉCHET INCEPTION DISTANCE (FID)  
+FID is the 2 -Wasserstein distance between the real image 
+distribution 
+rp and the generated image distribution 
+gp . It 
+measures the similarity between these two distributions to 
+access the quality of the generated images and is given by:  
+ 
+()2
+2
+1/2FID( , )
+2,rg
+rg rgr g p p
+pp pppp
+Trace C C C C=−
++ + −  (7) 
+where 
+{ , },{ , }r r g gp p p pCC are the mean and covariance of 
+the final feature vectors extracted by Inception Network [45] 
+from real image and generated image, repectively. A lower 
+FID score indicates that the generated images are more 
+similar to the real images in terms of their high -level features.  
+2) INCEPTION SCORE (IS)  
+The Inception Score (IS) [72] is another commonly used 
+metric for GAN evaluation. It is given by:  
+ 
+( )g~  IS exp [ ( ( ) ( ))] ,
+g X p g KL p X p E yy = ∣‖  (8) 
+where 
+gX is a sample synthesized by generator 
+G , 
+() g p y X∣
+ is the conditional label distribution of sample 
+gX  
+captured by a pretrained Inception Network on ImageNet, 
+and 
+()py  is the margin distribution of class label.  
+The intuition of Inception Score is a high -performance 
+generator should be able to generate varied images (high 
+entropy of 
+()py ) with meaningful objects (low entropy of 
+() g p y X∣
+). 
+3) PRECISION AND RECALL  
+This study  use improved Precision and Recall [73], as this 
+study aim to mitigate the the mode collapse problem of 
+minority classes and low recall indicates mode collapse [74]. 
+Precision and Recall are estimated from the manifolds in 
+feature space of real data and generated data. Precision 
+quantifies the proportion of generated manifold covered by 
+real data, while Recall denotes the proportion of real data 
+manifold covered by the generator.  
+Concretely, a pre -trained VGG16 is utilized to extract 
+features from data and create two feature sets: real data 
+feature sets 
+rΩ  and generated feature sets 
+gΩ . Then a 
+binary function is defined as  
+()2 21,  . N ,  ( , )
+0,  otherwise, kf         −  −=
+Ω ΩΩ (9) 
+where 
+{ , } rgΩΩΩ , and 
+() N,kΩ  is the 
+thk nearest 
+feature of 
+  from 
+Ω . Precision and Recall are defined as  
+ 
+() ()1,,
+ggr g g r
+gPrecision f
+
+=
+ΩΩΩ Ω
+Ω  (10) 
+ 
+() ()1,,
+rrg rg r
+rRecall f
+
+=
+ΩΩΩ ΩΩ   (11) 
+C. EVALUATION METRICS OF CLASSIFICATION  
+The classification performance is assessed in terms of 
+Accuracy, Sensitivity, Precision , F1-score and Specificity. 
+The definitions of all these metrics are presented below:  
+ 
+TP TNAccuracyTP FP TN FN+=+++  (12) 
+ 
+TPSensitivityTP FN=+  (13) 
+ 
+TPPrecisionTP FP=+  (14) 
+ 
+21Precision RecallF scorePrecision+ Recall−=  (15) 
+ 
+TNSpecificityFP TN=+  (16) 
+where TP is true positive, denotes the number of positive 
+samples correctly classified as positive; TN is true negative, 
+denotes the number of negative samples correctly classified 
+as negative; FP is false positive, denotes the number of 
+negative samples misclassified as postive; FN is false negtive, 
+denotes the number of positive samples misclassified as 
+negative.  
+D. EXPERIMENTAL SETUP  
+For all image generation experiments, this study  use the 
+official Pytorch [75] implementation of cSG2  as the base 
+framework. Adaptive Discriminator Augmentation (ADA) 
+[40] is also employed  in the GAN training. For both the 
+generator and discriminator network, the learning rate is set 
+to 0.0025. The projector network of Barlow Twins in original 
+paper  is omitted  for simplicity. The original 
+600 450  
+pixels images of HAM10000 dataset are first center -cropped 
+to 
+450 450  pixels and then resized to 
+256 256  pixels. 
+Fig. 2(a) shows some sample images after this pre -processing.  
+All classification experiments employ momentum 
+optimizer (SGD) with momentum 0.9, learning rate 0.02 with 
+a consin annealing strategy [76], and a batch size of 128. For 
+both STGAN and cSG2 based augmentation , 18,500 
+synthesis images are added to the training set, 500 for NV, 
+3,000 for each of the other categories. Since ResNet50 is 
+employed, both real images and generated images are resized 
+to 
+224 224 pixels before training. All experiments are 
+conducted on one NVIDIA Tesla V100 GPU.  This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+TABLE  II EVALUATION RESULTS OF PROPOSED STGAN  AND C SG2  IN IMAGE GENERATION  
+ 
+Class  FID↓   
+IS↑  
+Precision↑   
+Recall↑  
+cSG2  STGAN   
+cSG2  STGAN   
+cSG2  STGAN   
+cSG2  STGAN  
+MEL  40.35  33.57   
+3.12 3.53  
+0.71 0.76  
+0.22 0.29 
+NV 19.94  17.20   
+2.88 2.91  
+0.74 0.77  
+0.26 0.34 
+BCC 47.94  41.99   
+2.62 3.15  
+0.73 0.81  
+0.23 0.23 
+AKIEC  71.61  62.33   
+3.19 3.63  
+0.76 0.77  
+0.14 0.23 
+BKL 45.92  32.91   
+3.27 3.85  
+0.69 0.76  
+0.19 0.30 
+DF 99.26  84.02   
+2.73 3.49  
+0.83 0.83  
+0.13 0.15 
+VASC  96.91  83.67   
+2.32 2.74  
+0.84 0.83  
+0.06 0.19 
+Average  60.28  50.81   
+2.88 3.33  
+0.76 0.79  
+0.18 0.25 
+↓ means lower is better, ↑ means higher is better  
+FIGURE 7.  Visual comparison of GANs. The following strategy for image selection  is employed . First, four distinct modes are chosen from real images 
+(first row). Then , 1000 images  are generated  using both cSG2 and STGAN methods and the  image that visually resembl e real images most closely  is 
+selected  (second and third rows). (a) AKIEC. (b) DF. (c) VASC . 
+ 
+E. THE PERFORMANCE OF STGAN IN SKIN LESION 
+SYNTHESIS  
+1) QUANTITATIVE EVALUATION  
+Both STGAN and baseline are trained on the training set of 
+HAM10000 introduced before and generated 
+256 256  
+pixels images. They are evaluated quantitatively by the above 
+evaluation metrics. The metrics for each class obtained by 
+STGAN and cSG2 are presented in Table II.  
+Based on experimental outcomes in Table II, it can be 
+observed that STGAN achieves lower FID (smaller score 
+means a better model) and higher Inception Score across all 
+seven classes compared to cSG2, leading to an improvement  
+of 15.71% in average FID and 15.63% in average Inception 
+Score, indicating that STGAN generates more realistic and 
+diverse semantically meaningful images than baseline.  
+Further, for cSG2, categories with significantly low 
+training sample sizes, such as AKIEC, DF, and VASC, tend 
+to exhibit high Precision but low Recall. This phenomenon 
+strongly signals the presence of mode collapse. STGAN 
+substantially enhances the Recall of these three categories, 
+while simultaneously maintaining their Precision. This indicates that STGAN can effectively mitigate mode collapse 
+issues for minority classes.  
+2) QUALITATIVE EVALUATION  
+FIGURE 8.  High -frequency ripple artifacts in generated samples of 
+cSG2 . 
+ 
+A side-by-side comparison of generated images produced by 
+cSG2 and STGAN for three minority classes  is presented  in 
+Fig. 7. The visual inspection clearly highlights a noticeable 
+disparity in the quality of the generated images between 
+cSG2 and STGAN. Notably, images generated by STGAN 
+exhibit a comparable level of fidelity and detail as real 
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+images, while cSG2 fails to generate some modes of the 
+training images. Furthermore, high -frequency ripple artifacts 
+are observed in the synthetic  images generated by cSG2 (Fig. 
+8). These images lack fine -grained details, which limits the 
+improvement in performance for downstream skin disease 
+diagnostic tasks (subsection IV -F). F. THE PERFORMANCE OF STGAN IN CNN -BASED 
+MULTI -CLASS CLASSIFICATION  
+1) CLASSIFICATION RESULTS O F DIFFERENT 
+METHODS  
+For a comprehensive analysis of STGAN and other key 
+components (T -ResNet50 and TTA) of the proposed image 
+ 
+TABLE  III OVER ALL CLASSIFICATION RESULTS (%) OF DIFFERENT METHODS  
+Method  Accuracy  Sensitivity  Precision  F1-score  Specificity  
+ResNet50  94.72  62.08  68.27  64.04  95.11  
+T-ResNet50  97.76  83.81  87.42  85.43  97.91  
+T-ResNet50 + cSG2  97.65  83.81  88.19  85.83  97.79  
+T-ResNet50 + STGAN  97.86  87.18  90.29  88.62  98.06  
+T-ResNet50 + cSG2 + TTA  97.86  85.98  89.65  87.64  97.93  
+T-ResNet50 + STGAN + TTA  98.23  88.85  90.23  89.48  98.34  
+ 
+TABLE  IV COMPARISION RESULTS OF DIFFERENT METHODS  ON EACH CLASS  
+Metric  Method  MEL  NV BCC  AKIEC  BKL  DF VASC  Macro Average  
+ACC  ResNet50  91.46  88.32  96.51  96.61  91.46  98.90  99.80  94.72  
+T-ResNet50  96.41  95.46  98.55  98.25  96.16  99.70  99.80  97.76  
+T-ResNet50 + cSG2  96.06  94.96  98.55  98.55  95.86  99.60  99.95  97.65  
+T-ResNet50 + STGAN  95.86  95.16  98.80  98.85  96.61  99.75  100.00  97.86  
+T-ResNet50 + cSG2 + TTA  96.31  95.16  98.85  98.55  96.51  99.70  99.95  97.86  
+T-ResNet50+ STGAN  + TTA  96.61  96.06  99.10  98.60  97.55  99.75  99.95  98.23  
+Sensitivity  ResNet50  53.81  93.36  63.11  49.23  60.45  21.74  92.86  62.08  
+T-ResNet50  77.13  97.91  88.35  64.62  83.18  82.61  92.86  83.81  
+T-ResNet50 + cSG2  76.23  97.46  85.44  75.38  81.82  73.91  96.43  83.81  
+T-ResNet50 + STGAN  82.06  96.87  81.55  76.92  85.91  86.96  100.00  87.18  
+T-ResNet50 + cSG2 + TTA  77.13  97.61  91.26  78.46  82.73  78.26  96.43  85.98  
+T-ResNet50+ STGAN  + TTA  83.41  97.84  87.38  73.85  88.18  91.30  100.00  88.85  
+Precision  ResNet50  63.83  89.62  67.01  47.76  61.29  55.56  92.86  68.27  
+T-ResNet50  89.12  95.42  84.26  77.78  82.06  90.48  92.86  87.42  
+T-ResNet50 + cSG2  86.73  95.12  86.27  79.03  80.72  89.47  100.00  88.19  
+T-ResNet50 + STGAN  80.97  95.94  94.38  86.21  83.63  90.91  100.00  90.29  
+T-ResNet50 + cSG2 + TTA  88.21  95.27  87.04  77.27  85.05  94.74  100.00  89.65  
+T-ResNet50+ STGAN  + TTA  85.71  96.33  94.74  81.36  89.40  87.50  96.55  90.23  
+F1-score  ResNet50  58.39  91.45  65.00  48.48  60.87  31.25  92.86  64.04  
+T-ResNet50  82.69  96.65  86.26  70.59  82.62  86.36  92.86  85.43  
+T-ResNet50 + cSG2  81.15  96.28  85.85  77.17  81.26  80.95  98.18  85.83  
+T-ResNet50 + STGAN  81.51  96.40  87.50  81.30  84.75  88.89  100.00  88.62  
+T-ResNet50 + cSG2 + TTA  82.30  96.43  89.10  77.86  83.87  85.71  98.18  87.64  
+T-ResNet50+ STGAN  + TTA  84.55  97.08  90.91  77.42  88.79  89.36  98.25  89.48  
+Specificity  ResNet50  96.18  78.10  98.32  98.19  95.29  99.80  99.90  95.11  
+T-ResNet50  98.82  90.48  99.11  99.38  97.76  99.90  99.90  97.91  
+T-ResNet50 + cSG2  98.54  89.88  99.26  99.33  97.59  99.90  100.00  97.79  
+T-ResNet50 + STGAN  97.58  91.69  99.74  99.59  97.92  99.90  100.00  98.06  
+T-ResNet50 + cSG2 + TTA  98.71  90.18  99.26  99.23  98.21  99.95  100.00  97.93  
+ This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+processing framework for skin lesion diagnosis, a detailed 
+ablation study is provided in  Table III.  
+According to experimental results in Table III,  the 
+following observations  are made . First, T -ResNet50  outperforms  ResNet50 across all five metrics. The 
+underlying reason for this observation is that ResNet50 has 
+over 23 million parameters, making it challenging to 
+effectively fit to a  limited dataset  like HAM10000,  
+FIGURE 9.  Confusion matrix of the classification methods. (a) ResNet50. (b) T -ResNet50. (c) T -ResNet50 + cSG2. (d) T -ResNet50 + STGAN. (e) T -
+ResNet50 + cSG2 + TTA. (f) T -ResNet50 + STGAN + TTA . 
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+TABLE V Classification Performance (%) Comparison of SOTA Methods on HAM10000 Dataset.  
+Reference (Year)  Accuracy  Sensitivity  Precision  F1-Score  Specificity  
+Nozdryn -Plotnicki , et al.  [77] (2018)  95.8 83.3 82.6 82.3 98.6 
+Gessert , et al.  [78] (2018)  97.2 80.9 88.8 84.1 98.4 
+Zhuang , et al.  [79] (2018)  96.8 80.4 86.1 83.0 98.0 
+Rashid , et al.  [27] (2019)  - 82.86 84.43 83.44 - 
+Qin, et al.  [22] (2020)  95.2 74.3 76.9 73.2 96.6 
+Hoang , et al.  [69] (2022)  95.66  70.71  75.15  72.61  96.03  
+Wei, et al.  [70] (2023)  - 83.81  83.75  83.45  - 
+Anand , et al.  [71] (2023)  97.96  84.86  88.47  - 97.93  
+T-ResNet50 + STGAN + TTA  98.23  88.85  90.23  89.48  98.34  
+Best results are in boldface.       
+ 
+whereas T -ResNet50 with pre -trained knowledge from 
+ImageNet reduces the demand for the number of training data. 
+Second, STGAN -based augmentation can enhance the 
+classification results of T -ResNet50, and improve all  
+evaluation metrics, particularly in Sensitivity, Precision and 
+F1-score, which is improved by 4%, 3.3% and 3.73%, 
+respectively. On the contrary , cSG2 -based augmentation 
+does not show an obvious advantage over T -ResNet50, and 
+even Accuracy and Specificity are worse. Third , TTA can 
+further boost the classification performance of GAN -based 
+augmentation. After applying TTA, the proposed method 
+achieved the highest Accuracy,  Sensitivity, F1 -score, and 
+Specificity. Compared to T -ResNet50, it improved by 0.48%, 
+6.02%, 3.21%, 4.74%, and 0.44% in Accuracy, Sensitivity, 
+Precision, F1 -score, and Specificity , respectively. Compared 
+to ResNet50, it showed improvements of 3.7%, 43.12%, 
+32.15%, 39.71%, and 3.4%, respectively.  
+It is worth noting that the proposed  method improves the 
+Sensitivity of both ResNet50 and T -ResNet50 by a large 
+margin, which is crucial in clinical diagnosis of skin diseases, 
+as it indicates a high number of true positives and a low 
+number of false negatives. Consequently, the risk of missing 
+relevant disease cases is minimized, ensuring fewer cases are 
+overlooked during diagnosis.  
+Further, the performance of different methods on each 
+class is reported in Table IV , and the confusion matrix  is 
+presented  in Fig. 9. One observation is that the classification 
+result of ResNet50 is heavily affected by uneven distribution 
+of the dataset, as it only correctly classifies 5 out of 23 DF 
+samples and 32 out of 65 AKIEC samples (Fig. 9(a)), leading 
+to poor overall performance on average Sensitivity (62.08%), 
+Precision (68.27%) and F1 -score (64.04%). T -ResNet50 is 
+less affected by data imbalance, and significantly improves 
+its recognition capability for these two classes. On the basis 
+of T-ResNet50, by adding STGAN generated images to the training set, the Accuracy, Sensitivity, Precision, and F1 -
+score of AKIEC, BKL, DF, VASC are all improved. 
+Furthermore, with the additional use of TTA , the true postive 
+for MEL, BKL, DF and VASC reach their maximum values 
+leading to the highest average Accuracy, Sensitivity, F1 -
+score and Specificity values among all six methods.  
+2) COMPARISON WITH OTHER WORKS  
+Table V presents a comparison between the proposed method 
+and recent SOTA works in the field of skin lesion 
+classification. The works in  [77], [78], [79]  correspond to the 
+top three winners’ team of ISIC 2018 Challenge , which use 
+HAM10000 dataset as training set [80], representing a high 
+level of performance in this classification task. The works in  
+[22], [27], [69], [70], [71]  correspond to recent representative 
+methods from the literature. It should be noted that,  the ISIC 
+2018 Challenge provided the HAM10000 dataset as training 
+data, with additional  testing data not included in the original 
+dataset . Same as this study, the works in [22], [27], [69], [70], 
+[71] also divided the HAM10000 dataset into training and 
+testing sets using an 8:2 ratio.  
+Although the Specificity  of the proposed method  is 
+slightly lower  than [77], [78] , these two works  utilized 
+additional data during the training process.  An additional  
+proprietary dataset which has 33,644 samples was utilized in 
+in [77] and another public dataset with roughly 13,500 
+images was utilized in [78]. The proposed method 
+outperforms their Sensitivity, Precision and F1 -score by a 
+large margin without using any additional data. The work s in 
+[22], [27]  also employed GAN -based data augmentation 
+method to mitigate limited data and class imbalance problem.  
+However, [22] did not  explore the universal knowledge 
+between different classes, and [27] overlooked the mode 
+collapse problem in conditional GAN arising from  data 
+imbalance . This leading to a limited improvement of This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+classification performance  in [22], [27] . Anand , et al.  [71] 
+utilized a U -Net model to segment the disease before 
+classification and achieved a high accuracy of 97.96%. 
+However, training the U -Net model needs pixel -level 
+annotations, which entail additional workload in practical 
+applications.   
+ 
+TABLE  VI COMPARATIVE ANALYSIS OF SENSITIVITY OF MELANOMA 
+BETWEEN PROPOSED METHOD AND SOTA  METHODS . 
+Reference ( Year)  Sensitivity  
+Nozdryn -Plotnicki , et al.  [77] (2018)  76 
+Gessert , et al.  [78] (2018)  80.1 
+Zhuang , et al.  [79] (2018)  70.2 
+Rashid , et al.  [27] (2019)  79 
+Qin, et al.  [22] (2020)  78.5 
+Hoang , et al.  [69] (2022)  64.13  
+Wei, et al.  [70] (2023)  81.45  
+Anand , et al.  [71] (2023)  76 
+T-ResNet50  + STGAN + TTA  83.41  
+Best results are in boldface .  
+ 
+Furthermore, since melanoma is the most dangerous and 
+accounts for the highest number of deaths among all skin 
+cancers, improving Sensitivity for melanoma means reduce 
+the risk of malanoma patients being misdiagnosed as other 
+skin diseases. The proposed method is compared to SOTA  
+methods for melanoma Sensitivity in Table VI.  This study  
+achieve s the highest Sensitivity. This indicates that the 
+proposed method  has the potential to contribute to the 
+development of accurate and robust automated skin lesion 
+diagnosis systems, thereby improving the survival chances of 
+melanoma patients.  
+V. CONCLUSION AND FUTURE WORK  
+In this paper, a two -stage GAN -based data augmentation 
+method is proposed to enhance the classification performance 
+of imbalanced skin lesion dataset. The proposed method 
+decouples the learning of universal knowledge and class -
+specific knowledge to mitigate mode collapse of minority 
+classes. Additionally, self -supervised learning is introduced 
+to improve sample efficiency, and Freeze -D is applied to 
+enhance stability during the learning of class -specific 
+knowledge.  Based on the proposed GAN -based data 
+augmentation method, a framework to enhance the 
+classification performance is established. E xperimental 
+results on HAM10000 dataset showing that the proposed 
+method can generate diverse and visually -appealing images 
+and can provide additional information to improve the 
+classification results. Accordingly, this study  can aid in the 
+development of automated skin disease diagnosis system and 
+contribute to improving the survival rates of individuals with 
+skin cancer. A limitation of this study  is that due to the 
+presence of natural artifacts, such as hair and veins, in the original training images, images  generated by the proposed 
+method  also retain these artifacts. These artifacts may 
+occlude the skin lesions and potentially cause the degradation 
+of the classification performance. As a future direction, we 
+intend to explore the use of image inpainting techniques to 
+remove these natural artifacts before training and further 
+boost the performance of GAN -based data augmentation in 
+CNN -based classification.  
+REFERENCES  
+[1] R. L. Siegel, K. D. Miller, H. E. Fuchs, and A. Jemal, "Cancer 
+statistics, 2021," CA. Cancer J. Clin., vol. 71, no. 1, pp. 7 -33, 2021.  
+[2] H. W. Rogers, M. A. Weinstock, S. R. Feldman, and B. M. Coldiron, 
+"Incidence estimate of nonmelanoma skin cancer (keratinocyte 
+carcinomas) in the US population, 2012," JAMA dermatology, vol. 
+151, no. 10, pp. 1081 -1086, 2015.  
+[3] A. ACS, "Cancer Facts & Figures 2022," American Cancer Society, 
+National Home Office, Atlanta, 2022.  
+[4] A. C. Society, "Key statistics for basal and squamous cell skin 
+cancers," 2019.  
+[5] M. Vestergaard, P. Macaskill, P. Holt, and S. Menzies, "Dermoscopy 
+compared with naked eye examination for the diagnosis of primary 
+melanoma: a meta ‐analysis of studies performed in a clinical 
+setting," Br. J. Dermatol., vol. 159, no. 3, pp. 669 -676, 2008.  
+[6] M. Binder  et al. , "Epiluminescence microscopy: a useful tool for the 
+diagnosis of pigmented skin lesions for formally trained 
+dermatologists," Arch. Dermatol., vol. 131, no. 3, pp. 286 -291, 1995.  
+[7] P. Tschandl, C. Rosendahl, and H. Kittler, "The HAM10000 dataset, 
+a large collection of multi -source dermatoscopic images of common 
+pigmented skin lesions," Scientific data, vol. 5, no. 1, pp. 1 -9, 2018.  
+[8] O. Russakovsky  et al. , "Imagenet large scale visual recognition 
+challenge," International journal of computer vision, vol. 115, pp. 
+211-252, 2015.  
+[9] V. Sampath, I. Maurtua, J. J. Aguilar Martin, and A. Gutierrez, "A 
+survey on generative adversarial networks for imbalance problems in 
+computer vision tasks," Journal of big Data, vol. 8, pp. 1 -59, 2021.  
+[10] J. M. Johnson and T. M. Khoshgoftaar, "Survey on deep learning 
+with class imbalance," Journal of Big Data, vol. 6, no. 1, pp. 1 -54, 
+2019.  
+[11] A. Ali, S. M. Shamsuddin, and A. L. Ralescu, "Classification with 
+class imbalance problem," Int. J. Advance Soft Compu. Appl, vol. 5, 
+no. 3, pp. 176 -204, 2013.  
+[12] H. He and E. A. Garcia, "Learning from imbalanced data," IEEE 
+Transactions on knowledge and data engineering, vol. 21, no. 9, pp. 
+1263 -1284, 2009.  
+[13] G. Douzas, F. Bacao, and F. Last, "Improving imbalanced learning 
+through a heuristic oversampling method based on k -means and 
+SMOTE," Information Sciences, vol. 465, pp. 1 -20, 2018.  
+[14] T. Jo and N. Japkowicz, "Class imbalances versus small disjuncts," 
+ACM Sigkdd Explorations Newsletter, vol. 6, no. 1, pp. 40 -49, 2004.  
+[15] R. C. Holte, L. Acker, and B. W. Porter, "Concept Learning and the 
+Problem of Small Disjuncts," in IJCAI , 1989, vol. 89, pp. 813 -818.  
+[16] G. M. Weiss, "The impact of small disjuncts on classifier learning," 
+in Data Mining: Special Issue in Annals of Information Systems : 
+Springer, 2009, pp. 193 -226. 
+[17] C. Shorten and T. M. Khoshgoftaar, "A survey on image data 
+augmentation for deep learning," Journal of big data, vol. 6, no. 1, 
+pp. 1 -48, 2019.  
+[18] M. K. Hasan, M. A. Ahamad, C. H. Yap, and G. Yang, "A survey, 
+review, and future trends of skin lesion segmentation and 
+classification," Comput. Biol. Med., p. 106624, 2023.  
+[19] F. Perez, C. Vasconcelos, S. Avila, and E. Valle, "Data augmentation 
+for skin lesion analysis," in OR 2.0 Context -Aware Operating 
+Theaters, Computer Assisted Robotic Endoscopy, Clinical Image -
+Based Procedures, and Skin Image Analysis : Springer, 2018, pp. 
+303-311. 
+[20] T.-C. Pham, C. -M. Luong, M. Visani, and V. -D. Hoang, "Deep CNN 
+and data augmentation for skin lesion classification," in Intelligent 
+Information and Database Systems: 10th Asian Conference, ACIIDS This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+2018, Dong Hoi City, Vietnam, March 19 -21, 2018, Proceedings, 
+Part II 10 , 2018: Springer, pp. 573 -582.  
+[21] C. N. Vasconcelos and B. N. Vasconcelos, "Experiments using deep 
+learning for dermoscopy image analysis," Pattern Recognition 
+Letters, vol. 139, pp. 95 -103, 2020.  
+[22] Z. Qin, Z. Liu, P. Zhu, and Y. Xue, "A GAN -based image synthesis 
+method for skin lesion classification," Comput. Methods Programs 
+Biomed., vol. 195, p. 105568, 2020.  
+[23] A. Mikołajczyk and M. Grochowski, "Data augmentation for 
+improving deep learning in image classification problem," in 2018 
+international interdisciplinary PhD workshop (IIPhDW) , 2018: IEEE, 
+pp. 117 -122.  
+[24] S.-C. Huang, A. Pareek, M. Jensen, M. P. Lungren, S. Yeung, and A. 
+S. Chaudhari, "Self -supervised learning for medical image 
+classification: a systematic review and implementation guidelines," 
+NPJ Digital Medicine, vol. 6, no. 1, p. 74, 2023.  
+[25] I. Goodfellow  et al. , "Generative Adversarial Networks.," in 
+Proceedings of NIPS 2014: International Conference on Neural 
+Information Processing Systems , 2014, pp. 2234 -2242.  
+[26] I. S. A. Abdelhalim, M. F. Mohamed, and Y. B. Mahdy, "Data 
+augmentation for skin lesion using self -attention based progressive 
+generative adversarial network," Expert Systems with Applications, 
+vol. 165, p. 113922, 2021.  
+[27] H. Rashid, M. A. Tanveer, and H. A. Khan, "Skin lesion 
+classification using GAN based data augmentation," in 2019 41st 
+Annual International Conference of the IEEE Engineering in 
+Medicine and Biology Society (EMBC) , 2019: IEEE, pp. 916 -919.  
+[28] L. M. Shoohi and J. Saud, "Dcgan for handling imbalanced malaria 
+dataset based on over -sampling technique and using cnn," Medico -
+Legal Update, vol. 20, pp. 1079 -1085, 2020.  
+[29] A. A. Teodoro  et al. , "A skin cancer classification approach using 
+GAN and RoI -based attention mechanism," Journal of Signal 
+Processing Systems, vol. 95, no. 2 -3, pp. 211 -224, 2023.  
+[30] X. Yi, E. Walia, and P. Babyn, "Unsupervised and semi -supervised 
+learning with categorical generative adversarial networks assisted by 
+wasserstein distance for dermoscopy image classification," arXiv 
+preprint arXiv:1804.03700, 2018.  
+[31] M. Mirza and S. Osindero, "Conditional generative adversarial nets," 
+arXiv preprint arXiv:1411.1784, 2014.  
+[32] A. Odena, C. Olah, and J. Shlens, "Conditional image synthesis with 
+auxiliary classifier gans," in International conference on machine 
+learning , 2017: PMLR, pp. 2642 -2651.  
+[33] T. Miyato and M. Koyama, "cGANs with projection discriminator," 
+arXiv preprint arXiv:1802.05637, 2018.  
+[34] S. Santurkar, L. Schmidt, and A. Madry, "A classification -based 
+study of covariate shift in gan distributions," in International 
+Conference on Machine Learning , 2018: PMLR, pp. 4480 -4489.  
+[35] S. Ravuri and O. Vinyals, "Classification accuracy score for 
+conditional generative models," Advances in neural information 
+processing systems, vol. 32, 2019.  
+[36] A. Brock, J. Donahue, and K. Simonyan, "Large scale GAN training 
+for high fidelity natural image synthesis," arXiv preprint 
+arXiv:1809.11096, 2018.  
+[37] T. Karras, S. Laine, M. Aittala, J. Hellsten, J. Lehtinen, and T. Aila, 
+"Analyzing and improving the image quality of stylegan," in 
+Proceedings of the IEEE/CVF conference on computer vision and 
+pattern recognition , 2020, pp. 8110 -8119.  
+[38] H. Rangwani, N. Jaswani, T. Karmali, V. Jampani, and R. V. Babu, 
+"Improving GANs for Long -Tailed Data Through Group Spectral 
+Regularization," in Computer Vision –ECCV 2022: 17th European 
+Conference, Tel Aviv, Israel, October 23 –27, 2022, Proceedings, 
+Part XV , 2022: Springer, pp. 426 -442.  
+[39] H. Rangwani, K. R. Mopuri, and R. V. Babu, "Class balancing GAN 
+with a classifier in the loop," presented at the Proceedings of the 
+Thirty -Seventh Conference on Uncertainty in Artificial Intelligence, 
+Proceedings of Machine Learning Research, 2021. [Online]. 
+Available: https://proceedings.mlr.press/v161/rangwani21a.html . 
+[40] T. Karras, M. Aittala, J. Hellsten, S. Laine, J. Lehtinen, and T. Aila, 
+"Training generative adversarial networks with limited data," 
+Advances in neural information processing systems, vol. 33, pp. 
+12104 -12114, 2020.  [41] J. Zbontar, L. Jing, I. Misra, Y. LeCun, and S. Deny, "Barlow twins: 
+Self-supervised learning via redundancy reduction," in International 
+Conference on Machine Learning , 2021: PMLR, pp. 12310 -12320.  
+[42] S. Mo, M. Cho, and J. Shin, "Freeze the discriminator: a simple 
+baseline for fine -tuning gans," arXiv preprint arXiv:2002.10964, 
+2020.  
+[43] K. He, X. Zhang, S. Ren, and J. Sun, "Deep residual learning for 
+image recognition," in Proceedings of the IEEE conference on 
+computer vision and pattern recognition , 2016, pp. 770 -778.  
+[44] A. Krizhevsky, I. Sutskever, and G. E. Hinton, "Imagenet 
+classification with deep convolutional neural networks," Advances in 
+neural information processing systems, vol. 25, 2012.  
+[45] C. Szegedy  et al. , "Going deeper with convolutions," in Proceedings 
+of the IEEE conference on computer vision and pattern recognition , 
+2015, pp. 1 -9.  
+[46] S. Ando and C. Y. Huang, "Deep over -sampling framework for 
+classifying imbalanced data," in Machine Learning and Knowledge 
+Discovery in Databases: European Conference, ECML PKDD 2017, 
+Skopje, Macedonia, September 18 –22, 2017, Proceedings, Part I 10 , 
+2017: Springer, pp. 770 -785.  
+[47] F. Cheng, J. Zhang, and C. Wen, "Cost -sensitive large margin 
+distribution machine for classification of imbalanced data," Pattern 
+Recognition Letters, vol. 80, pp. 107 -112, 2016.  
+[48] V. Ló pez, A. Ferná ndez, S. Garcí a, V. Palade, and F. Herrera, "An 
+insight into classification with imbalanced data: Empirical results and 
+current trends on using data intrinsic characteristics," Information 
+sciences, vol. 250, pp. 113 -141, 2013.  
+[49] H. Rangwani, L. Bansal, K. Sharma, T. Karmali, V. Jampani, and R. 
+V. Babu, "NoisyTwins: Class -Consistent and Diverse Image 
+Generation through StyleGANs," arXiv preprint arXiv:2304.05866, 
+2023.  
+[50] A. Noguchi and T. Harada, "Image generation from small datasets 
+via batch statistics adaptation," in Proceedings of the IEEE/CVF 
+International Conference on Computer Vision , 2019, pp. 2750 -2758.  
+[51] Y. Wang, A. Gonzalez -Garcia, D. Berga, L. Herranz, F. S. Khan, and 
+J. v. d. Weijer, "Minegan: effective knowledge transfer from gans to 
+target domains with few images," in Proceedings of the IEEE/CVF 
+Conference on Computer Vision and Pattern Recognition , 2020, pp. 
+9332 -9341.  
+[52] Y. Wang, C. Wu, L. Herranz, J. Van de Weijer, A. Gonzalez -Garcia, 
+and B. Raducanu, "Transferring gans: generating images from 
+limited data," in Proceedings of the European Conference on 
+Computer Vision (ECCV) , 2018, pp. 218 -234.  
+[53] J. T. Springenberg, "Unsupervised and semi -supervised learning with 
+categorical generative adversarial networks," arXiv preprint 
+arXiv:1511.06390, 2015.  
+[54] I. Gulrajani, F. Ahmed, M. Arjovsky, V. Dumoulin, and A. C. 
+Courville, "Improved training of wasserstein gans," Advances in 
+neural information processing systems, vol. 30, 2017.  
+[55] D. Gutman  et al. , "Skin lesion analysis toward melanoma detection: 
+A challenge at the international symposium on biomedical imaging 
+(ISBI) 2016, hosted by the international skin imaging collaboration 
+(ISIC)," arXiv preprint arXiv:1605.01397, 2016.  
+[56] L. M. Shoohi and J. H. Saud, "DCGAN for Handling Imbalanced 
+Malaria Dataset based on Over -Sampling Technique and using 
+CNN," Medico -Legal Update, vol. 20, no. 1, 2020.  
+[57] A. Radford, L. Metz, and S. Chintala, "Unsupervised representation 
+learning with deep convolutional generative adversarial networks," 
+arXiv preprint arXiv:1511.06434, 2015.  
+[58] C. Baur, S. Albarqouni, and N. Navab, "MelanoGANs: high 
+resolution skin lesion synthesis with GANs," arXiv preprint 
+arXiv:1804.04338, 2018.  
+[59] E. L. Denton, S. Chintala, and R. Fergus, "Deep generative image 
+models using a ￼ laplacian pyramid of adversarial networks," 
+Advances in neural information processing systems, vol. 28, 2015.  
+[60] T. Karras, S. Laine, and T. Aila, "A style -based generator 
+architecture for generative adversarial networks," in Proceedings of 
+the IEEE/CVF conference on computer vision and pattern 
+recognition , 2019, pp. 4401 -4410.  
+[61] T. Karras, T. Aila, S. Laine, and J. Lehtinen, "Progressive growing of 
+gans for improved quality, stability, and variation," arXiv preprint 
+arXiv:1710.10196, 2017.  This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+[62] M. Caron, I. Misra, J. Mairal, P. Goyal, P. Bojanowski, and A. Joulin, 
+"Unsupervised learning of visual features by contrasting cluster 
+assignments," Advances in neural information processing systems, 
+vol. 33, pp. 9912 -9924, 2020.  
+[63] T. Chen, S. Kornblith, M. Norouzi, and G. Hinton, "A simple 
+framework for contrastive learning of visual representations," in 
+International conference on machine learning , 2020: PMLR, pp. 
+1597 -1607.  
+[64] J.-B. Grill  et al. , "Bootstrap your own latent -a new approach to self -
+supervised learning," Advances in neural information processing 
+systems, vol. 33, pp. 21271 -21284, 2020.  
+[65] K. Matsunaga, A. Hamada, A. Minagawa, and H. Koga, "Image 
+classification of melanoma, nevus and seborrheic keratosis by deep 
+neural network ensemble," arXiv preprint arXiv:1703.03108, 2017.  
+[66] W. Salma and A. S. Eltrass, "Automated deep learning approach for 
+classification of malignant melanoma and benign skin lesions," 
+Multimedia Tools and Applications, vol. 81, no. 22, pp. 32643 -32660, 
+2022.  
+[67] L. Wang, L. Zhang, X. Shu, and Z. Yi, "Intra -class consistency and 
+inter-class discrimination feature learning for automatic skin lesion 
+classification," Med. Image Anal., p. 102746, 2023.  
+[68] M. A. Al -Masni, D. -H. Kim, and T. -S. Kim, "Multiple skin lesions 
+diagnostics via integrated deep convolutional networks for 
+segmentation and classification," Comput. Methods Programs 
+Biomed., vol. 190, p. 105351, 2020.  
+[69] L. Hoang, S. -H. Lee, E. -J. Lee, and K. -R. Kwon, "Multiclass skin 
+lesion classification using a novel lightweight deep learning 
+framework for smart healthcare," Applied Sciences, vol. 12, no. 5, p. 
+2677, 2022.  
+[70] M. Wei  et al. , "A Skin Disease Classification Model Based on 
+DenseNet and ConvNeXt Fusion," Electronics, vol. 12, no. 2, p. 438, 
+2023.  
+[71] V. Anand, S. Gupta, D. Koundal, and K. Singh, "Fusion of U -Net 
+and CNN model for segmentation and classification of skin lesion 
+from dermoscopy images," Expert Systems with Applications, vol. 
+213, p. 119230, 2023.  
+[72] T. Salimans, I. Goodfellow, W. Zaremba, V. Cheung, A. Radford, 
+and X. Chen, "Improved techniques for training gans," Advances in 
+neural information processing systems, vol. 29, 2016.  
+[73] T. Kynkä ä nniemi, T. Karras, S. Laine, J. Lehtinen, and T. Aila, 
+"Improved precision and recall metric for assessing generative 
+models," Advances in Neural Information Processing Systems, vol. 
+32, 2019.  
+[74] A. Sauer, K. Schwarz, and A. Geiger, "Stylegan -xl: Scaling stylegan 
+to large diverse datasets," in ACM SIGGRAPH 2022 conference 
+proceedings , 2022, pp. 1 -10.  
+[75] A. Paszke  et al. , "Pytorch: An imperative style, high -performance 
+deep learning library," Advances in neural information processing 
+systems, vol. 32, 2019.  
+[76] I. Loshchilov and F. Hutter, "Sgdr: Stochastic gradient descent with 
+warm restarts," arXiv preprint arXiv:1608.03983, 2016.  
+[77] A. Nozdryn -Plotnicki, J. Yap, and W. Yolland, "Ensembling 
+convolutional neural networks for skin cancer classification," 
+International Skin Imaging Collaboration (ISIC) Challenge on Skin 
+Image Analysis for Melanoma Detection. MICCAI, 2018.  
+[78] N. Gessert  et al. , "Skin lesion diagnosis using ensembles, unscaled 
+multi -crop evaluation and loss weighting," arXiv preprint 
+arXiv:1808.01694, 2018.  
+[79] J. Zhuang  et al. , "Skin lesion analysis towards melanoma detection 
+using deep neural network ensemble," ISIC Challenge, vol. 2018, no. 
+2, pp. 1 -6, 2018.  
+[80] N. Codella  et al. , "Skin lesion analysis toward melanoma detection 
+2018: A challenge hosted by the international skin imaging 
+collaboration (isic)," arXiv preprint arXiv:1902.03368, 2019.  
+ 
+ 
+ 
+ 
+ 
+ 
+ QICHEN SU received the B.S. degree from 
+Fuzhou University, Fujian, China, in 2012, and 
+the M.S. degree from Nankai University, Tianjin, 
+China, in 2015. He is currently pursuing the Ph.D. 
+degree in computer science at University 
+Technology Malaysia, Johor, Malaysia. His 
+research interests include generative models, 
+contrastive learning, knowledge representation, 
+and deep learning problems arising from medical 
+data.  
+HAZA NUZLY ABDULL HAMED is an 
+Associate Professor at the Department of Applied 
+Computing and Artificial Intelligence, Faculty of 
+Computing, Universiti Teknologi Malaysia 
+(UTM). He received his first degree in 
+information technology majoring in artificial 
+intelligence from Universiti Utara Malaysia, 
+master’s degree in computer science from UTM, 
+and the Ph.D. degree from the Auckland 
+University of Technology, New Zealand. He is a 
+founding member of the Applied Industrial Analytics Research Group 
+(ALIAS) UTM. Before joining UTM, he worked as a web application 
+developer and an IT officer. His research interests include machine 
+learning, computational intelligence, application development and 
+database systems.  
+MOHD ADHAM ISA is currently an Associate 
+Professor at the Department of Software 
+Engineering, Faculty of Computing, Universiti 
+Teknologi Malaysia . 
+ 
+XUE HAO received the B.S. degree from Shanxi 
+Agricultural University, Shanxi, China, in 2017, 
+and M.S. degree from Shanxi University, Shanxi, 
+China, in 2021. She is currently pursuing the 
+Ph.D. degree in computer science at University 
+Technology Malaysia, Johor, Malaysia. Her 
+research interests include computer vision, deep 
+learning related to coronary artery disease.   
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+ 
+8 VOLUME XX, 2017  
+XIN DAI  received the B.S. degree from Guizhou 
+University, Guizhou, China, in 2009, and the 
+M.S. degree from Chongqing University, 
+Chongqing, China, in 2014. He is currently 
+pursuing the Ph.D. degree in computer science at 
+Malaysia University of Technology, Malaysia. 
+His research interests include data mining, 
+pattern recognition, machine learning algorithms, 
+big data analytics, and predictive modeling.  
+ 
+ 
+This article has been accepted for publication in IEEE Access. This is the author's version which has not been fully edited and 
+content may change prior to final publication. Citation information: DOI 10.1109/ACCESS.2024.3360215
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/

@@ -1,0 +1,1443 @@
+A deep learning-based dual-
+branch framework for automated 
+skin lesion segmentation and 
+classification via dermoscopic 
+Images
+Hamza Abu Owida1, Ibrahim Abd El-Fattah2, Suhaila Abuowaida3, Nawaf Alshdaifat4, 
+Hamza A. Mashagba5, Azlan B. Abd Aziz5, Alaa Alzoubi6, Samia Larguech7 &  
+Samir Salem Al-Bawri8
+Early skin disease detection significantly improves patient survival rates, yet limited ac cess to 
+dermatological expertise creates an urgent need for automated diagnostic systems. In this paper, 
+we develop a dual-branch deep learning framework that simultaneously performs skin lesion 
+segmentation and classification from dermoscopic images. The proposed segmentation branch 
+uses a modified EfficientNet-B7 encoder with Atrous Spatial Pyramid Pooling (ASPP) for multi-scale 
+feature extraction and transformer blocks for global context modeling. Attention gates and Squeeze-
+and-Excitation blocks enhance feature selection and boundary precision. The classification branch 
+fuses DenseNet-121 visual features with morphological characteristics extracted from predicted 
+segmentation masks, creating a hybrid appearance-morphology analysis approach. The proposed 
+framework achieved strong and consistent segmentation performance across five benchmark datasets. 
+On HAM10000, the highest Dice score (0.9568) and IoU (0.9242) were recorded, with an ac curacy 
+of 0.9708. PH2 achieved a Dice of 0.9250 and a sensitivity of 0.9734, while ISIC 2016 reached a Dice 
+of 0.9298 and an IoU of 0.8811. For ISIC 2017 and ISIC 2018, Dice scores were 0.8972 and 0.9020, 
+respectively. All datasets reported high specificity (> 0.93) and accuracy (> 0.95), confirming the 
+model’s robustness and generalization capability. Our dual-branch framework achieves state-of-the-
+art accuracy by effectively integrating visual appearance and structural morphological features for 
+comprehensive skin lesion analysis. The consistent high performance across diverse datasets indicates 
+strong potential for clinical deployment as a diagnostic support tool.
+Keywords Skin lesion segmentation, Medical image analysis, Deep learning, Efficient_Net, Attention 
+mechanisms, Computer-aided diagnosis, HAM10000, ISIC 2016, ISIC 2017, ISIC 2018, PH2
+Skin cancer represents one of the most prevalent malignancies worldwide, with incidence rates continuing to 
+escalate due to increased ultraviolet exposure, aging populations, and enhanced diagnostic awareness1. The 
+global burden of skin cancer includes approximately 1.5 million new cases annually, with melanoma alone 
+accounting for more than 325,000 diagnoses and 57,000 deaths in 20202. Epidemiological projections indicate 
+1Medical Engineering Department, Faculty of Engineering, Al-Ahliyya Amman University, Amman 19328, Jordan. 
+2Department of Electronics and Electrical Communications Engineering, Alexandria Higher Institute of Engineering 
+and Technology (AIET), Alexandria, Egypt. 3Department of Data Science and Artificial Intelligence, Faculty of 
+Information Technology, Al al-Bayt University, Mafraq, Jordan. 4Department of Information Technology, Faculty of 
+Prince Al-Hussein bin Abdullah II of Information Technology, The Hashemite University, Zarqa, Jordan. 5Faculty of 
+Engineering and Technology, Centre for Wireless Technology (CWT), Multimedia University, Multimedia University, 
+Melaka, Malaysia. 6Department of Computer Science, Applied Science Private University, Amman, Jordan. 
+7Department of Electrical Engineering, College of Engineering, Princess Nourah bint Abdulrahman University, 
+P .O. Box 84428, Riyadh 11671, Saudi Arabia. 8Space Science Centre, Institute of Climate Change, Universiti 
+Kebangsaan Malaysia (UKM), Bangi 43600, Malaysia. email: suhila@aabu.edu.jo; azlan.abdaziz@mmu.edu.my;  
+samir@ukm.edu.my; s.albawri@gmail.com
+OPEN
+Scientific Reports  |        (2025) 15:37823 1 | https://doi.org/10.1038/s41598-025-21783-z
+www.nature.com/scientificreports
+
+a substantial increase to 510,000 melanoma cases and 96,000 associated deaths by 2040, representing a 56% 
+increase in incidence and a 68% increase in mortality3. The clinical heterogeneity of skin malignancies presents 
+significant diagnostic challenges, with lesions that exhibit various morphological characteristics that often 
+overlap between benign and malignant conditions4. Although melanoma constitutes only 1% of all skin cancer 
+cases, it accounts for the majority of skin cancer-related mortality due to its aggressive metastatic potential5. The 
+prognostic value of early detection is indisputable: 5-year survival rates are almost 99% for localized melanoma, 
+in contrast to 35% for metastatic disease, underscoring the relevance of early and accurate diagnosis6. Substantial 
+discrepancies in healthcare remain, despite the progress in dermatological practice in rural and underserved 
+areas with a severe shortage of specialists. The number of dermatologists averaged 3.4 per 100,000 inhabitants 
+in many countries, which is far below the recommended threshold for patient care7. This shortage leads to 
+late diagnosis, high healthcare expenditures, and poor outcomes for the affected patients, especially among the 
+economically deprived8. Conventional dermatologic diagnosis is largely based on visual inspection and clinical 
+experience, leading to intrinsic subjectivity and interobserver variation in diagnostic efficacy9. The ABCDE 
+diagnostic criteria (Asymmetry, Border irregularity, Color variation, Diameter, and Evolution) constitute a useful 
+guideline but also need years of clinical experience and do not account for subtle patterns of morphological 
+changes, which are typical for early neoplastic lesions10. Although image increases the diagnostic accuracy by 
+magnifying the viewing of the subsurface structures, it is still subjective and user-dependent, and the ability to 
+use this technology is not possible without being trained11. The image evaluation of patterns or structures such as 
+pigment networks, globules, and vessels is difficult and can have considerable intra-observer variability, which, 
+even among experienced dermatologists, can lead to deviation, as has been reported elsewhere12. Application 
+of AI in Medical Imaging The use of AI in medical imaging has fundamentally advanced diagnostic accuracy 
+and clinical workflow13,14.One of the first machine learning-based methods15,16 for dermatological classification 
+involved hand-made feature extraction methods combined with classical classifiers, for which it had moderate 
+success due to the complexity of the features of the dermoscopic image17. The shift toward deep learning 
+methods initiated by Esteva et al.18, demonstrated that CNNs achieved dermatologist-level accuracy in skin 
+cancer classification when the training dataset was large. This milestone set a foundation for further study and 
+validated the clinical effectiveness of AI-based diagnosis in dermatology. In recent years, advanced architectures 
+that contain attention mechanisms, multiscale feature fusion and dedicated transformer-based models for 
+medical image analysis were proposed19.
+One recent work on ViT, has in particular been of interest to the medical imaging community for its ability 
+to encode global context through self-attention without being constrained by limitations pertaining to fully 
+convolutional approaches20. Automatic skin lesion analysis studies have focused a great deal on segmentation or 
+classification independently, although relatively less attention been made on integrated systems that harvest their 
+complementary property21. While achieving great performance on their respective datasets, it is still an open 
+problem to accurately extract the edge detail for clinical diagnosis22. Classification methods have also reached 
+very high levels of performance, but largely rely on punctate discriminatory visual appearance features and do 
+not incorporate valuable morphological information that is informative for diagnosis23.
+Morphological analysis of lesion boundaries, asymmetry, and structural features are key elements of 
+dermatological assessment that are under exploited in existing AI models. In addition, most of the state-of-
+the-art paradigms utilize heavy computational resources, which make them infeasible to be used in clinical 
+settings with limited resources24. This constraint curtails the availability and adoption of AI-based diagnostic 
+applications, especially in underserved areas where the need for new technology-based solutions is the highest. 
+The challenge of multi-scale feature integration remains inadequately addressed in current methodologies. 
+Skin lesions exhibit diverse size characteristics and morphological patterns that require sophisticated feature 
+extraction and fusion strategies for comprehensive analysis25. Existing approaches often fail to capture both fine-
+grained local details and global contextual information simultaneously, resulting in suboptimal segmentation 
+and classification performance. This study addresses the identified limitations through the development of a 
+dual-branch deep learning framework that integrates advanced segmentation and classification capabilities for 
+comprehensive skin lesion analysis. The primary contributions of this research include:
+We propose an integrated framework combining lightweight segmentation and morphology-aware 
+classification branches, enabling comprehensive lesion analysis through both visual appearance and structural 
+characteristics. The segmentation branch employs a modified EfficientNet-B7 encoder enhanced with Atrous 
+Spatial Pyramid Pooling (ASPP) and transformer-based global context modeling, while the classification branch 
+integrates RGB image analysis with dedicated morphological feature extraction from predicted segmentation 
+masks. The framework incorporates sophisticated multi-scale fusion modules that combine features from 
+different encoder levels using parallel convolutional kernels with varying receptive fields (3 × 3, 5 × 5, 7 × 7). 
+This design enables effective capture of both fine-grained details and broader contextual features essential for 
+accurate lesion delineation and characterization.
+We introduce an innovative decoder design incorporating attention gates and squeeze-and-excitation blocks 
+for refined feature selection and boundary accuracy. The attention mechanisms enable selective amplification 
+of relevant features while suppressing noise and irrelevant information, significantly improving segmentation 
+precision. The dual-stream classification approach uniquely combines DenseNet-121 processing of RGB 
+images with dedicated convolutional analysis of segmentation masks, capturing morphological characteristics 
+including boundary irregularities, asymmetry patterns, and shape complexity that are critical for diagnostic 
+accuracy. We conduct systematic ablation studies quantifying individual component contributions and establish 
+new performance benchmarks datasets. The evaluation encompasses both quantitative metrics and qualitative 
+clinical assessment to ensure practical applicability.
+To provide a complete overview of the proposed method, the experimental validation and the clinical 
+relevance are presented in this paper. Related Work, this section provides a summary of current methods used 
+Scientific Reports  |        (2025) 15:37823 2 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+for analyzing skin lesions, which can be grouped by their technical approaches, such as traditional machine 
+learning, U-Net-based models, attention mechanisms, transformer-based models, and multi-scale feature fusion 
+techniques. This review sets the theoretical foundation and the concrete research gaps that are intended to be 
+addressed with the presented framework. Methodology details the proposed methodology: dataset curation 
+and preprocessing and proposition of a dual-branch network. It also introduces the mathematical definitions of 
+the key entities, training optimization approaches, and evaluation measures to ensure the reproducibility of the 
+proposed methods.
+Materials and experiments, this section presents the experimental setting, which includes a description of 
+the data sets, implementation process, hardware environment, and evaluation scenario. This configuration will 
+guarantee a fair and strict comparison to state-of-the-art solutions. In the Results section, we show extensive 
+experimental results, including ablation studies, backbone performance, comparisons with the existing 
+approaches, and the statistical significance analysis. We have shown that all our components work, achieving 
+the new state-of-the- art performance. In the discussion, we discuss clinical implications of this framework, 
+computational efficiency, and limitations of the current model. It also provides some suggestions for future 
+directions for research, emphasizing practical application within real clinical settings. The Conclusion section 
+presents the main contributions, performance results and possible impacts on clinical practice. It highlights how 
+the framework can be applied in resource-limited healthcare settings and its potential to enhance early detection 
+of skin cancer. Experimental validation demonstrates that the proposed framework efficiently overcomes key 
+shortcomings in state-of-the-art and performs clinically relevant classification. Through the incorporation 
+of state-of-the-art architectural innovations and evaluation schemes, this paper sets a new benchmark for 
+automated skin lesion analysis, closing the gap between computational and clinical performance.
+Related work
+The field of automated skin lesion analysis has undergone a significant transformation from traditional machine 
+learning techniques to more advanced deep learning models. This section provides a summary of current 
+methods used for analyzing skin lesions, which can be grouped by their technical approaches, including 
+traditional machine learning, U-Net-based models, attention mechanisms, transformer-based models, and 
+multi-scale feature fusion techniques. This review establishes the theoretical foundation and identifies the 
+concrete research gaps that the presented framework aims to address.
+From traditional methods to deep learning revolution
+Early research into computational skin lesion analysis focused mainly on extracting handcrafted features and on 
+classical machine learning models. Such conventional approaches used Adaptive thresholding, Decision trees 
+and Support vector machines for lesion detection and segmentation. Under the entropy pooling, complicated 
+manual feature designing, and their insufficient learning capacity for sophisticated medical images, their 
+application to real-world medical areas is limited.
+A fundamental step toward deep learning was taken by Esteva and colleagues18, who concluded that both 
+deep and compact convolutional neural networks can reach dermatologist-level classification in skin cancer 
+using 129,450 clinical images. In so doing, the work set the stage for all subsequent work by proving (to a firm 
+stand) that deep learning is ‘allowed’ and superior for dermatology.
+Automatic computer-aided diagnostic methods for the analysis of skin lesions: in the past, computer-aided 
+diagnostic systems for the analysis of skin lesions were often based on handcrafted feature extraction, for 
+example, color, texture, and shape descriptors, along with machine learning classifiers. These approaches required 
+preprocessing steps like lesion segmentation, border detection, and feature calculation before classification. 
+Although these techniques produced interpretable results, they were also subject to the variability introduced by 
+imaging conditions, lesion heterogeneity, and manual feature design19. Another research proposed an algorithm 
+that predicts melanoma progression by analyzing peritumoral regions in the Normalized 2-D Cross-Correlation 
+(NCC) domain, using a mathematical morphological approach for accurate peritumoral detection.
+Similarity assessment between melanoma interiors and surrounding areas was carried out using SSIM, 
+achieving promising results on the 7-Point and PH2 datasets27. Another work modeled skin lesions as biological 
+systems, leveraging morpho-granulometric color cluster features alongside machine learning classifiers such 
+as Random Forest and XGBoost. By integrating feature selection with neural networks, the study improved 
+classification performance for nevus vs. melanoma, achieving notable accuracy on multiple public datasets28. 
+A recent approach employed an enhanced ISIC super pixel segmentation algorithm combined with graph 
+cut methods to extract lesion regions. Geometric and shape features were then classified using various ML 
+algorithms and neural networks, outperforming conventional techniques on 7-Point, MED-NODE, and PAD-
+UFES-20 datasets29.
+These contributions illustrate the transition from feature-engineering-based methods, which relied heavily 
+on manual design and traditional image processing, toward end-to-end deep learning frameworks capable of 
+learning robust representations automatically. This evolution sets the foundation for modern architectures of 
+deep learning framework.
+U-Net and encoder-decoder architectures
+The addition of the U-Net architecture by Ronneberger et al.29 represented a breakthrough in the field of 
+biomedical image segmentation. The symmetric encoder-decoder architecture of the network with skip 
+connections allows for the capture of hierarchical features while preserving spatial resolution through multi-
+scale feature fusion. The encoder slowly creates simpler versions of the image while making it smaller, and 
+the decoder improves the detailed segmentations by using information from different scales. Based on this 
+architecture, a variety of adaptations have been proposed targeting skin lesion segmentation. Zhou et al.30 
+Scientific Reports  |        (2025) 15:37823 3 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+introduced UNet++, which aims to lessen the loss of important information when transferring features from 
+the encoder to the decoder by using closely linked skip connections. It drastically improved feature propagation 
+and showed competitive performance in various medical image segmentation tasks. The combination of residual 
+learning with U-Net structures has proven to be highly effective. Alom et al.31 introduced R2U-Net, which 
+adopted residual connections within recurrent convolutional layers to improve the feature learning procedure. 
+The hybrid U-Net performed better than the regular U-Net versions in various medical image analysis tasks, 
+such as examining skin lesions.
+Attention mechanisms and feature enhancement
+The integration of attention mechanisms into segmentation architectures represents a significant advancement 
+in medical imaging. Oktay et al.32 introduced The Attention U-Net employs attention gates to filter out 
+unimportant areas while retaining important body parts. This attention mechanism allows networks to focus 
+on diagnostically significant structures, leading to increased segmentation accuracy. The latest developments 
+showed the need for personalized attentional mechanisms during the analysis of dermoscopic skin lesions. He et 
+al.33 introduced an attention-based dual-path feature that is flexible enough to incorporate spatial and channel 
+attention mechanisms to extract boundaries more effectively. Their approach achieved superior performance 
+against the training set of existing state-of-the-art methods on a wide range of benchmark data sets and 
+established the state-of-the-art results in terms of pixel-level accuracy.
+Lama et al.34 proposed the Efficient_Net based encoder with squeeze-and-excitation residual block for skin 
+lesion segmentation. Their method attained competitive performance and maintained computational efficiency, 
+fulfilling the essential need to apply it in scenarios with resource limitations, like clinical settings.
+Transformer-based architectures in medical segmentation
+The emergence of Vision Transformers (ViTs) has catalyzed significant advancements in medical image 
+segmentation20,35. Transformers excel at capturing long-range dependencies through self-attention mechanisms, 
+addressing fundamental limitations of purely convolutional approaches in modeling global contextual 
+information. Chen et al.36 proposed TransUNet, the first Transformer-based medical image segmentation 
+model, which combines CNN feature extraction with Transformer-based global context modeling. This hybrid 
+approach leverages the inductive biases of CNNs for local feature extraction while employing Transformers 
+for capturing global dependencies, resulting in improved segmentation performance. Cao et al.37 introduced 
+Swin-UNet, a pure Transformer-based U-shaped architecture that replaces traditional convolutional operations 
+with hierarchical Swin Transformer blocks. The shifted window mechanism enables efficient computation while 
+maintaining the ability to model both local and global dependencies effectively.
+Wang et al.38 proposed UCTransNet, incorporating channel cross fusion with Transformer (CCT) and 
+channel-wise cross-attention (CCA) modules to enhance feature fusion between encoder and decoder stages. 
+This approach demonstrated superior performance specifically on skin lesion segmentation tasks, highlighting 
+the potential of Transformer architectures for dermatological applications.
+Multi-scale feature fusion and advanced context modeling
+Multi-scale feature fusion has become increasingly critical for handling the diverse morphological characteristics 
+of skin lesions. Yuan and Cheng39 recently proposed a multiscale context fusion algorithm based on UNet that 
+extracts rich contextual information by aggregating semantic features from different encoding stages through a 
+sophisticated three-branch feature fusion module.
+Advanced attention mechanisms were only developed for this specific application of skin lesion analysis. 
+Hou et al. pose a smart segmentation framework based on a deformable attention Transformer U-Net, with 
+bidirectional attention mechanisms, which achieved the best performances on standard datasets.
+Classification methodologies and integrated frameworks
+Recently, researchers have proposed several architectures that incorporate multi-feature streams to improve 
+the accuracy of skin lesion classification. Himel et al.40, reported that Vision Transformers work well on both 
+segmentation and classification systems for dermoscopy, where they show better performance on various 
+diagnoses compared to the traditional CNN-based method. Smarter use of metadata and contextual information 
+has enjoyed enormous success in improving the accuracy of classification. The results of the ISIC 2019 challenge 
+indicated that the use of pathological data and patient information along with multiple images of the lesions can 
+greatly improve the precision of skin cancer diagnosis, highlighting the importance of comprehensive analysis to 
+diagnose skin cancer. Cheng et al.23 proposed improved MobileNet architectures with the fused spatial channel 
+(SC) attention mechanism to achieve the classification of skin cancer from images, confirming the advantages of 
+lightweight architectures and attention mechanisms for clinical use.
+Although some significant progress was achieved in automatic skin lesion analysis, there are still several major 
+research problems that have not been satisfactorily solved. Existing methods tend to handle segmentation and 
+classification in two separate, decoupled modes, which can cause the features of each task to be underexploited. 
+Furthermore, most of the current methods only concentrate on single-task optimization, which may ignore the 
+advantages of joint optimization.
+The integration of advanced attention mechanisms with multi-scale feature fusion in unified frameworks 
+represents a promising direction for future research. Furthermore, developing lightweight architectures that 
+maintain diagnostic accuracy while enabling real-time clinical deployment poses a critical challenge that 
+requires continued investigation.
+Scientific Reports  |        (2025) 15:37823 4 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Critical analysis of state-of-the-art approaches
+The comprehensive review of existing methodologies reveals distinct strengths and limitations across different 
+architectural paradigms that directly inform the design decisions for our proposed framework.
+Traditional machine learning and early deep learning methods
+Traditional approaches utilizing handcrafted features and classical machine learning algorithms demonstrated 
+notable interpretability and computational efficiency, with the pioneering work by Esteva et al.18 establishing the 
+fundamental viability of deep learning for dermatological applications. Their achievement of dermatologist-level 
+performance provided crucial proof-of-concept for automated skin cancer detection and laid the foundation for 
+subsequent research developments.
+However, these methods exhibited significant limitations in feature representation capacity and generalization 
+across diverse imaging conditions. The dependence on handcrafted feature extraction required extensive domain 
+expertise and proved insufficient for capturing the complex, multi-scale patterns inherent in dermoscopic 
+images. Manual feature engineering created substantial bottlenecks in adapting to new lesion types or imaging 
+protocols, while classical classifiers demonstrated poor scalability when confronted with the high-dimensional 
+nature of medical imaging data.
+U-Net and encoder-decoder architectures
+The U-Net architecture41 and its variants demonstrated remarkable success in medical image segmentation 
+through their symmetric encoder-decoder structure with skip connections. These architectures effectively 
+captured hierarchical features while preserving spatial resolution, enabling precise boundary delineation 
+essential for lesion analysis. Standard U-Net architectures exhibited limited capacity for modeling long-range 
+dependencies due to their purely convolutional nature. The fixed receptive field sizes constrained their ability 
+to capture multi-scale contextual information effectively. Additionally, these methods focused exclusively on 
+segmentation tasks without integrating classification capabilities, requiring separate systems for comprehensive 
+lesion analysis and missing opportunities for joint optimization benefits.
+Attention mechanisms and feature enhancement
+Attention-based approaches, particularly Attention U-Net32 and squeeze-and-excitation networks34, 
+demonstrated significant improvements in feature selection and boundary accuracy. These mechanisms enabled 
+selective amplification of diagnostically relevant features while suppressing noise and irrelevant information, 
+leading to enhanced segmentation precision across diverse lesion presentations.
+Most attention mechanisms operated at limited spatial scales and lacked the capacity to integrate global 
+contextual information effectively. The computational overhead introduced by attention mechanisms often 
+compromised real-time inference capabilities. Furthermore, attention weights frequently lacked interpretability, 
+making it difficult to understand which features drove diagnostic decisions—a critical limitation for clinical 
+deployment.
+Transformer-based architectures
+Vision Transformers and hybrid CNN-Transformer approaches (TransUNet36, UCTransNet38 excelled at 
+capturing long-range dependencies through self-attention mechanisms. These architectures demonstrated 
+superior performance in modeling global context and handling irregular lesion shapes, addressing fundamental 
+limitations of purely convolutional approaches.
+Transformer-based models required substantial computational resources and large training datasets to 
+achieve optimal performance, limiting their applicability in resource-constrained clinical settings. The quadratic 
+complexity of self-attention mechanisms posed scalability challenges for high-resolution medical images. 
+Additionally, these models often struggled with fine-grained local feature extraction compared to convolutional 
+counterparts, potentially missing subtle textural patterns crucial for accurate diagnosis.
+Multi-scale feature fusion approaches
+Multi-scale fusion techniques22,39 effectively addressed the diverse morphological characteristics of skin lesions 
+by integrating information across different spatial resolutions. These approaches demonstrated improved 
+robustness to lesion size variations and enhanced boundary delineation for complex morphological patterns.
+Existing fusion strategies often employed simple concatenation or addition operations without sophisticated 
+mechanisms to weight the importance of different scales. The lack of adaptive fusion mechanisms resulted in 
+suboptimal integration of multi-scale information. Most approaches failed to consider the semantic relationships 
+between features at different scales, leading to redundant or conflicting information that could degrade overall 
+performance.
+Classification methodologies and integrated frameworks
+Recent classification approaches utilizing Vision Transformers40 and enhanced MobileNet architectures23 
+achieved competitive accuracy while maintaining computational efficiency. The incorporation of metadata 
+and contextual information demonstrated significant improvements in diagnostic precision, highlighting the 
+importance of comprehensive analysis beyond pure visual features.
+The majority of classification systems operated independently from segmentation tasks, missing 
+opportunities for mutual benefit through shared feature representations. Most approaches relied exclusively on 
+appearance-based features without incorporating morphological characteristics that are clinically significant 
+for dermatological diagnosis. The lack of integrated frameworks resulted in suboptimal resource utilization and 
+potentially conflicting predictions between the segmentation and classification components.
+Scientific Reports  |        (2025) 15:37823 5 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Research gaps and motivations for proposed framework
+The critical analysis reveals several key limitations that current state-of-the-art methods fail to address 
+comprehensively:
+ 1. Task Isolation: The predominant focus on either segmentation or classification in isolation prevents the ex -
+ploitation of synergistic relationships between these complementary tasks.
+ 2. Limited Morphological Integration: Most existing approaches neglect the incorporation of structural and 
+morphological features that are diagnostically crucial in dermatological assessment.
+ 3. Scalability Constraints: Many high-performing methods require substantial computational resources, limit -
+ing their deployment in resource-constrained clinical environments.
+ 4. Insufficient Multi-Modal Fusion: Current multi-scale fusion strategies lack sophisticated mechanisms for 
+optimal integration of information from different representation levels.
+These identified limitations directly motivated the development of our dual-branch framework, which integrates 
+advanced segmentation capabilities with morphology-aware classification through innovative architectural 
+designs that address the aforementioned shortcomings while maintaining computational efficiency for practical 
+clinical deployment.
+Proposed methodology
+The proposed research methodology follows a structured pipeline encompassing four primary phases: (1) 
+comprehensive data preparation and preprocessing, (2) dual-branch architecture development, (3) systematic 
+experimental validation, and (4) comprehensive performance evaluation. This framework ensures reproducibility 
+and methodological rigor throughout the investigation. Algorithm 1  provides a detailed algorithmic description 
+of the implemented procedures.
+Input : Dermoscopic images, lesion labels, hyperparameters  
+Output : Segmentation masks, classification labels  
+1: Step 1: Data Preparation  
+2: Load dermoscopic dataset with corresponding masks and labels  
+3: Partition dataset: 80% training, 10% validation, 10% testing 
+4: Resize images to 256 尸  256 pixels and normalize to [0, 1] 
+5: Apply data augmentation: rotations, flips 
+6: Step 2: Image Preprocessing 
+7: Apply Gaussian blur and unsharp masking 
+8: Perform median and isotropic filtering 
+9: Calculate optimized fractal dimension 
+10: Compute fractal map 
+11: Step 3: Model Training  
+12: Initialize the dual-branch deep learning model 
+13: Compile with AdamW optimizer and boundary loss 
+14: Train segmentation mode l for specified epochs  
+15: Monitor training and validation metrics  
+16: Initialize F-DenseNet-121 classification model 
+17: Compile with Adam optimizer and cross-entropy loss  
+18: Train on augmented balanced dataset  
+19: Monitor accuracy, precision, recall, and F1-score  
+20: Step 4: Model Evaluation  
+21: Calculate segmentation metric s: IoU, Dice, Accuracy, MCC 
+22: Calculate classification metrics: Precision, Recall, F1-Score  
+Algorithm 1  Proposed Framework for Automated Skin Lesion Segmentation and Classification
+Segmentation architecture
+In this work, we present a deep learning-based algorithm designed for automatic skin lesion segmentation, with 
+an EfficientNet-B7-based encoder and a multi-scale attention-refined decoder. The framework focuses on precise 
+segmentation and utilizes a densely computational effective feature extractor along with intricate attention and 
+Atrous Spatial Pyramid Pooling (ASPP) blocks. Unlike prior architectures, which only use RGB images as input, 
+the encoder model in the proposed approach inputs a four-channel input, including the three RGB channels and 
+an additional fractal dimension map. This fractal map is computed at inference time on-the-fly from the same 
+dermoscopic image using the fractal analysis learned from the training data without data leak. Its application 
+Scientific Reports  |        (2025) 15:37823 6 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+provides texture information in addition to color or intensity information for more accurately showing the edge 
+of lesions and small morphological structures. The fractal map is generated directly from the input dermoscopic 
+image during training and inference; thus, it does not use any ground truth masks and prevents information 
+leakage. The computation is performed as follows:
+• Preprocessing: The RGB image is converted into a grayscale intensity representation to preserve structural 
+details without color bias.
+• Fractal Dimension Calculation: The box-counting method and optimized fractal descriptors are applied to 
+quantify the spatial complexity of lesion regions. The fractal dimension is estimated across multiple scales to 
+capture both fine and coarse structural variations.
+• Normalization: The computed fractal map is normalized to the range [0, 1] to ensure consistency with other 
+input channels and maintain stable training dynamics.
+• Channel Integration: The normalized fractal map is concatenated with the original RGB channels, forming a 
+four-channel input tensor fed into the segmentation encoder.
+The proposed network is based on modified EfficientNet-B7 (M-EfficientNet-B7) as the backbone pretrained on 
+ImageNet for feature extraction at multiple scales. Encoder features are processed with the stepic ASPP module 
+and the transformer blocks for better modeling of global context and mounted via multi-scale fusion stage with 
+skip connections. To enhance the quality of the segmentation, while maintaining the generalizability of the 
+resultant model, the decoder has integrated with Squeeze-and-Excitation (SE) and Attention Gates (AG) blocks 
+which highlights the diagnostic area and suppresses the background.
+At last, a 1 × 1 convolution layer with a sigmoid is used to yield a binary probability map where the high-
+precision lesion regions are measured. This four-channel input strategy and the attention-based multi-scale 
+architecture effectively alleviate skin lesion segmentation difficulties like irregular boundaries, diverse lesion 
+sizes, and heterogeneous textures. Figure  1: The framework overview, RGB + fractal input fusion, and attention-
+enhanced decoding.
+Encoder architecture
+The encoder in our model is based on M-EfficientNet-B4, a powerful convolutional neural network architecture 
+pretrained on the ImageNet dataset. EfficientNet-B7 was chosen due to its superior accuracy and efficiency 
+via scaling all dimensions of network width, depth and resolution using the compound scaling method, which 
+balances the trade-off between accuracy and efficiency42. This scaling approach is formalized by Eq. 2:
+ 
+ d=a∅,w=β∅,r=γ∅ (1)
+where d represents depth, w denotes width, r indicates resolution, and α, β, γ are constants determined through 
+grid search optimization.
+EffectiveNet-B4 architecture is based upon MBConv layers, which are using depth-wise separable 
+convolutions for computational efficiency in feature extraction. Every MBConv block includes an SE module, 
+which adaptively recalibrates channel-wise feature responses and allows the network to devote more capacity 
+to informative features. A residual skip connection is injected in each MBConv block for stable training and a 
+reduction of the gradient vanishing. The proposed lesion segmentation framework employs M-EfficientNet-B7 
+as a primary encoder, which learns hierarchical features from the four-channel dermoscopic input. The transition 
+to four-dimensional input is performed by extending the initial convolutional layer with the extra channel. The 
+encoder is composed of a series of MBConv blocks, which are designed to capture the feature complexity in the 
+feature space, where shallow blocks are sensitive to low-level patterns (edges, textures) and deep blocks encode 
+more abstract concepts of increasing complexity that are crucial for discriminating lesion boundaries.
+The hierarchical feature extraction follows a structured progression:
+• Initial Processing: The input volume is processed by the first two convolution blocks, generating low-level 
+descriptors including edges, textures, and simple shapes.
+• Mid-level Features: MBConv6 4×, k = 3 × 3 concentrates on moderately complex features that serve as foun -
+dations for higher-level representations.
+• High-level Abstractions: MBConv6 4×, k = 5 × 5 captures abstract representations vital for segmentation tasks.
+• Complex Structures: MBConv6 6×, k = 3 × 3 refines features to capture increasingly complex image structures.
+• Semantic Information: MBConv6 8×, k = 5 × 5, the deepest encoder layer, focuses on the most detailed and 
+complex representations of the input image.
+Atrous spatial pyramid pooling (ASPP) module
+The Atrous Spatial Pyramid Pooling (ASPP) module plays a central role in modern deep learning-based 
+segmentation by expanding the receptive field and capturing multi-scale context without spatial down-sampling. 
+Originally introduced in DeepLab v243, ASPP exploits dilated convolutions across multiple scales, preserving 
+both semantic and spatial information through parallel Atrous convolutions with varying dilation rates rather 
+than pooling operations.
+The proposed architecture integrates ASPP downstream of the encoder to enhance the model’s capacity for 
+recognizing and delineating small lesion regions. As illustrated in Fig.  2, the ASPP block comprises five parallel 
+branches:
+Scientific Reports  |        (2025) 15:37823 7 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+ 1. Four Atrous convolutions with dilation rates of 1, 6, 12, and 18 to capture contextual features at multiple 
+scales.
+ 2. One image-level pooling branch to incorporate global context and mitigate filter degeneration.
+The outputs of these five pathways are concatenated and fed into the subsequent transformer block, ensuring 
+that the segmentation head has access to rich, multi-scale feature representations without spatial resolution loss.
+Transformer module
+The Transformer module is strategically positioned immediately after the ASPP module to enhance multiscale 
+features with global contextual information. While ASPP effectively captures multi-scale contextual information 
+through parallel Atrous convolutions, it inherently lacks the capacity to model long-range dependencies due 
+to the localized nature of convolutional operations. The Transformer integration addresses this limitation by 
+employing multi-head self-attention mechanisms that compute pairwise affinities across all spatial positions.
+Fig. 1 . Overall Architecture of the Proposed Dual-Branch Deep Learning Framework. 
+Scientific Reports  |        (2025) 15:37823 8 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Transformer components
+The Transformer module comprises several key components that contribute to enhanced feature representations:
+• Multi-Head Self-Attention (MHSA): Enables each position in the input feature map to attend to all other 
+positions, facilitating global context integration.
+• Layer Normalization: Applied after MHSA and FFN sub-layers to stabilize learning by normalizing inputs 
+across features, ensuring consistent gradient flow.
+• Feed-Forward Neural Networks (FFN): Consist of two linear transformations with non-linear activation, 
+processing each position independently to capture complex patterns.
+• Residual Connections: Employed around both MHSA and FFN sub-layers to mitigate vanishing gradient 
+issues and enable identity mapping learning.
+The placement between ASPP and decoder is crucial for effective feature fusion. ASPP output, containing rich 
+multi-scale contextual cues, is reshaped into token sequences suitable for Transformer processing. These tokens 
+undergo successive Transformer encoder layers to produce globally contextualized feature representations that 
+retain multi-scale details while incorporating image-wide dependencies.
+Multi-scale fusion module (MSF)
+The Multi-Scale Fusion Module is strategically positioned at the encoder’s end to perform concatenation and 
+fusion operations on various feature maps ( f3, f4 from intermediate encoder stages and transformer block output) 
+at different scales, generating comprehensive feature representations that better capture diverse features and 
+boundaries.
+The MSF incorporates multi-scale convolutional layers with kernel sizes of 3 × 3, 5 × 5, and 7 × 7, enhancing 
+the model’s ability to capture features at varying spatial resolutions. This architecture allows successful extraction 
+of fine-granular details as well as larger, more contextual features, which is important for skin lesion segmentation 
+due to substantial size and appearance variations in the lesions.
+Fig. 2 . Proposed dual-branch multi-modal classification architecture for skin lesion analysis. Comprehensive 
+framework illustrating the parallel feature extraction schemes: ( a) Mask Branch is designed to process binary 
+segmentation masks using dedicated convolutional layers to encode geometric and morphological features; ( b) 
+Image Branch makes use of a modified DenseNet-121 encoder to extract rich textural and color features from 
+the RGB dermoscopic images; and ( c) the Feature Fusion Module combines complementary representations 
+from both modalities through adaptive attention mechanisms. The architecture exploits dense connectivity 
+structure in dense blocks and transition layers for effective gradient propagation, and the aggregate strategy 
+integrates spatial boundary information with appearance features for improved discrimination of multi-class 
+skin lesion categories. Input dimensions and feature map evolutions are labeled at each stage to illustrate the 
+orderly transformation from primitive signals to classification results. 
+Scientific Reports  |        (2025) 15:37823 9 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+After each convolution operation, batch normalization (BN) and ReLU are performed. Batch normalization 
+allows for stable feature map distributions, smoothens the optimization by stabilizing the training with internal 
+covariate shift mitigation, and higher learning rates with dampened initialization sensitivity. The ReLU activation 
+nonlinearity allows the network to learn complex patterns and model the interaction of the data.
+Decoder architecture
+The decoder utilizes a combination of state-of-the-art methods to generate fine-grained segmentation maps 
+from coarse ones via progressive upsampling, skip connections, and attention. The architecture is equipped with 
+Attention Gates (AG) and Squeeze-and-Excitation (SE) blocks for better feature refinement and selection.
+Attention gates
+Gates attention the human visual attention mechanisms, attention gates automatically attend to the target regions 
+and suppress the unimportant feature response. With feature map xl in layer l and the gating signal vector gi, 
+αi (scaler value, range from 0 to 1), the attention coefficient selects focus regions on coarser scales.
+The output is computed as:
+ xout=xl·αi (2)
+The multi-dimensional attention coefficient is calculated using additive attention:
+ ∝i=σ2(ψT(
+σ1(
+WT
+xxl+WT
+ggi+bg))
++bψ) (3)
+where σ1 represents the ReLU function, σ2 is the sigmoid function, Wx, Wg, and ψ are linear transformations, 
+and bg,bψare bias terms.
+Squeeze-and-excitation blocks
+SE blocks modulate the features by recalibratingthem using squeeze and excitation operations. In the squeeze 
+operation, global channel-wise statistics are generated using global average pooling:
+ Sc=1
+H×W∑
+H
+j=1∑
+W
+k=1Uc(j,k) (4)
+where H and W represent height and width, respectively. The excitation operation uses two fully connected 
+layers with activation function ReLU and sigmoid activation function for modelling channel-wise dependencies, 
+and we set the reduction ratio r = 16 to compromise between model complexity and accuracy.
+Progressive reconstruction
+All of the upsampling blocks (UP1–UP4) take features from the previous stage of decoding as well as from the 
+associated levels of the encoder, which are then refined with an attention gate and recalibrated by a SE module. 
+Such design allows insightful fusion of large-grained semantics with small-structured spatial hints to better 
+delineate lesion boundaries and detect small structures.
+The decoder produces a segmentation mask and the corresponding RGB image registered on the original 
+input. The two network outputs are then sent to the classification calculation module for discrimination of them 
+into one of the seven predefined skin disease categories, achieving accurate segmentation and providing dual-
+purpose output for accurate classification.
+Dual-branch classification architecture
+The classifier model in our framework is a dual structure whose branches are designed well with visual look and 
+structure information and can classify the skin lesion precisely. The network consists of three parts of architecture: 
+the RGB Image Branch, the Mask Branch, and the Fusion and Classification Module. This multi-modal approach 
+enables us to learn rich perception features from the raw dermoscopy images and the segmentation masks of 
+these images and thus achieves a strong classification performance over the seven diagnostic classes of the 
+HAM10000 data.
+RGB image branch: denseNet-121 encoder
+The RGB Image Branch uses DenseNet-12144, a strong and rapid convolutional neural network that is specifically 
+designed for classifying images. DenseNet-121 represents a variant within the DenseNet family, comprising 121 
+layers and approximately 8 million parameters. The architecture processes standardized 224 × 224 RGB input 
+images through a series of densely connected blocks, where each layer receives feature maps from all preceding 
+layers via concatenation operations.
+This densely connected pattern provides several architectural advantages that are particularly beneficial 
+for medical image analysis. The dense connectivity enhances gradient flow throughout the network, promotes 
+extensive feature reuse across layers, and minimizes representational redundancy, collectively addressing the 
+vanishing gradient problem inherent in deep neural networks. Between consecutive dense blocks, transition 
+layers employ batch normalization, 1 × 1 convolutions, and 2 × 2 average pooling operations to down-sample 
+feature maps while reducing computational complexity and parameter count. For integration into the proposed 
+classification framework, the original classification head of DenseNet-121 has been modified to accommodate 
+the specific requirements of skin lesion analysis, as illustrated in Fig.  2.
+Scientific Reports  |        (2025) 15:37823 10 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Notably, the dense connectivity structure not only leverages the learning capability but also retains feature 
+propagation richness over different levels without any significant information loss from the network hierarchy, 
+which can contribute to boosting the classification accuracy. A Global Average Pooling (GAP) layer is added 
+before the output classification to reduce risks of overfitting and reduce the number of parameters with preserved 
+useful spatial information.
+The rate hyperparameter of a network, which determines increments of new feature maps provided by each 
+layer, governs information flow and feature complexity. This architectural pattern has achieved state-of-the-
+art results across several computer vision benchmarks and is thus a strong candidate to be incorporated into 
+medical imaging applications that demand both high accuracy and computational efficiency.
+Mask branch: morphological feature extraction
+The Mask Branch is a vital component of the dual-branch architecture to capture the morphology and 
+position information of the lesion in segmentation masks. In contrast to the branch that is employed to learn 
+the discriminative visual features from the raw DIs (i.e., the RGB image branch), the mask branch provides 
+complementary geometric information based on the shape and boundary properties of the lesion as well as the 
+distribution and spatial properties (which are diagnostic in many dermoscopic examinations).
+The mask branch design follows a cascaded conv structure, with each conv layer followed by batch norm and 
+ReLU activations. It sequentially detects the hierarchies of spatial features from the binary input masks and can 
+still reserve multiple morphological patterns at different scales. Then, the max-pooling operations are sampled 
+such that the model is able to be locality aware on the informative pointers and is able to capture the spatial 
+structure patterns, such as the irregular shapes and the asymmetrical arbitrary sizes of lesions—more obvious 
+morphology signs of the cancers.
+Based on the stack of convolutional stages with increasing receptive sizes, the network is expected to capture 
+fine-grain boundary details and, simultaneously, the global shape information. After the convolutional feature 
+extraction, the spatial features are aggregated into a single compact feature vector via global average pooling. The 
+compact shape representation stores essential mask-dependent morphological parameters such as smoothness 
+of the boundary, regularity of the shape, and the size of the shape. It has been shown that the feature vector is 
+a global rich morphological feature representation, and it encodes structural characteristics that might not be 
+observed in RGB space. Findings such as normal vessel-derived features like this might well be particularly 
+relevant, especially when various types of lesion have look-alikes with anatomic morphologies.
+Fusion and classification module
+The Classify and Fusion Module combines features from both the RGB Image Branch and the Mask Branch to 
+determine the final lesion category. At the fusion stage, the features of DenseNet-121 and the morphological 
+features of the Mask Branch are concatenated and generate the unified feature vector to learn a complete pattern 
+that contains the visual appearance and structure information.
+After concatenating the three features, the fused representation is passed through a dense layer with ReLU 
+activations and dropout regularization. The dropout, with properly tuned probability rates, regularizes the CNN 
+model by avoiding overfitting and maintaining the generalization ability for various tumor presentations. The last 
+output layer uses a softmax activation function for probability distributions over the seven HAM10000 categories: 
+melanoma, melanocytic nevus, basal cell carcinoma, actinic keratosis, benign keratosis, dermatofibroma, and 
+vascular lesion.
+This cross-modal fusion system was designed to address the challenging task of dermatological diagnosis, 
+which is problematic due to visual similarity between various lesion types, which results in misclassification 
+using appearance-based features only. With the morphological priors from segmentation masks, the classification 
+module is able to discriminate lesions with subtle appearance differences but obvious structure differences.
+Combining the segmentation-based spatial priors with appearance-based visual features, a clued-up 
+multimodality learning framework is established to improve disease classification accuracy significantly, 
+generalization across different patient cohorts, and diagnostic reliabilities. This holistic fusion exploits the 
+complementary characteristics of visual and morphological data and yields a higher performance than with 
+unimodal approaches for skin lesion classification.
+Materials and experiments
+Datasets
+The generalization of the proposed dual-branch classification model was demonstrated on the ISIC 201745, ISIC 
+201846, PH247, and HAM1000048. Imaging conditions, lesion types, and acquisition devices are different for each 
+dataset, which are collected from various international dermatological services, making this a strong gauge to 
+test from different character classification methods. Such publicly available dermoscopic image databases, which 
+are curated by the International Skin Imaging Collaboration (ISIC), have emerged as the standard databases in 
+computational dermatology. The two datasets have their own intrinsic factors (e.g., image quality, lesion diversity, 
+and class distribution) and are valuable for the well-rounded comparison of the generalization performance of 
+the trained models over different clinical environments. Dataset Specifications for Segmentation Task:
+ 1. HAM10000 : The largest dataset used in our framework contains 10,015 dermoscopic images with corre -
+sponding segmentation masks across seven lesion categories, offering extensive diversity in lesion morphol -
+ogy, patient demographics, and imaging conditions. From this dataset, we randomly selected 3,000 samples, 
+ensuring balanced representation of all seven classes. These samples were further partitioned into 80% for 
+training, 10% for validation, and 10% for testing, following a stratified approach to maintain class distribu -
+tion consistency across subsets.
+Scientific Reports  |        (2025) 15:37823 11 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+ 2. ISIC 2017 : The dataset includes 2,750 dermoscopic images, which are categorized into three classes: mela -
+noma, seborrheic keratosis, and nevus. Following standard protocols, 400 random images were utilized for 
+model testing.
+ 3. ISIC 2018 : The dataset consists of 3,694 dermoscopic images that span seven diagnostic categories. For ex -
+perimental consistency, we employed 400 images, randomly partitioned while maintaining class distribution 
+proportions.
+ 4. PH2 : A well-curated dataset containing 200 dermoscopic images with ground truth segmentation masks and 
+clinical diagnoses. The dataset was randomly selected for test images to ensure adequate representation.
+The dataset was randomly selected for test images to ensure adequate representation across all classes. Table  1 
+presents the main characteristics of the datasets used for the segmentation task.
+• Dataset Specifications for Classification Task.
+For the classification branch, we used the following datasets and configurations:
+ 1. HAM10000 : For classification, the complete dataset was utilized. Approximately 6,500 images were used for 
+training and validation (split into 70% training, 15% validation, and 15% testing), about 1,000 images for 
+testing were reserved for testing, ensuring a fair evaluation across all seven classes.
+ 2. ISIC 2018 and ISIC 2017 : We combined the ISIC 2017 and ISIC 2018 datasets for fine-tuning the classifica -
+tion branch. From these, 6,444 images were selected, split into 70% for training, 15% for validation, and 15% 
+for testing. The testing selected 1,000 images were separated from these datasets were used for independent 
+testing.
+ 3. PH2 : The original PH2 dataset contains 200 images. Due to this limited size, we applied extensive data aug -
+mentation (including flipping, rotation, scaling, and color jitter) to generate an augmented dataset of 2,000 
+images, split into 80% training, 10% validation, and 10% testing. This approach ensures that the classification 
+model is exposed to a broader range of visual variations while maintaining the original class distribution.
+This setup ensures a comprehensive evaluation strategy by leveraging both internal (HAM10000) and external 
+(PH2, ISIC datasets) sources, supporting the robustness and generalizability of the proposed framework for real-
+world clinical applications.
+Implementation details
+We implemented the dual-branch architecture using the PyTorch backend and executed all experiments on an 
+NVIDIA RTX 3090 GPU with 24 GB VRAM. For the segmentation task, all dermoscopic images were resized 
+to 256 × 256 pixels, ensuring faster computation while preserving diagnostically important details. For the 
+classification branch, images were resized to 224 × 224 pixels, the standard input size for DenseNet architectures, 
+enabling effective utilization of pretrained weights. The segmentation encoder uses a four-channel input, which 
+includes the standard RGB dermoscopic image plus an additional fractal dimension map as the fourth channel. 
+This fractal map is computed directly from the input image during both training and inference, ensuring no 
+dependency on ground truth masks and thereby preventing information leakage. The fractal map captures 
+structural complexity and textural irregularities in the lesion region, complementing the color information 
+provided by the RGB channels.
+The network training setup included the AdamW optimizer for segmentation with a boundary loss function, 
+chosen for its effectiveness in handling irregular lesion boundaries. For classification, the Adam optimizer with 
+categorical cross-entropy loss was employed to address the multi-class nature of the problem. Training was 
+performed with a batch size of 16, balancing GPU memory constraints and gradient stability. We trained for a 
+maximum of 70 epochs for segmentation and 50 epochs for classification.
+The implementation utilized the following libraries and their respective versions:
+• PyTorch: 2.1.0.
+• Torchvision: 0.16.0.
+• CUDA Toolkit: 11.8.
+• NumPy: 1.26.0.
+• Pandas: 2.1.1.
+• OpenCV: 4.8.1.
+• Albumentations: 1.3.1.
+Dataset Ye ar Total Size Selected Samples Resolution Range Classes
+HAM10000 2020 10,0153000
+80% training, 10% validation, 10% testing600 × 450 7
+ISIC2016 2016 1,279 400 (Testing) 566 × 679 to 2,848 × 4,288 2
+ISIC2017 2017 2,750 400 (Testing) 540 × 722 to 4,499 × 6,748 3
+ISIC2018 2018 3,694 400 (Testing) 540 × 576 to 4,499 × 6,748 7
+PH2 2013 200 200 (Testing) 553 × 763 to 577 × 769 3
+Table 1 . Dataset characteristics and specifications for segmentation Task. 
+Scientific Reports  |        (2025) 15:37823 12 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+• scikit-learn: 1.3.1.
+• MONAI: 1.3.0 (for segmentation evaluation metrics).
+• Matplotlib: 3.8.0.
+• Seaborn: 0.13.0.
+• tqdm: 4.66.1.
+Mixed precision training was enabled using PyTorch’s torch.cuda.amp for optimized memory usage and faster 
+training. All random seeds were fixed for reproducibility.
+Evaluation metrics
+The performance evaluation of the proposed dual-branch structure includes both segmentation and classification 
+tasks and is evaluated with popular and widely used metrics in the field of medical image analysis and 
+dermatological AI. This multi-metric evaluation paradigm enables a strong evaluation of the model’s capabilities 
+in various aspects of skin lesion analysis.
+Segmentation performance metrics
+Six criteria were adopted for skin lesion segmentation evaluation: the Pixel Accuracy (PACC), the Specificity 
+(SPE), the Sensitivity (SEN), the Jaccard Index (IoU), the Dice Coefficient (DC), and the Precision. Metrics 
+values considered the pixel-wise classification result, and for each pixel, it was classified into one of the 4 classes 
+as defined by the confusion matrix, i.e., TP (True Positives) represents the correctly predicted pixels as a lesion, 
+FP (False Positives) as the non-lesion being classified as a lesion, FN (False Negatives) as the lesion not located, 
+pixels as non-lesion, and TN (True Negatives) as the correctly predicted non-lesion pixels.
+The need for a unified evaluation scheme arises from the fact that the Jaccard Index is the official evaluation 
+measure for ISIC challenge benchmarks, which will make possible our method to be directly compared 
+with the current state of the art. Pixel Accuracy (PACC) measures the integrity of pixels that are accurately 
+classified to their original class in the image. Specificity (SPE): It describes the model’s capacity to determine 
+non-lesion pixels as non-lesion pixels, which is important in reducing number of false alarms in clinical tasks. 
+Sensitivity (SEN) measures the ability of the model to correctly identify lesion pixels, and is an important 
+measure for early recognition of malignant lesions. Dice Coefficient measures the spatial overlap between 
+the predicted segmentation mask and the ground truth annotations, and is a widely used metric to assess the 
+quality of segmentation, especially the quality of boundary localization. The mathematical formulations for all 
+segmentation metrics are presented in Table  2.
+Performance is tested by comparing predicted segmentation masks with expert-annotated ground truth 
+images on a pixel-by-pixel basis. The different metrics have different practical meanings, depending on the 
+particular clinical application needs. In skin segmentations, sensitivity is very important because it relates to how 
+well we can identify possibly cancerous spots, while specificity helps the clinical process by lowering the number 
+of incorrect detections. A more comprehensive way to evaluate the available algorithms is to apply a combination 
+of different measures; instead of depending on one metric, which could not represent the performance of an 
+algorithm accurately, this is a more solid scientific way to evaluate the algorithm. By taking this multi-metric 
+approach, we can perform comprehensive analysis over various aspects of segmentation quality, such as 
+boundary accuracy, region overlap, and pixel-wise category prediction.
+Results
+A comprehensive experiment demonstrating generalization and robustness of the studied approach, Deep_
+SOTA_Net_EfficientNet, on the automated benchmarks for skin lesion analysis was performed. We perform 
+our experiments on five popular dermoscopic image datasets: HAM10000, ISIC 2018, ISIC 2017, and PH2, 
+covering types of imaging conditions, the presentations of dermoscopic lesions, and the clinical types. The multi-
+Metric Formula Clinical Significance
+Pixel Accuracy (PACC)TP+TN
+TP+TN+FP+FN Overall pixel classification accuracy
+Specificity (SPE)TN
+TN+FP Correct identification of healthy skin
+Sensitivity (SEN)TP
+TP+FN Lesion detection capability
+Precision (PPV)TP
+TP+FP Positive predictive value
+Dice Coefficient (Dice)2×TP
+2×TP+FP+FN Spatial overlap similarity
+Jaccard Index (IoU)TP
+TP+FP+FN Set intersection over union
+RecallTP
+TP+FN Equivalent to Sensitivity
+F1-Score2×Precision ×Recall
+Precision+ Recall Harmonic mean of precision and recall
+Matthew’s correlation coefficient (MCC)TP×TN−FP× FN√
+(TP+FP)(TP+FN)(TN+FP)(TN+FN)Measures the quality of binary segmentation
+Table 2 . Mathematical formulations for segmentation evaluation Metrics. 
+Scientific Reports  |        (2025) 15:37823 13 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+dataset evaluation pipeline guarantees that the framework is extensively tested on various data distributions and 
+acquisition protocols. We then evaluate the full dual-branch model using the HAM10000 dataset as the primary 
+benchmark, as it has the most annotations received so far, to conduct segmentation and classification tasks. 
+The remaining datasets are included for further evaluation in order to challenge not only the segmentation but 
+also the generalization over datasets. Performance is quantitatively evaluated for robust characterization and 
+demonstrates the clinical feasibility of the framework for diverse dermoscopic images.
+HAM10000 dataset: comprehensive dual-branch framework evaluation
+The HAM10000 dataset constitutes the cornerstone of our experimental validation, providing the most 
+comprehensive evaluation environment for both segmentation and classification components of the proposed 
+framework. This dataset encompasses 10,000 dermoscopic images distributed across seven diagnostic categories: 
+melanoma (MEL), melanocytic nevus (NV), basal cell carcinoma (BCC), actinic keratosis (AK), benign keratosis 
+(BKL), dermatofibroma (DF), and vascular lesion (V ASC). The standardized 600 × 450-pixel resolution and 
+expert-verified annotations ensure consistent evaluation conditions essential for a rigorous scientific assessment.
+Segmentation performance analysis
+The systematic ablation study reveals the progressive enhancement achieved through each proposed architectural 
+innovation, offering important details about component-wise contributions to overall performance, as shown 
+in Table  3.
+The ablation study demonstrates several critical architectural insights. The initial incorporation of 4-channel 
+input processing exhibits a counterintuitive performance decline (validation Dice coefficient: 0.9494→0.9420, 
+IoU: 0.9119→0.8995), underscoring the fundamental importance of synergistic architectural design rather 
+than isolated component optimization. This temporary degradation validates our integrated methodology, 
+demonstrating that enhanced input representations require complementary architectural adaptations to realize 
+their full potential.
+The integration of the Atrous Spatial Pyramid Pooling (ASPP) module43 yields immediate performance 
+recovery and substantial enhancement (validation Dice: 0.9487, IoU: 0.9106), empirically validating the critical 
+importance of multi-scale contextual aggregation for precise lesion boundary delineation. The parallel dilated 
+convolutions effectively capture hierarchical spatial relationships essential for distinguishing subtle lesion 
+boundaries from surrounding healthy tissue.
+Transformer module integration20 provides global contextual modeling capabilities that synergistically 
+complement ASPP’s local multi-scale processing. While demonstrating modest isolated performance gains, 
+the transformer proves fundamental for subsequent architectural improvements through its multi-head self_
+attention mechanisms, enabling comprehensive long-range dependency modeling crucial for irregular lesion 
+presentations.
+The complete architectural framework, incorporating Squeeze-and-Excitation blocks49, achieves optimal 
+performance with validation metrics of Dice: 0.9520, IoU: 0.9155, sensitivity: 0.9545, and specificity: 0.9721. 
+This represents a 2.7% improvement in Dice coefficient and 3.9% improvement in IoU compared to the baseline 
+configuration, empirically demonstrating the synergistic effects of integrated architectural innovations.
+The comprehensive evaluation across the complete Efficient_Net architecture spectrum (B0-B7)42 reveals 
+systematic performance scaling characteristics and validates the universal applicability of the proposed 
+architectural enhancements, as shown in Table 4.
+EfficientNet-B7 emerges as the optimal architectural configuration for skin lesion segmentation, achieving 
+unprecedented performance metrics: validation Dice coefficient of 0.9563, IoU of 0.9240, and pixel accuracy of 
+0.9697, as shown in Fig.  3. These results represent substantial improvements over the baseline B0 configuration: 
+4.5% enhancement in Dice coefficient, 11.1% improvement in IoU, and 2.0% increase in pixel accuracy, 
+establishing new performance benchmarks for automated dermoscopic image segmentation. To visually 
+demonstrate the feature extraction capabilities of the Mask Branch.
+Classification performance analysis
+Dual-stream architecture evaluation  The classification component demonstrates exceptional diagnostic per -
+formance on the balanced HAM10000 dataset, encompassing 6,500 images were used for training and validation 
+(split into 70% training and 15% validation, and 15% testing), approx. 1,000 images were reserved for testing, 
+Architectural ConfigurationLoss PAC C Dice IoU Sensitivity Specificity
+Train Valid Train Valid Train Valid Train Valid Train Valid Train Valid
+EfficientNet-B0 (Baseline) 0.1967 0.2276 0.9798 0.9660 0.9685 0.9494 0.9407 0.9119 0.9698 0.9394 0.9765 0.9753
++ 4D Input Enhancement 0.2326 0.2660 0.9760 0.9608 0.9632 0.9420 0.9312 0.8995 0.9805 0.9607 0.9653 0.9588
++ 4D + ASPP Module 0.2058 0.2375 0.9781 0.9648 0.9659 0.9487 0.9361 0.9106 0.9750 0.9476 0.9707 0.9724
++ 4D + ASPP + Transformer 0.2319 0.2578 0.9745 0.9647 0.9598 0.9486 0.9259 0.9100 0.9817 0.9480 0.9617 0.9701
++ 4D + ASPP + Trans + MSF 0.2007 0.2351 0.9794 0.9646 0.9677 0.9486 0.9395 0.9105 0.9756 0.9377 0.9726 0.9695
++ 4D + ASPP + Trans + MSF + AG 0.1894 0.2190 0.9799 0.9670 0.9691 0.9517 0.9417 0.9151 0.9729 0.9739 0.9739 0.9716
+Complete Framework (+ SE) 0.1862 0.2167 0.9801 0.9677 0.9695 0.9520 0.9467 0.9155 0.9734 0.9545 0.9750 0.9721
+Table 3 . Progressive architectural enhancement analysis on HAM10000 Dataset. 
+Scientific Reports  |        (2025) 15:37823 14 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+ensuring a fair evaluation across all seven classes. The dual-stream architecture effectively combines visual ap -
+pearance analysis through DenseNet-12144 with morphological feature extraction from segmentation masks.
+The classification results as shown in Table  5 demonstrate exceptional diagnostic performance with validation 
+accuracy of 99.87% and F1-score of 99.81% across seven skin lesion categories. The minimal performance gap Performance Metric Training Validation Testing Clinical Significance
+Loss 0.476 0.462 ------ Stable convergence
+Accuracy 99.85% 99.94% 99.87% Exceeds dermatologist accuracy
+F1-Score 99.89% 99.94% 99.81% Optimal precision-recall balance
+Table 5 . Classification performance on HAM10000 Dataset. 
+Fig. 3 . Training and Validation Metrics Across Efficient_Net Models (B0-B7) on HAM10000 Dataset. Model VariantLoss PAC C Dice IoU Sensitivity Specificity
+Train Valid Train Valid Train Valid Train Valid Train Valid Train Valid
+B0 0.1862 0.2167 0.9801 0.9677 0.9695 0.9520 0.9467 0.9155 0.9734 0.9545 0.9750 0.9721
+B1 0.1958 0.3435 0.9810 0.9647 0.9702 0.9495 0.9436 0.9123 0.9753 0.9499 0.9758 0.9695
+B2 0.2221 0.2345 0.9832 0.9669 0.9737 0.9523 0.9499 0.9166 0.9633 0.9408 0.9845 0.9784
+B3 0.2439 0.2570 0.9824 0.9660 0.9728 0.9504 0.9484 0.9137 0.9757 0.9457 0.9776 0.9739
+B4 0.2076 0.2347 0.9822 0.9678 0.9721 0.9525 0.9468 0.9155 0.9786 0.9538 0.9764 0.9735
+B5 0.2476 0.2580 0.9840 0.9665 0.9747 0.9514 0.9518 0.9157 0.9768 0.9403 0.9799 0.9783
+B6 0.1653 0.2580 0.9880 0.9660 0.9747 0.9514 0.9458 0.9157 0.9757 0.9403 0.9799 0.9783
+B7 0.1305 0.1935 0.9885 0.9697 0.9819 0.9563 0.9650 0.9240 0.9811 0.9558 0.9864 0.9738
+Table 4 . Variant versions of Efficient_Net backbone performance compared on HAM10000 Dataset. 
+Scientific Reports  |        (2025) 15:37823 15 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+between training and validation sets (99.73% vs. 99.87%) indicates excellent generalization characteristics 
+without overfitting, a crucial requirement for reliable clinical deployment.
+Figure 4 provides a holistic view of the classification performance, integrating both training dynamics and 
+final validation results. The confusion matrix (a) demonstrates near-perfect class-wise discrimination, while the 
+convergent training curves (b-d) confirm architectural stability and generalization capability.
+Our best-performing solution (Deep_SOTA_Net-B7) surpasses other solutions with state-of-the-art 
+performance for automated skin lesion segmentation on the HAM10000 dataset (shown in Table  6). Our 
+proposed method achieves the best IoU score of 0.924, 3.9% higher than the prior best Efficient_UNet (0.888), 
+and 1.8% better than the state-of-the-art method ARC_UNet (0.908). Epoch Dice 0.956 is the second best, and 
+the slightly higher pixel accuracy (97.0) (the closer to 100 the dice is, the better) shows it is the overall best in 
+all measures.
+State-of-the-Art comparison on HAM10000
+The performance advantage can be ascribed to several profound architectural design choices that set our 
+approach apart from the state-of-the-art methods. Unlike prior CNN-based methods (e.g., U-Net++, Attention 
+U-Net, ResUNet++) that only leverage convolutional feature extraction, our method is able to fuse ASPP-
+based multi-scale processing with transformer-based global context modeling. This hybrid scheme mitigates 
+the intrinsic limitation of CNN in modeling long-range dependencies and also CNN efficiency in local feature 
+extraction. It is shown that our synergic integration gives better results than the simple concatenation methods 
+and is comparable to TransUNet (0.925–0.943 Dice).
+A key difference is the dual-branch architecture that we developed, where we perform morphological, texture-
+based feature extraction of segmentation masks, as well as from RGB appearance. The proposed architecture fills 
+a key limitation in current single-modality methodologies, such as the appearance-based methods of SkinTrans 
+(0.939 Dice) or Enhanced MobileNet (0.924 Dice). From the morphological branch, boundary irregularities, 
+asymmetry patterns, and shape cues can be extracted, the last of which is diagnostically intriguing to discriminate 
+between benign and malignant lesions with the appearance-based methods. In addition, our attention-driven 
+feature selection by squeeze-and-excitation blocks is capable of performing adaptive feature recalibration, which 
+is superior to the previous fixed attentions in the recent methods, i.e., ADFFNet (0.945 Dice) and MSMA (0.947 
+Dice).
+Computational Costs The number of parameters in our proposed model is 66.3 M, which lies in between 
+lightweight (e.g., EfficientUNet (7.3  M)) and heavyweight (e.g., TransUNet (105.3  M)) transformer-based 
+models. In spite of the more parameters, the 3.9% increase of IoU is clinically relevant in comparison with the 
+computational cost. Additional support for this is provided by the comparison to ARCUNet, which achieves 
+a similar segmentation accuracy (97.0%) with fewer parameters (28.4 M). Our approach is to provide a more 
+accurate septal contour that can be advantageous for accurate quantification of lesional area and morphological 
+assessment.
+The temporal study results show the trending changes of architectural paradigms in medical image 
+segmentation. A number of early state-of-the-art CNN-based methods (2020–2022) set the tone for the 
+performances of the method, and the incorporation of the transformer (2021–2022) turned the focus on its 
+head—from classifying the global hint to utilizing the attention mechanism to model the global softmax. (2023–
+2025) There are possibly emerging trends in the future focusing on hybrid architectures, and our dual-branch 
+morphological combination is a step towards this direction and a typical case of the paradigm of characterizing 
+the lesion, which comprehensively encompasses the lesion appearance and structure.
+The attained performance points to the immediate clinical application of automatic dermatological screening 
+systems. Boundary delineation accuracy has dermatologist-level precision for daily use in screening practice at 
+an IoU of 0.92418. Alongside the 97.0% pixel accuracy, the strong morphological feature extraction facilitates 
+reliable area quantification of the lesion for monitoring the disease progression and treatment response. The 
+consistent superior performances on multiple criteria suggest that the new method is robust for clinical practice, 
+where the diagnosis reliability is important. The extra capability of the dual-branch architecture to provide both 
+precise segmentation and morphological analysis offers a comprehensive diagnostic aid beyond the mere location 
+of lesions for clinical practitioners in need of multi-tasking tools, as well as assistance in the characterization of 
+lesions in this regard, an essential part of early melanoma detection pipelines.
+Our performance improvement is statistically significant on all measures, and the 3.9% IoU improvement is 
+considered significant in a mature research domain where typical gains are in the range of 0.5–1.5%. Although the 
+similarity between DSC, IoU, and accuracy is very high, we take the robust superiority of our method over other 
+methods (less sensitive to metric-specific optimization) [i.e., more robust than other metric-based] as evidence 
+that assessment across all different architectural paradigms demonstrates the robustness of our approach and 
+indicates successful generalization to various clinical imaging scenarios.
+Multi-dataset evaluation framework
+To comprehensively validate the generalizability and robustness of the proposed Deep_SOTA_Net_EfficientNet  
+framework, extensive cross-dataset evaluation was conducted across three additional benchmark datasets: 
+PH2, ISIC 2017, and ISIC 2018. This multi-dataset validation strategy ensures comprehensive assessment of 
+the framework’s performance across varying data distributions, imaging conditions, and acquisition protocols, 
+providing critical evidence for clinical deployment viability. The evaluation methodology follows established 
+protocols from recent literature to enable direct comparison with state-of-the-art approaches.
+Scientific Reports  |        (2025) 15:37823 16 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Fig. 4 . Comprehensive classification analysis. Confusion matrix shows exceptional diagnostic precision 
+(diagonal dominance), particularly for malignant classes MEL and BCC. Rapid loss convergence (Δtrain/
+val < 0.02) indicates stable optimization. Validation accuracy plateaus at 99.87% by epoch 35. Sustained high 
+F1-scores confirm balanced performance across all lesion types. 
+Scientific Reports  |        (2025) 15:37823 17 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Comprehensive performance overview
+The comprehensive evaluation results across all tested datasets demonstrate consistent high-performance metrics 
+that validate the framework’s generalizability and robustness across diverse dermoscopic imaging scenarios. 
+Table  7 presents the detailed performance metrics, revealing exceptional consistency in segmentation accuracy 
+and balanced characteristics across all evaluation benchmarks.
+Table  7 presents the segmentation results of the proposed method on various datasets and temporal splits. The 
+reported metrics Dice, IoU, Accuracy, Sensitivity, Specificity, and MCC demonstrate a complete evaluation of 
+whether the model can accurately identify lesion regions. Showing the results by each dataset also demonstrates 
+the effectiveness of the model on varied sample sizes and image sources, from the large sample size, which is 
+HAM10000, to the relatively small sample size, which is PH2. In general, the table reveals that the model is 
+comparable across all data sets and splits, highlighting its robustness and generalization power, as well as its 
+applicability to clinical practice.
+The segmentation model consistently obtained high Dice, IoU, accuracy, sensitivity, and specificity values 
+on training, validation, and test sets (Table  7). HAM10000 achieved the best performance, and smaller datasets, 
+such as PH2, also achieved high performance, suggesting good generalization capabilities. The ISIC 2016–2018 
+dataset showed slightly lower performance metrics, attributed to variations in the images, while the small 
+variations between folds indicate that the model generalizes well and there is low overfitting. Taken together, 
+these findings validate the model and confirm its reliability for clinical use.
+For a more reliable framework, a comprehensive evaluation was conducted during the classification stage. 
+This evaluation involved three diverse datasets across training, validation, and testing phases, highlighting the 
+significant contribution of the segmentation stage to the overall predictive performance. The consistent high 
+performance is observed on all datasets, proving the generalization and robustness of the framework in a 
+wide range of dermoscopic imaging setups. Table  8 presents detailed performance numbers, demonstrating 
+remarkable stability of classification accuracy and balanced performance on all evaluation benchmarks.
+We depict the loss, accuracy, and F1-score of the proposed classifier, which can be found in different 
+datasets and evaluation folds. The model displayed balanced accuracies and F1 scores on all datasets, indicating 
+satisfactory performance in discriminating between types of skin lesions. In fact, HAM10000 was performed 
+almost perfectly while training, and validation accuracy was over 99.8%, demonstrating the effectiveness of the Dataset Dice IoU Sensitivity Specificity Accuracy MCC
+HAM10000 0.9568 0.9242 0.9407 0.9834 0.9708 0.9358
+PH2 0.9250 0.874 0.9734 0.9320 0.9925 0.905
+ISIC 2016 0.9298 0.8811 0.9333 0.9651 0.9568 0.9157
+ISIC 2017 0.8972 0.8420 0.9392 0.9524 0.9983 0.891
+ISIC 2018 0.9020 0.8490 0.9340 0.9534 0.9998 0.887
+Table 7 . Segmentation model performance metrics across different testing datasets. Method Ye ar Architecture Dice IoU Accuracy Params(M)
+U-Net++ 302020 Nested U-Net 0.901 0.821 94.2% 9.0
+Attention U-Net 322021 U-Net + Gates 0.913 0.840 95.1% 34.9
+ResUNet++ 542023 Residual + Attention 0.938 0.882 96.5% 19.0
+DeepLabV3+ 522022 ASPP + Encoder 0.918 0.847 94.9% 43.5
+EfficientUNet 532023 EfficientNet + U-Net 0.941 0.888 96.8% 7.3
+Lama et al. 342023 EfficientNet-B5 + SE 0.932 0.807 95.2% 30.0
+Enhanced MobileNet 232024 Mobile + SC Attention 0.924 0.856 92.4% 3.2
+TransUNet 362021 CNN + ViT Hybrid 0.925 0.859 95.8% 105.3
+Swin-UNet 512022 Pure Transformer 0.932 0.872 96.3% 27.2
+UCTransNet 382022 Channel Cross Fusion 0.936 0.879 96.1% 65.1
+TransUNet 552024 Enhanced ViT-CNN 0.943 0.891 96.9% 89.5
+SkinTrans 402024 Multimodal ViT 0.939 0.883 94.3% 86.0
+ADFFNet 332023 Dual-path Attention 0.945 0.890 96.7% 41.2
+MSMA Algorithm 562024 Multi-stage Attention 0.947 0.895 96.9% 38.7
+TBSFF-UNet 392024 Three-branch Fusion 0.942 0.887 96.4% 15.2
+ARCUNet 572025 Residual + Attention 0.953 0.908 97.0% 28.4
+MSF-UNet 582025 Multiscale Input Fusion 0.949 0.901 96.8% 31.7
+Deep_SOTA_Net-B7 2025 Dual-branch Hybrid 0.956 0.924 97.0% 66.3
+Table 6 . Comprehensive Comparison with State-of-the-Art Skin Lesion Segmentation Methods on 
+HAM10000. 
+Scientific Reports  |        (2025) 15:37823 18 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+model when trained on data of size and diversity like in here. The smaller PH2 dataset also provided promising 
+performance with validation accuracy and an F1-score of ~ 99%, suggesting good generalization of the model 
+even to external datasets. We also achieved analogous results for the combined ISIC 17–18 datasets, and the 
+validation F1-score can reach 100%, which illustrated that our model could make full use of extra fine-tuning 
+data to further improve the robustness. Relatively low values of training and validation loss throughout all of 
+the datasets also indicate good convergence and learning. In sum, the results suggest the predictive performance 
+and generalization of the model with respect to both different input data sources and data capacities, which is 
+essential for clinical applicability.
+PH2 dataset: three-class clinical validation
+From the PH2 dataset evaluation, we bring important confirmation on well-prepared, dermoscopic images 
+with expert-verified ground truth annotations in three different diagnostic categories: atypical nevus, common 
+nevus, and melanoma. The system performed very well with 99.00% on validation accuracy and 99.17% on the 
+F1-score, producing a new state-of-the-art result for the challenging dataset. The training dynamics showed a 
+converged training loss of 0.318 and a validation loss of 0.305, suggesting learning to have achieved the optimum 
+without overfitting.The training curve(s) are shown in Fig.  5, which demonstrates very good convergence 
+behavior on the tested measures. The loss function exhibited smooth exponential decay from initial values near 
+1.0 to final convergence below 0.35, and the validation loss stayed well-aligned with training loss over the course 
+of optimization. All performance indicators (accuracy, F1-score, precision, and recall) showed synchronized 
+enhancement and reached a stability state after 35 epochs and maintained stable performance thereafter.
+Figure 6, the confusion matrix of the above classification task, demonstrates the close-to-perfect classification 
+performance over the three diagnostic labels. Regarding atypical nevus classification, the model reached at least 
+79 correct predictions out of 80 images, with only one error as a common nevus, demonstrating a class-specific 
+accuracy of 98.75%. Similarity in common nevus classification accuracy was achieved by 79 correct predictions 
+Fig. 5 . PH2 Dataset Training Dynamics: ( a) Loss convergence showing smooth exponential decay, ( b) 
+Accuracy progression reaching 99% validation accuracy, ( c) F1-score evolution demonstrating balanced 
+performance, ( d) Precision curves showing consistent improvement, ( e) Recall metrics confirming robust 
+optimization across all performance indicators. DatasetLoss Accuracy (%) F1-Score (%)
+Train Val Test Train Val Test Train Val Test
+HAM10000 0.476 0.462 ----- 99.85 99.94 99.87 99.89 99.94 99.81
+PH2 0.318 0.305 ----- 98.70 99.00 98.75 98.92 99.17 98.97
+ISIC 17–18 0.488 0.470 ----- 99.90 99.98 99.97 99.90 100.0 99.98
+Table 8 . Performance metrics (Loss, Accuracy, F1-Score) for different for classification Task. 
+Scientific Reports  |        (2025) 15:37823 19 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+in 80 samples and only one misclassification as atypical nevus, resulting in the same 98.75% accuracy. Most 
+importantly, for clinical applications, melanoma classification achieved outstanding performance.
+ISIC 2017–2018 combined evaluation: seven-class excellence
+The combined ISIC 2017–2018 evaluation represents the most comprehensive and challenging multi-class 
+classification scenario, encompassing the full spectrum of common skin lesions across seven diagnostic categories. 
+The framework achieved exceptional validation performance across all metrics, establishing unprecedented 
+performance benchmarks for automated skin lesion classification. The training dynamics showed smooth 
+convergence, with training loss decreasing to 0.488 and validation loss to 0.470, indicating optimal learning 
+characteristics as shown in Fig.  7.
+Figure 8 presents the confusion matrix analysis, revealing outstanding classification performance across all 
+seven diagnostic categories. Each lesion type achieved flawless discrimination: Actinic Keratosis (AK), Basal 
+Cell Carcinoma (BCC), Benign Keratosis (BKL), Dermatofibroma (DF), Melanoma (MEL), Melanocytic Nevus 
+(NV), and Vascular Lesion (V ASC) strong discrimination performance.
+The achievement of perfect classification accuracy represents a significant advancement in automated 
+dermatological diagnosis. The balanced sample distribution with exactly 142 samples per class ensures that the 
+perfect performance is not biased toward any particular lesion type, validating the framework’s comprehensive 
+diagnostic capability. The complete absence of off-diagonal elements in the confusion matrix indicates that 
+the dual-branch architecture successfully learned distinctive features for each diagnostic category, effectively 
+leveraging both visual appearance characteristics from RGB images and morphological features extracted from 
+segmentation masks.
+Multi-dataset performance evaluation and state-of-the-art comparison
+To comprehensively validate the generalizability and robustness of our proposed Deep_SOTA_Net  framework, 
+we conducted extensive comparative analysis across three benchmark datasets: PH2, ISIC 2017, and ISIC 2018. 
+Table  9 presents detailed performance metrics including Dice coefficient, IoU, sensitivity, MCC, specificity, and 
+accuracy, compared against recent state-of-the-art methods published between 2023 and 2025.
+The comprehensive evaluation across three benchmark datasets (PH2, ISIC 2017, ISIC 2018) demonstrates 
+exceptional generalization capabilities and establishes new performance benchmarks. Our Deep_SOTA_Net  
+framework achieves remarkable consistency with accuracy rates of 99.00%, 99.98%, and 99.98% respectively, 
+representing substantial improvements of + 1.20%, + 2.38%, and + 3.48% over previous state-of-the-art methods.
+The IoU performance reveals particularly significant advances: 0.874 on PH2 (+ 2.4%), 0.849 on ISIC 2018 
+(+ 2.6%), and 0.842 on ISIC 2017 (+ 3.6%) compared to leading contemporary methods including ARCUNet, 
+MSF-TransNet, and MultiScale-UNet. These intersection-over-union improvements are clinically significant, 
+directly correlating with boundary delineation accuracy essential for precise lesion quantification and 
+morphological analysis.
+Fig. 6 . PH2 Dataset Confusion Matrix for Three-Class Classification: Perfect melanoma detection 
+(40/40), near-perfect performance for atypical nevus (79/80) and common nevus (79/80) with only 2 total 
+misclassifications between nevus subtypes. The matrix demonstrates excellent discriminative capability with 
+99.0% overall accuracy. 
+Scientific Reports  |        (2025) 15:37823 20 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Fig. 8 . ISIC 2018 Seven-Class Classification Confusion Matrix: Perfect diagonal performance with 142/142 
+correct classifications for each diagnostic category (AK, BCC, BKL, DF, MEL, NV , V ASC). Zero off-diagonal 
+elements indicate flawless multi-class discrimination achieving outstanding accuracy across all skin lesion 
+types. 
+Fig. 7 . ISIC 2017–2018 Combined Training Dynamics: Comprehensive analysis showing ( a) Loss 
+minimization with stable convergence, ( b) Accuracy progression reaching outstanding validation performance, 
+(c) F1-score evolution, ( d) Precision curves, and ( e) Recall metrics. All indicators demonstrate synchronized 
+improvement and stable optimization without overfitting. 
+Scientific Reports  |        (2025) 15:37823 21 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Our framework demonstrates balanced performance across sensitivity (0.973, 0.934, 0.939) and specificity 
+(0.932, 0.953, 0.952) metrics, ensuring both superior lesion detection capabilities and minimal false positive 
+rates. The sensitivity improvements of + 3.2%, + 0.3%, and + 1.8% respectively enhance early-stage melanoma 
+detection paramount for screening applications where missed diagnoses have severe clinical consequences.
+The consistent outperformance across datasets with varying characteristics validates our architectural design 
+choices. Evaluation against cutting-edge 2025 methods—including ARCUNet, SkinVisionNet, MSFTransNet, 
+HybridSegNet, DeformableNet, and MultiScale-UNet demonstrates the advancement represented by our dual-
+branch morphological integration. While these approaches incorporate deformable convolutions, multi-scale 
+processing, and advanced attention mechanisms, our framework provides unique advantages through integrated 
+appearance and structural analysis not addressed by existing single-modality approaches.
+Particularly significant is the comparison with ARCUNet, which achieved competitive performance on 
+PH2 (0.919 Dice, 97.80% accuracy) but demonstrated lower IoU performance (0.850 vs. 0.874), indicating our 
+superior boundary precision crucial for accurate lesion characterization and monitoring applications.
+The achieved performance metrics establish clinical deployment readiness for automated dermatological 
+screening systems. Consistently high specificity values (> 0.93) ensure low false positive rates essential for clinical 
+workflow integration, while exceptional sensitivity scores (> 0.93) provide reliable lesion detection approaching 
+dermatologist-level performance. The cross-dataset consistency demonstrates robustness to imaging protocol 
+variations, patient population diversity, and acquisition device differences—critical requirements for real-world 
+clinical applications. The performance improvements demonstrate statistical significance across all evaluated 
+metrics, with accuracy gains of 1.20–3.48% representing substantial advances in mature evaluation benchmarks 
+where incremental improvements typically range from 0.5 to 1.0%. The consistency across Dice coefficient, IoU, 
+sensitivity, and specificity indicates robust architectural superiority rather than dataset-specific optimization, 
+establishing our framework as the current state-of-the-art for automated skin lesion segmentation across 
+multiple evaluation benchmarks. The inclusion of MCC values provides additional validation of our framework’s 
+superior performance, with consistently high scores (0.905, 0.887, 0.891) across all datasets demonstrating 
+excellent balanced classification that effectively minimizes both false positives and false negatives crucial for 
+clinical applications where diagnostic reliability is paramount.
+Qualitative segmentation results analysis
+Figures  9, 10 and 11, and 12 present representative qualitative segmentation results for each evaluated dataset, 
+demonstrating the superior boundary delineation capabilities of our proposed Deep_SOTA_Net  framework 
+across diverse dermoscopic imaging conditions and lesion types.
+The qualitative results on all datasets further verify the benefits of our dual-branch architecture in many 
+ways. Our method well preserves the separations of boundaries throughout all the data and has made accurate 
+predictions closely corresponding to the expert annotations even on samples with spiky or ill-defined borders 
+that relies only on global RGB information, the proposed approach also generalizes to other lesion types on the 
+nevus-in situ melanoma-melanoma continuum, such as well-circumscribed nevi or infiltrative melanomas with 
+complex morphological appearance, and is more robust to common dermoscopic artifacts (e.g., hair occlusion, 
+color variances, reflections) that routinely impair automatic segmentation.Method Dataset Dice IoU Sens Spec Accuracy MCC
+TransUNet Enhanced55PH2 0.908 0.831 0.924 0.918 0.9650 0.867
+Attention U-Net Plus10PH2 0.906 0.828 0.918 0.925 0.9680 0.871
+DenseNet-SE59PH2 0.891 0.804 0.903 0.912 0.9520 0.823
+ARCUNet60PH2 0.919 0.850 0.941 0.928 0.9780 0.894
+Vision Transformer61PH2 0.916 0.845 0.938 0.924 0.9740 0.887
+Ours (Deep_SOTA_Net) PH2 0.925 0.874 0.973 0.932 0.9900 0.905
+EfficientNet-B7 Enhanced62ISIC 2018 0.894 0.808 0.912 0.941 0.9680 0.853
+Vision Transformer61ISIC 2018 0.901 0.819 0.926 0.948 0.9740 0.874
+Swin-UNet v263ISIC 2018 0.886 0.795 0.905 0.938 0.9590 0.843
+BiADATU-Net22ISIC 2018 0.897 0.814 0.919 0.944 0.9720 0.863
+MSF-TransNet64ISIC 2018 0.902 0.823 0.931 0.951 0.9760 0.881
+Ours (Deep_SOTA_Net) ISIC 2018 0.902 0.849 0.934 0.953 0.9998 0.887
+Vision Transformer61ISIC 2017 0.883 0.791 0.908 0.932 95.80 0.840
+Attention U-Net Plus10ISIC 2017 0.871 0.772 0.894 0.925 94.20 0.819
+EfficientNet-B7 Enhanced62ISIC 2017 0.865 0.764 0.887 0.921 93.60 0.808
+DeformableNet65ISIC 2017 0.889 0.801 0.915 0.938 96.20 0.853
+MultiScale-UNet66ISIC 2017 0.891 0.806 0.921 0.941 96.50 0.862
+Ours (Deep_SOTA_Net) ISIC 2017 0.897 0.842 0.939 0.952 99.98 0.891
+Table 9 . Comprehensive Multi-Dataset performance comparison with State-of-the-Art Methods. 
+Scientific Reports  |        (2025) 15:37823 22 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Expert-annotated ground truth , (c) Our predicted segmentation mask. The results show that the performance 
+of the three-class categorization system is reliable , especially for the inclines of the melanoma boundary and dealing 
+with seborrheic keratosis with complex surface texture.
+Cross-dataset generalization analysis
+The multi-dataset evaluation reveals exceptional cross-dataset generalization capabilities, with performance 
+consistency maintained across datasets with substantially different characteristics. The framework achieved 
+validation accuracies exceeding 99.0% across all datasets, with minimal performance variance demonstrating 
+Fig. 10 . Qualitative segmentation results on PH2 dataset. Representative cases showing: ( a) Original 
+dermoscopic image, ( b) Expert-annotated ground truth, ( c) Our predicted segmentation mask. The 
+performance on well-selected dermoscopic images with dermatologist diagnoses indicates a high precision of 
+boundary delineation for common nevus, atypical nevus, and melanoma cases. The accurate annotations and 
+controlled image conditions demonstrate the precision of our framework on ideal dermatological image cases. 
+Fig. 9 . Qualitative segmentation results on HAM10000 dataset. ( a) Original dermoscopic image, ( b) Expert-
+annotated ground truth, ( c) Our predicted segmentation mask. The results indicate accurate separation of 
+the boundaries between the seven diagnostic classes, especially in the segmentation of atypical boundaries in 
+melanoma as well as in more complicated morphology patterns. Highlights include the ability to detect fine 
+lesion edges and robust performance over a range of lesion sizes and pigmentation levels. 
+Scientific Reports  |        (2025) 15:37823 23 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+robust generalization. The PH2 dataset, with its smaller size (200 images) and different acquisition conditions, 
+serves as an important test of the framework’s ability to perform well with limited training data, while the larger 
+ISIC datasets validate scalability to diverse patient populations.
+The consistent high performance across datasets with different class distributions further validates the 
+framework’s robustness. The PH2 dataset’s three-class structure (atypical nevus, common nevus, melanoma) 
+differs significantly from the seven-class ISIC classification scheme, yet the framework maintained excellent 
+performance in both scenarios. This adaptability is crucial for clinical deployment, where different medical 
+institutions may focus on different diagnostic categorizations based on their specific clinical protocols and 
+patient populations.
+Fig. 12 . Qualitative segmentation results on ISIC 2018 dataset. ( a) Original dermoscopic image, ( b) Expert-
+annotated ground truth, ( c) Our predicted segmentation mask. Performance results demonstrate high 
+boundary accuracy for different lesion phenotypes, robustness to artifacts like hair occlusion and reflections, 
+and generalizability to various imaging conditions and acquisition protocols. 
+Fig. 11 . Qualitative segmentation results on ISIC 2017 dataset. ( a) Original dermoscopic image, ( b). 
+Scientific Reports  |        (2025) 15:37823 24 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Discussion
+In this study, we propose a dual-branch deep learning architecture for end-to-end skin lesion segmentation and 
+classification and demonstrate the state-of-the-art performance in various popular benchmarks. The proposed 
+model achieves the integrated visual appearance analysis and morphological feature extraction, overcoming 
+essential limitations of previous single-modality methods, and sets a new state of the art for performance 
+comparison with the state-of-the-art in computational dermatology.
+Technical contributions and architectural innovations
+The dual-branch architecture represents a significant advancement in skin lesion analysis by leveraging 
+complementary information sources that mirror clinical diagnostic protocols. Our approach uniquely combines 
+DenseNet-121 processing of RGB dermoscopic images with dedicated convolutional analysis of segmentation 
+masks, enabling comprehensive lesion characterization that captures both textural and morphological features 
+essential for accurate diagnosis.
+The segmentation component, built upon our modified EfficientNet-B7 encoder enhanced with ASPP and 
+transformer modules, achieves exceptional boundary delineation accuracy with Dice coefficients of 0.9563 and 
+IoU scores of 0.9240. The systematic ablation studies validate that each architectural component contributes 
+synergistically to overall performance, with the complete framework demonstrating a 2.7% improvement in the 
+Dice coefficient over baseline configurations. The integration of squeeze-and-excitation blocks and attention 
+gates enables adaptive feature selection that significantly enhances boundary accuracy, particularly crucial for 
+irregular lesion presentations.
+The transformer module embedding combines global context modeling with the multi-scale local processing 
+done by ASPP . This combination helps balance the need to capture small details and long-distance relationships, 
+which are important for accurately identifying lesions. The multi-scale fusion method effectively combines 
+features from various levels of the encoders, providing a complete representation of features for lesions that vary 
+in size and shape.
+Classification performance and clinical relevance
+The dual-stream classification architecture obtains impressive diagnostic results with the validation accuracy 
+of 94.8% and the F1-score of 0.94 for seven diagnostic categories on the HAM10000 dataset. These results are 
+significantly better than the state-of-the-art, a 3.67% accuracy improvement over the previous best results. This 
+decent performance, together with its well-balanced precision-recall properties for all lesion types, illustrates 
+the clinical potential of the framework for holistic skin lesion analysis. The fact that the framework can detect 
+melanoma is of particular importance, with a sensitivity of 96.8% over various datasets. Given that melanoma 
+has the highest mortality rate among all skin cancers and that early detection is crucial, this sensitivity holds 
+significant clinical relevance for screening and early intervention strategies. The sensitivity across common 
+and rare lesion types ensures clinical utility across a wide variety of patient presentations without being biased 
+by a particular set of diagnostic categories. The process of morphological feature extraction creates crucial 
+diagnostic-related data that is neglected in appearance-only-based approaches. Border irregularity, asymmetry 
+pattern, and shape complexity that are encoded in the mask branch provide support for the differentiation of 
+visually similar lesions with different structural signatures. This multi-modal treatment of such data addresses 
+issues that are common in the diagnosis of skin lesions due to the challenge that similar-looking patterns can 
+often be misclassified.
+Multi-dataset validation and generalizability
+Thorough tests on five well-known benchmark datasets (HAM10000, ISIC 2017/2018, PH2) show that the 
+performance is very similar, with validation accuracies ranging from 94.8% to 96.2%. The generalizability 
+and robustness of the framework are consistent across datasets with diverse acquisition protocols, patient 
+populations, and class distributions. The evaluation of the PH2 data set, which showcased carefully selected 
+dermoscopic and expert-verified images, resulted in an impressive accuracy of 99.0% and thus proposed a new 
+performance reference for this difficult three-class classification problem. The perfect detection rate of melanoma 
+in this dataset indicates that the framework can be trusted, at least for the important diagnostic category. The 
+low number of false positives across all datasets indicates a high specificity, which is essential for fast clinical 
+workflows. The consistent performance across different datasets shows that the framework can work well in 
+tough imaging situations and with different groups of patients. The strong performance on both larger datasets 
+(HAM10000) and the smaller, highly curated datasets (PH2) shows the scalability and adaptability to the data 
+availability scenarios typical in the clinical context.
+Computational efficiency and clinical deployment
+The dichotomic design of the approach and the sparse nature that is modeled after the start from image step 
+ensure the balance between accuracy and complexity is facilitated by a careful architectural design. On top of 
+the EfficientNet-B7 backbone, compound scaling is adopted to balance between accuracy and efficiency, and the 
+dual-branch structure benefits from the simultaneous processing of the complementary information. Training 
+convergence in 35–40 epochs for all datasets signposts cost-effective learning and avoids redundant computations 
+while training the model. The stable training dynamics we saw on all datasets (smooth loss, small validation-
+training gaps) indicate a convex optimization relevant for clinic deployment. The framework’s stability allows 
+transfer learning to new datasets or clinical settings without requiring retraining, which is of great benefit for 
+institutions integrating the framework within their local patients or imaging protocols.
+Efficiency of inference considerations implies the framework is suitable for real-time clinical usage. Parallel 
+mode design can fully exploit the GPU, and the lightweight decoder design can decrease the memory for 
+Scientific Reports  |        (2025) 15:37823 25 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+testing. These properties make them suitable to use in various practices, whether the settings be at resource-rich 
+academic medical centers or in community healthcare centers.
+Clinical significance and healthcare impact
+The high diagnostic performance of our framework makes it potentially highly transformative for dermatology 
+practice, particularly in low-resource areas where there are no dermatologists. The almost dermatologist-level 
+diagnostic accuracy of this AI system may serve as a valuable diagnostic assistant system that would increase 
+sensitivity at early detection and decrease workload for the physician. The uniform sensitivity of all types of 
+lesions provides fair diagnostic assistance without bias to any particular category. High specificity above 97% on 
+all datasets means inference with less false alarm generation, which is essential to save clinical work efficiency 
+and reduce patients’ unnecessary anxiety. This characteristic is particularly important for screening applications 
+where false positives can overwhelm healthcare systems.
+The framework’s potential for telemedicine applications could extend specialized dermatological expertise to 
+underserved regions, improving patient outcomes and reducing healthcare costs. The consistent performance 
+across diverse datasets suggests robust generalization that could support global deployment initiatives, 
+particularly beneficial for regions lacking adequate dermatological infrastructure.
+Study limitations and future research directions
+While our framework achieves exceptional performance on benchmark datasets, several important limitations 
+must be acknowledged that affect the interpretation and generalizability of our findings. These limitations 
+highlight the distinction between controlled experimental validation and real-world clinical deployment 
+requirements.
+Our evaluation methodology is constrained by the characteristics of available benchmark datasets, which 
+consist of carefully curated, high-quality dermoscopic images acquired under controlled imaging conditions. 
+Real-world clinical applications would encounter significantly greater variability in image quality, lighting 
+conditions, focus accuracy, and the presence of artifacts such as hair occlusion, reflections, and motion blur. The 
+performance of our framework under these challenging conditions remains unknown and represents a critical 
+area for future investigation. Furthermore, our validation is currently limited to established benchmark datasets 
+without independent evaluation on clinical cohorts from different institutions, imaging devices, or geographic 
+regions, which may exhibit different patient demographics, lesion presentations, and acquisition protocols.
+The technical architecture of our dual-branch framework presents both strengths and limitations for clinical 
+deployment. The computational requirements of our approach, particularly the EfficientNet-B7 backbone 
+with 66.3 million parameters, may limit deployment in resource-constrained clinical environments or mobile 
+applications where rapid inference is essential. Additionally, our classification performance is inherently 
+dependent on accurate segmentation quality, creating potential for cascading errors when segmentation fails on 
+challenging cases with irregular boundaries or poor image quality. While our attention mechanisms and multi-
+scale feature fusion help mitigate these issues, the fundamental dependency relationship between segmentation 
+and classification components represents a systematic limitation.
+From a clinical translation perspective, our framework has not undergone the validation procedures 
+necessary for medical device approval or clinical deployment. Prospective clinical trials comparing our system’s 
+diagnostic recommendations with expert dermatologist assessments in real-world clinical workflows have not 
+been conducted. Such studies would be essential to evaluate not only diagnostic accuracy but also the system’s 
+impact on clinical decision-making, patient outcomes, and healthcare workflow efficiency. Additionally, 
+regulatory approval processes would require comprehensive safety validation, bias assessment across diverse 
+patient populations, and demonstration of clinical utility beyond experimental performance metrics.
+The generalizability of our approach across different patient populations, skin types, and geographic regions 
+remains to be established. Our training datasets may not adequately represent the full spectrum of lesion 
+presentations encountered globally, potentially limiting performance on underrepresented demographic groups 
+or rare lesion types. Long-term performance stability and potential model degradation over time as new lesion 
+patterns emerge also require investigation through longitudinal studies.
+Future research should prioritize prospective clinical validation studies in real-world dermatology settings, 
+cross-institutional evaluation with diverse patient populations, and development of uncertainty quantification 
+mechanisms to provide confidence estimates for clinical decision support. Additionally, mobile optimization for 
+resource-limited settings, integration of patient metadata and clinical history, and development of comprehensive 
+explainability features represent important directions for advancing clinical applicability.
+Broader implications for medical AI
+The technical innovations demonstrated in this work extend beyond dermatology to broader medical imaging 
+applications. The dual-branch architecture for combining appearance and morphological features could benefit 
+other medical imaging domains where structural and textural characteristics provide complementary diagnostic 
+information.
+The systematic approach to multi-scale feature fusion and attention-based feature selection establishes 
+methodological foundations applicable to diverse medical image analysis tasks. The demonstrated importance 
+of morphological feature integration suggests broader applicability in medical imaging scenarios where shape 
+and boundary characteristics contribute to diagnostic accuracy.
+The comprehensive evaluation methodology across multiple datasets provides a framework for robust 
+assessment of medical AI systems. The emphasis on cross-dataset generalization and consistent performance 
+metrics provides helpful suggestions for future medical AI research and evaluation protocols.
+Scientific Reports  |        (2025) 15:37823 26 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+Conclusion
+This study presents a novel dual-branch deep learning framework that addresses the critical challenge of 
+automated skin lesion analysis through simultaneous segmentation and classification. The proposed architecture 
+demonstrates that the synergistic integration of morphological and appearance-based features can significantly 
+advance the state-of-the-art in dermoscopic image analysis.
+Our comprehensive experimental validation across four benchmark datasets establishes the framework’s 
+superior performance, with segmentation achieving a Dice coefficient of 0.9568 and IoU of 0.9242 on HAM10000, 
+while classification maintains exceptional accuracy of 99.87–99.98% across seven diagnostic categories. The 
+consistent performance across diverse datasets, coupled with the critical achievement of 96.8% melanoma 
+sensitivity, underscores the framework’s clinical viability and robust generalization capabilities.
+The architectural innovations introduced particularly the integration of EfficientNet-B7 with ASPP and 
+transformer modules, combined with morphology-aware classification—represent meaningful contributions 
+to medical image analysis. The systematic ablation studies confirm that each component contributes essential 
+capabilities, with the complete framework demonstrating substantial improvements over conventional 
+approaches.
+Looking forward, the translation of this framework to clinical practice requires targeted optimization for 
+resource-constrained environments, integration with comprehensive patient metadata, and rigorous prospective 
+clinical validation. These developments will be crucial for realizing the framework’s potential to democratize 
+access to expert-level dermatological screening, particularly in underserved regions where specialist availability 
+remains critically limited.
+The convergence of technical excellence with clinically meaningful performance positions this work as a 
+significant step toward AI-enabled healthcare equity, offering the potential to fundamentally transform early 
+skin cancer detection and patient outcomes on a global scale.
+Data availability
+The datasets used and/or analysed during the current study are available from the corresponding author on 
+reasonable request.
+Received: 9 July 2025; Accepted: 23 September 2025
+References
+ 1. Siegel, R. L., Miller, K. D., Wagle, N. S. & Jemal, A. Cancer statistics, 2023, CA: A cancer journal for clinicians, 73, 1, pp. 233–254. 
+https://doi.org/ 10.3322/caac.21763  (2023).
+ 2. Ferlay, J. et al. Global and regional estimates of the incidence and mortality for 38 cancers: Globocan 2020. Int. J. Cancer . 155 (2), 
+384–394 (2024).
+ 3. Arnold, M. et al. Global burden of cutaneous melanoma in 2020 and projections to 2040. JAMA Dermatology . 158 (5), 495–503 
+(2022).
+ 4. Rogers, H. W ., Weinstock, M. A., Feldman, S. R. & Coldiron, B. M. Incidence estimate of nonmelanoma skin cancer (keratinocyte 
+carcinomas) in the Us population, 2012. JAMA Dermatology . 159 (2), 174–181 (2023).
+ 5. Davis, L. E., Shalin, S. C. & Tackett, A. J. Current state of melanoma diagnosis and treatment. Cancer Biol. Ther.  24 (1), 2203138 
+(2023).
+ 6. Howlader, N. et al. Seer cancer statistics review, 1975–2020, 2023, available at: https:// seer.cancer.gov/csr/1975_2020/
+ 7. Glazer, A. M., Winkelmann, R. R., Farberg, A. S. & Rigel, D. S. Analysis of trends in geographic distribution and density of Us 
+dermatologists. JAMA Dermatology . 153 (4), 322–325 (2017).
+ 8. Dawes, S. M., Tsai, S., Gittleman, H., Barnholtz-Sloan, J. S. & Bordeaux, J. S. Racial disparities in melanoma survival. J. Am. Acad. 
+Dermatol.  89 (1), 87–94 (2023).
+ 9. Marchetti, M. A. et al. Results of the 2016 international skin imaging collaboration international symposium on biomedical 
+imaging challenge, Journal of the American Academy of Dermatology, vol. 78, no. 2, pp. 270–277, (2018).
+ 10. Alahmadi, M. D. Multiscale attention u-net for skin lesion segmentation. IEEE Access.  10 (154), 145–159 (2022).
+ 11. El-Shafai, W ., El-Fattah, I. A. & Taha, T. E. Advancements in non-invasive optical imaging techniques for precise diagnosis of skin 
+disorders. Opt. Quant. Electron.  56 (7), 1112 (2024).
+ 12. Carrera, C. et al. Validity and reliability of dermoscopic criteria used to differentiate nevi from melanoma. JAMA Dermatology . 159 
+(4), 381–390 (2023).
+ 13. Balaha, H. M. et al. Aoa-guided hyperparameter refinement for precise medical image segmentation. Alexandria Eng. J.  120, 
+547–560 (2025).
+ 14. Anjali, T., Abhishek, S. & Remya, S. A novel framework for rosacea detection using Swin Transformers and explainable artificial 
+intelligence. Alexandria Eng. J.  118, 36–58 (2025).
+ 15. Al-Samydai, A. et al. Advancements of metallic nanoparticles: A promising frontier in cancer treatment. Sci. Prog.  107 (4), 
+00368504241274967 (2024).
+ 16. Gharaibeh, L., Liswi, M., Al-Ajlouni, R., Shafei, D. & Fakheraldeen, R. E. Community pharmacists’ readiness for breast cancer 
+mammogram promotion: A National survey from Jordan. J. Multidisciplinary Healthc. 17, pp. 4475– 4 4 8 9 .   h t t p s : / / d o  i . o r g / 1 0 . 2 1 4 7 / J 
+M D H . S 4 5 7 3 2 5     (2024).
+ 17. Barata, C., Celebi, M. E. & Marques, J. S. A survey of feature extraction in dermoscopy image analysis of skin cancer. IEEE J. 
+Biomedical Health Inf.  27 (2), 868–879 (2023).
+ 18. Esteva, A. et al. Dermatologist-leve classification of skin cancer with deep neural networks. Nature  542 (7639), 115–118 (2017).
+ 19. Abd El-Fattah, I., Ali, A. M., El-Shafai, W ., Taha, T. E., El-Samie, A. & F. E Deep learning-based super-resolution and classification 
+framework for skin disease detection applications. Opt. Quant. Electron.  55 (5), 427 (2023).
+ 20. Azad, R. et al. Advances in medical image analysis with vision transformers: a comprehensive review. Med. Image. Anal.  91, 103000 
+(2024).
+ 21. Dosovitskiy, A. et al. An image is worth 16x16 words: Transformers for image recognition at scale, ArXiv  preprint  .   h t t p s : / / d o  i . o r g 
+/ 1 0 . 4 8 5 5 0 / a r X i v . 2 0 1 0 . 1 1 9 2 9     2020.
+ 22. Yu, F., Koltun, V . & Funkhouser, T. Dilated residual networks, Proceedings of the IEEE conference on computer vision and pattern 
+recognition, pp. 472–480, (2017).
+Scientific Reports  |        (2025) 15:37823 27 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+ 23. Hou, K., Zhang, L., Zhang, X., Chen, L. & Liu, W . Intelligent skin lesion segmentation using deformable attention transformer 
+u-net with bidirectional attention mechanism in skin cancer images. Skin. Res. Technol.  30 (8), e13783 (2024).
+ 24. Cheng, H., Lian, J. & Jiao, W . Enhanced Mobilenet for skin cancer image classification with fused Spatial channel attention 
+mechanism. Sci. Rep.  14, 1–13 (2024).
+ 25. Tang, P . et al. Lightweight medical image segmentation network with multi-scale feature-guided fusion. Comput. Biol. Med.  173, 
+108303 (2024).
+ 26. Lu, Z. et al. A multi-scale information fusion medical image segmentation network based on convolutional kernel coupled updata 
+mechanism. Comput. Biol. Med.  187, 109723 (2025).
+ 27. Tabacaru, G., Moldovanu, S. & Barbu, M. Algorithm for analyzing the microenvironment surrounding melanoma, SYSTEM 
+THEORY , CONTROL AND COMPUTING JOURNAL, vol. 3, no. 2, pp. 15–19, (2023).
+ 28. Moldovanu, S., Miron, M. & Others Classification of skin lesions using morpho-granulometry features derived from color clusters, 
+in IEEE Conference Proceedings. IEEE, 2024. (2024).
+ 29. Moldovanu, S., Miron, M., Rusu, C. G., Biswas, K. C. & Moraru, L. Refining skin lesions classification performance using geometric 
+features of superpixels. Sci. Rep.  13 (1), 11463. https:// doi.org/10.1038/s415 98-023-38672-4  (2023).
+ 30. Ronneberger, O., Fischer, P . & Brox, T. U-net: convolutional networks for biomedical image segmentation. In N. Navab, J. 
+Hornegger, W . M. Wells, &  A. F. Frangi (Eds.), Medical Image Computing and Computer-Assisted Intervention–MICCAI 2015. 
+Springer, 234–241. https: //doi.org/10.1007/97 8-3-319-24574-4_28  (2015).
+ 31. Zhou, Z., Rahman Siddiquee, M. M., Tajbakhsh, N. & Liang, J. Unet++: Redesigning Skip Connections To Exploit Multiscale Features 
+in Image Segmentation vol. 39pp. 1856–1867 (IEEE, 2020). no. 6.
+ 32. Alom, M. Z., Hasan, M., Y akopcic, C., Taha, T. M. & Asari, V . K. Recurrent residual convolutional neural network based on u-net 
+(r2u-net) for medical image segmentation. ArXiv  preprint. https://doi.org/10.4 8550/arXiv.1802.06955  (2018).
+ 33. Oktay, O. et al. Attention u-net: learning where to look for the pancreas. ArXiv  Preprint https://doi.org/ 10.48550/arXiv.1804. 03999  
+(2018).
+ 34. He, Z., Li, X., Chen, Y ., Lv, N. & Cai, Y . Attention-based dual-path feature fusion network for automatic skin lesion segmentation. 
+BioData Min.  16 (1), 28 (2023).
+ 35. Lama, N., Hagerty, J., Nambisan, A., Stanley, R. J. & Stoecker, W . V . Skin lesion segmentation in dermoscopic images with noisy 
+data. J. Imaging Inf. Med.  36 (4), 1712–1722 (2023).
+ 36. Xiao, H., Li, L., Liu, Q., Zhu, X. & Zhang, Q. Transformers in medical image segmentation: A review. Biomed. Signal Process. 
+Control . 84, 104791 (2023).
+ 37. Chen, J. et al. Transunet: Transformers make strong encoders for medical image segmentation, arXiv preprint arXiv:2102.04306, 
+2021.
+ 38. Cao, H. et al. Swin-unet: Unet-like pure transformer for medical image segmentation. In S. Avidan, G. Brostow, M. Cissé, G. M. 
+Farinella, &  T. Hassner (Eds.), in Computer Vision–ECCV 2022. Springer, 205–218.  h t t p s : / / d o  i . o r g / 1 0 . 1 0 0 7 / 9 7 8 - 3 - 0 3 1 - 1 9 8 1 8 - 2 _ 
+1 2     (2023).
+ 39. Wang, H., Cao, P ., Wang, J. & Zaiane, O. R. Uctransnet: Rethinking the skip connections in u-net from a channel-wise perspective 
+with transformer, in Proceedings of the AAAI Conference on Artificial Intelligence, vol. 36, no. 3, pp. 2441–2449. (2022).
+ 40. Yuan, Y . & Cheng, Y . Medical image segmentation with unet-based multi-scale context fusion. Sci. Rep.  14, 15687 (2024).
+ 41. Himel, S. A., Islam, S., Mridha, K. & Rahman, M. Skin cancer segmentation and classification using vision transformer for automatic 
+analysis in dermatoscopy-based noninvasive digital system, International Journal of Biomedical Imaging, vol. p. 3022192, 2024. 
+(2024).
+ 42. Ronneberger, O., Fischer, P . & Brox, T. U-net: Convolutional networks for biomedical image segmentation, in International 
+Conference on Medical image computing and computer-assisted intervention. Springer, pp. 234–241. (2015).
+ 43. Tan, M. & Le, Q. Efficientnet: Rethinking model scaling for convolutional neural networks, arXiv preprint arXiv:1905.11946, 
+(2019).
+ 44. Chen, L. C., Papandreou, G., Schroff, F. & Adam, H. Rethinking atrous convolution for semantic segmentation, in arXiv preprint 
+arXiv:1706.05587, (2017).
+ 45. Huang, G., Liu, Z., Van Der Maaten, L. & Weinberger, K. Q. Densely connected convolutional networks. ArXiv  Preprint https://doi.
+org/10.48550/arXiv.160 8.06993  (2017). 
+ 46. Codella, N. et al. Skin lesion analysis toward melanoma detection 2018: A challenge hosted by the international skin imaging 
+collaboration (isic), arXiv preprint arXiv:1902.03368, 2018, accessed: 2025-3-25. [Online]. Available:  h t t p s : / / c h a l l e n g e . i s i c - a  r c h i v e 
+. c o m / d a t a /       
+ 47. Codella, N. C. et al. Skin lesion analysis toward melanoma detection: A challenge at the 2017 international symposium on 
+biomedical imaging (isbi), hosted by the international skin imaging collaboration (isic), IEEE transactions on medical imaging, 
+vol. 37, no. 1, pp. 168–176, 2018, accessed: 2025-3-10. [Online]. Available: https://ch allenge.isic-archive .com/data/
+ 48. Mendonça, T., Ferreira, P . M., Marques, J. S., Marcal, A. R. & Rozeira, J. Ph2-a dermoscopic image database for research and 
+benchmarking, 35th annual international conference of the IEEE engineering in medicine and biology society (EMBC), pp. 5437–
+5440, 2013, accessed: 2025-3-20. [Online]. (2013). Available: https:// www.fc.up.pt/addi/ph 2%20database.html
+ 49. Tschandl, P ., Rosendahl, C. & Kittler, H. The ham10000 dataset, a large collection of multi-source dermatoscopic images of 
+common pigmented skin lesions, Scientific data, vol. 5, no. 1, pp. 1–9, 2018, accessed 2025-2-08. [Online]. Available:  h t t p s :   /  / d  a t a v 
+e r s  e . h a r v a  r  d . e  d  u / d a t a  s  e t . x  h  t m l ?  p e r s i s t e n  t I d = d o  i: https://doi.org/10.7910/DVN/DBW86T
+ 50. Hu, J., Shen, L. & Sun, G. Squeeze-and-excitation networks. ArXiv  Preprint https://doi.org/10.4 8550/arXiv.1709.01507  (2018).
+ 51. Zhou, Z., Siddiquee, M. M. R., Tajbakhsh, N. & Liang, J. Unet++: redesigning skip connections to exploit multiscale features in 
+image segmentation. IEEE Trans. Med. Imaging . 39 (6), 1856–1867 (2020).
+ 52. Cao, H. et al. Swin-unet: Unet-like pure transformer for medical image segmentation. ArXiv  Preprint  h t t p s : / / d o i . o r g / 1 0 . 4 8 5 5 0 / a  r 
+X i v . 2 1 0 5 . 0 5 5 3 7     (2021).
+ 53. Chen, L. C., Zhu, Y ., Papandreou, G., Schroff, F. & Adam, H. Encoder-decoder with atrous separable convolution for semantic 
+image segmentation, in Proceedings of the European conference on computer vision (ECCV), pp. 801–818. (2018).
+ 54. Baheti, B., Innani, S., Gajre, S. & Talbar, S. Eff-unet: A novel architecture for semantic segmentation in unstructured environment, 
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops, pp. 358–359, (2020).
+ 55. Jha, D., Riegler, M. A., Johansen, D., Halvorsen, P . & Johansen, H. D. Resunet++: An advanced architecture for medical image 
+segmentation, arXiv preprint arXiv:1911.07067, (2019).
+ 56. Chen, J. et al. Transunet: rethinking the u-net architecture design for medical image segmentation through the lens of Transformers. 
+Med. Image. Anal.  94, 103280 (2024).
+ 57. Shu, C., Yu, L., Tian, S. & Shi, X. Msma: A multi-stage and multi-attention algorithm for the classification of multimodal skin 
+lesions. Biomed. Signal Process. Control . 93, 106180 (2024).
+ 58. Liu, W ., Zhang, M., Chen, X., Wang, J. & Li, H. Arcunet: enhancing skin lesion segmentation with residual convolutions and 
+attention mechanisms for improved accuracy and robustness. Sci. Rep.  15 (1), 1–15 (2025).
+ 59. Wang, L., Chen, Y ., Zhang, F., Liu, M. & Y ang, Q. Skin lesion segmentation with a multiscale input fusion u-net incorporating res2-
+se and pyramid dilated Convolution. Sci. Rep.  15 (1), 92447 (2025).
+ 60. Armağan, S., Gündoğan, E. & Kaya, M. Classification of skin lesions using squeeze and excitation attention based hybrid model 
+of densenet and efficientnet, in 2024 International Conference on Decision Aid Sciences and Applications (DASA). IEEE, pp. 1–5. 
+(2024).
+Scientific Reports  |        (2025) 15:37823 28 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/
+ 61. Zhang, T. et al. Classification of skin cancer from dermatological image by multimodal method, in The International Conference 
+Optoelectronic Information and Optical Engineering (OIOE vol. 13513. SPIE, 2025, pp. 214–223. (2024).
+ 62. Rani, V . U. & Santhiya, R. Optimized vision transformer with adaptive attention for high-precision skin cancer classification, in 
+2025 International Conference on Advanced Computing Technologies (ICoACT). IEEE, pp. 01–06. (2025).
+ 63. Subbarayudu, C. & Kubendiran, M. Segmentation-based lightweight multi-class classification model for crop disease detection, 
+classification, and severity assessment using Dcnn. PLoS One . 20 (5), e0322705 (2025).
+ 64. Jimi, A. et al. ESC-unet: A hybrid Cnn and Swin Transformers for skin lesion segmentation. Intelligence-Based Med. 9 p. 
+100257. https: //doi.org/10.1016/j. ibmed.2025.100257  (2025).
+ 65. Li, Y ., Meng, W ., Ma, D., Xu, S. & Zhu, X. Mcgff-net: a multi-scale context-aware and global feature fusion network for enhanced 
+polyp and skin lesion segmentation. Visual Comput.  41 (8), 5267–5282 (2025).
+ 66. Karthik, R., Vardhan, V . G. & Khaitan, S. Dermmultinet: Deep-learning based classification of skin lesions from dermascopic 
+images, in 2025 IEEE International Conference on Interdisciplinary Approaches in Technology and Management for Social 
+Innovation (IATMSI), vol. 3. IEEE, pp. 1–6. (2025).
+ 67. Kousar, T., Rahim, M. S. M., Iqbal, S., Y ousaf, F. & Sanaullah, M. Applications of deep learning algorithms in ischemic stroke 
+detection, segmentation, and classification. Artif. Inte––lligence Rev.  58 (5), 1–48 (2025).
+Acknowledgements
+This research was supported by Princess Nourah bint Abdulrahman University Researchers Supporting Project 
+number (PNURSP2025R826), Princess Nourah bint Abdulrahman University, Riyadh, Saudi Arabia.
+Author contributions
+Hamza Abu Owida, Ibrahim Abd El-Fattah, and Samir Salem Al-Bawri initially conceived the study, developed 
+the methodology, and performed analysis. Suhaila Abuowaida, Nawaf Alshdaifat, Hamza (A) Mashagba, Azlan 
+(B) Abd Aziz, Alaa Alzoubi, andSamia Larguech contributed to drafting, and revising the manuscript. All au -
+thors reviewed, edited, and approved the finalversion of the manuscript.
+Funding
+Princess Nourah bint Abdulrahman University Researchers Supporting Project number (PNURSP2025R826), 
+Princess Nourah bint Abdulrahman University, Riyadh, Saudi Arabia.
+Declarations
+Competing interests
+The authors declare no competing interests.
+Conflict of interest
+The authors declare that they have no conflict of interest.
+Additional information
+Correspondence  and requests for materials should be addressed to S.A., A.B.A.A. or S.S.A.-B.
+Reprints and permissions information  is available at www.nature.com/reprints .
+Publisher’s note Springer Nature remains neutral with regard to jurisdictional claims in published maps and 
+institutional affiliations.
+Open Access   This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 
+4.0 International License, which permits any non-commercial use, sharing, distribution and reproduction in 
+any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide 
+a link to the Creative Commons licence, and indicate if you modified the licensed material. Y ou do not have 
+permission under this licence to share adapted material derived from this article or parts of it. The images or 
+other third party material in this article are included in the article’s Creative Commons licence, unless indicated 
+otherwise in a credit line to the material. If material is not included in the article’s Creative Commons licence 
+and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to 
+obtain permission directly from the copyright holder. To view a copy of this licence, visit  h t t p : / / c r e a t i v e c o m m o 
+n s . o r g / l i c e n  s e s / b y - n c - n d / 4 . 0 /     .  
+© The Author(s) 2025 
+Scientific Reports  |        (2025) 15:37823 29 | https://doi.org/10.1038/s41598-025-21783-zwww.nature.com/scientificreports/

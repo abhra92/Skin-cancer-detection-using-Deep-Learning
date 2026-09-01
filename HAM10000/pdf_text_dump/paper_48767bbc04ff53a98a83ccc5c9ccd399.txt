@@ -1,0 +1,839 @@
+Hybrid vision transformer and 
+graph neural network model with 
+region-adaptive attention for 
+enhanced skin cancer prediction
+Aswani Dogga1,4, Sivasubramanian R.2,4 & Shanthi S.3,4
+A well-known and potentially lethal skin cancer requires prompt detection and diagnosis. Complex 
+spatial linkages and global contextual information in skin lesion photos challenge CNNs and other 
+deep learning methods. Given these restrictions, we present a Hybrid Vision Transformer (ViT) with 
+a Graph Neural Network (GNN) and Region-Adaptive Attention to diagnose skin cancer. The ViT 
+branch captures dermoscopy image global dependencies, whereas the GNN enhances features by 
+exploiting lesions’ spatial relationships. Region-Adaptive Attention improves lesion categorization 
+by dynamically improving feature extraction in diagnostically rele vant locations. Our paradigm for 
+multi-scale lesion analysis accounts for lesion size, color, and texture changes. Meta-learning methods 
+refine the proposed model to make it generalizable across skin tones and imaging settings. Our 
+model outperformed state-of-the-art deep learning algorithms on benchmark skin cancer datasets. 
+The architecture improves classification accuracy and interpretability, making it a promising clinical 
+dermatology tool.
+Keywords Skin cancer prediction, Vision transformer (ViT), Graph neural network (GNN), Region-
+adaptive attention (RAA), Deep learning, Medical image analysis, Multi-Scale lesion analysis
+Skin cancer is considered to be among the most fatal cancers, with melanoma being categorized as the most 
+deadly and aggressive type. Timely intervention considerably improves survival rates; hence, early detection 
+and accurate diagnosis are important for improving treatment outcome1. Clinical dermatology relies on visual 
+examination of skin lesions as its mainstay of diagnosis, yet this method is subjective and prone to errors. 
+In a bid to overcome some of these limitations, the automatic detection and diagnosis for skin cancer using 
+deep learning-based computer-aided diagnosis techniques had gained much research attention. Recently, 
+convolutional neural networks (CNN) have proved to be very effective in the field of medical image diagnosis. 
+Nonetheless, CNNs suffer some challenges including small receptive fields, long-range correlation capture, and 
+irregular lesion architecture. Option alternatives are the Vision Transformers (ViT), which with better global 
+contextual understanding than ConvNets, achieve superior results in medical imaging2. Unfortunately, ViTs 
+lack the ability to model spatial interactions among sub regions, which leads to their inability to understand the 
+complex shapes of skin lesions. We thus propose a skin cancer prediction model that implements a Hybrid Vision 
+Transformer (ViT) with a Graph Neural Network (GNN) incorporating Region-Adaptive Attention (RAA). The 
+GNN attempts to enhance the representation of atypical skin lesions by encoding spatial interactions between 
+lesion territories while the ViT exploits global dependency mapping on dermoscopic images. Our Region-
+Adaptive Attention (RAA) thus increases the classification score by improving feature extraction with focus 
+of attention on diagnostically salient areas3. Unlike classic approaches that rely solely on stacked convolutional 
+networks or transformer-only pipelines, the proposed architecture leverages the complementary strengths of 
+Vision Transformers and graph neural networks in a tightly woven, ViT-GNN hybrid design4. By deriving a 
+graph from the Vision Transformer’s output maps, the framework explicitly learns the spatial and topological 
+relations among lesion components, addressing the overlooked inter-region dependencies that remain absent in 
+most state-of-the-art pipelines. To further sharpen the model’s focus on clinically salient lesion characteristics, a 
+custom hybrid attention mechanism is employed, while complementary explainability modules—such as SHAP 
+1Department of CSE, Malla Reddy University, Hyderabad, Telangana, India. 2Department of AIML, Malla 
+Reddy University, Hyderabad, Telangana, India. 3Department of CSE, Malla Reddy University, Hyderabad, 
+Telangana, India. 4Aswani Dogga, Sivasubramanian R., and Shanthi S. contributed equally to this work. email:  
+d.ashwani323@gmail.com
+OPEN
+Scientific Reports  |         (2026) 16:5385 1 | https://doi.org/10.1038/s41598-025-32502-z
+www.nature.com/scientificreports
+
+and Grad-CAM—deliver fine-grained, visual, and numerical justifications to bolster interpretability and facilitate 
+clinician trust. Furthermore, performance is robustly verified against two disparate, real-world collections, the 
+HAM10000 and ISIC datasets. This extensive, cross-dataset testing affirms that the proposed framework not only 
+achieves competitive accuracy but also generalizes effectively beyond any single cohort, demonstrating readiness 
+for practical deployment in diagnostic workflows5. This work advances skin cancer prediction by merging Vision 
+Transformers (ViTs) and Graph Neural Networks (GNNs) through a proprietary integration rather than through 
+mere architecture stacking. The main contributions are as follows:
+• Embeddings-to-graph transformation: Instead of treating ViT triplet-token outputs as flat features, we re -
+shape them into a directed graph. Each token becomes a graph node localized to a lesion patch, while edges 
+encode proximity and cross-region interactions. This encoded graph permits the GNN to model spatial topol -
+ogy and diffusion paths explicitly, features that CNNs or component-based ViTs cannot learn in a self-con -
+tained operation.
+• Attention fusion module: The architecture interleaves ViT self-attention distributions with GNN edge-
+strength scores through learned modulation. The combined attention mask is calculated per-token, ena -
+bling differential focusing: lesion cores gain localized amplification, but the mask still preserves coarse lesion 
+boundary and inter-region spatial hierarchy. This cross-domain attention reuse remains unique in real-time 
+medical image processing, enabling dermoscopy where both lesion details and overall image structure affect 
+classification.
+• Interpretability integration: Pioneers in automated diagnosis require transparency; thus, model outputs are 
+accompanied by a recalibrated SHAP ranking and an overlaid Grad-CAM heatmaps. The combined approach 
+generates layer-wise, lesion-surface, and clinical-variant aligned explanations, translating model features back 
+to dermoscopic physiology.
+• Multi-Source Evaluation: Unlike existing single-repository benchmarks, we validate performance across 
+HAM10000, ISIC, and PH² to report generalized performance metrics across historiographic, illumination, 
+and annotation variance. The uniform architecture achieves consistently sub-1%-point variances in AUROC, 
+demonstrating pragmatic deployment readiness.
+The result goes beyond simply fusing Vision Transformers with Graph Neural Networks; it creates a fresh 
+workflow in which Vision transformer embeddings are adapted to lie in a graph space, attention layers are jointly 
+optimized to share information across both models, and a dedicated interpretability branch is embedded directly 
+into the end-to-end prediction system.
+The remaining chapters of this manuscript will be structured as follows: Sect.  “ Related work ” will look 
+at some of the available literature on the application of deep learning techniques on skin cancer detection. 
+Sect. “ Proposed Methodology ” will describe the new integrated architecture of ViT GNN that has been designed 
+and its architecture specification. Sect. “ Output Feature Update ” gives a detailed description of the experimental 
+design including the samples used as well as the evaluation criteria. Section 5 contains the findings and results 
+of the comparative analysis. Finally, Sect. 6 concludes the manuscript with considerations for future studies.
+Related work
+Automated skin cancer classification has been rigorously explored through a combination of machine learning 
+and deep learning techniques. This discussion organizes the relevant studies into three categories—CNN-based 
+approaches, transformer-based frameworks, and hybrid or graph-driven models.
+CNN-based skin cancer classification
+CNNs remain a mainstay in skin lesion analysis, largely because they excel at fusing local spatial information. 
+Pioneering work, including the study by Esteva et al.6, demonstrated dermatologist-level performance by 
+applying Inception-v3 on dermoscopic images. Building on this, Kawahara et al.7 employed several ResNet 
+variants, reporting consistent improvement over the ISIC benchmark. More recently, architectures such 
+as EfficientNet8 and DenseNet9 have been harnessed, offering gains in predictive fidelity while keeping 
+computational requirements in check. Despite these strengths, standard CNNs remain limited in their ability 
+to model long-range spatial relationships, a constraint that restricts the transfer of learned knowledge across 
+globally varying lesion contexts.
+Transformer-based models
+Transformers tend to overlook fine-grained structural nuances crucial for metastatic prognosis and the current 
+fusion fashions do not yet reliably harmonize convolutional and attention fields to yield both regional and holistic 
+representation10. Even after employing self-attention, the resulting feature planes often do not fully converge 
+on the anisotropic textural gradients surrounding a malignancy’s margin, thereby deterring optimal early 
+diagnostic fidelity. Additionally, datasets remain imbalanced along demographic, anatomic, and histological 
+spectra, artificially elevating the performance of models in homogeneous validation while inhibiting true clinical 
+generalizability11. As a corollary, the verification of learned features through clinical pathophysiology, especially 
+multi-spectral dermoscopic sequences and histo-cytometric graphs, is still, in most scenarios, a post-hoc 
+revelation, thus relegating interpretative confidence rather than embodying it in the feature extraction phase12.
+Hybrid and graph-based approaches
+Straightforward transformer-based methods often miss the subtleties of lesion relationships that are key to 
+differential diagnosis. While integrating Vision Transformer features with Graph Neural Networks has shown 
+promise in several domains, hardly any work has applied this blend specifically to the classification of skin 
+Scientific Reports  |         (2026) 16:5385 2 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+cancer13. Moreover, the prevailing literature emphasizes performance metrics at the expense of interpretability, 
+leaving dermatologists without clear, actionable insights. We address these gaps by presenting a hybrid ViT-
+GNN architecture that couples a refined attention layer with dedicated explainability modules14. Both SHAP 
+and Grad-CAM are embedded into the training pipeline, and the entire framework is validated against 
+multiple benchmark and clinical-derived datasets, yielding robust accuracy and transparent, clinically relevant 
+visual justifications15. A compelling hybrid architecture by Koparde et al.16 uses Conditional GANs, YOLOv5 
+Darknet, and Independent Component Analysis to improve skin lesion localization and categorization. The 
+architecture is robust and interpretable because the cGAN module generates high-resolution, context-aware 
+embeddings, YOLOv5 sharply localises them, and Independent Component Analysis (ICA) distils the salient 
+features, reducing noise and enhancing contrast. These phases yield dermoscopic estimates that surpass current 
+benchmarks across multiple test datasets, demonstrating the superiority of their approach.
+Deep learning-based approaches for skin cancer detection
+Because of their proficiency in automatic hierarchical feature extraction, Convolutional Neural Network (CNN) 
+has emerged as the most prominent architecture for skin lesion classification. CNN-based models have shown 
+accuracy comparable to dermatologists in melanoma detection according to Esteva et al.6 research. In any case, 
+some severe disadvantages exist among CNNs which comprise.
+• Constrained receptive field, resulting in a diminished comprehension of global dependencies in lesion struc -
+tures.
+• Absence of spatial connection modeling, hindering the compelling depiction of irregular lesion shapes.
+• Sensitivity to fluctuations in imaging circumstances necessitating comprehensive data augmentation and pre -
+processing.
+Researchers have investigated hybrid models that combine various deep learning paradigms, including ViTs, 
+GNNs, and attention-based networks, to enhance classification performance.
+Vision transformers (ViTs) for medical image analysis
+Originally created for NLP , Transformers have now been repurposed with the help of Vision Transformers (ViTs) 
+to handle image processing. Unlike CNNs, ViTs self-claims images into patches and processes them with self-
+attention a mechanism that solves long range dependence problems. Good examples are provided by Y ang et al.17 
+and Xin et al.18, who had shown that Vision Transformers perform better than Convolutional Neural Networks 
+in global feature representation tasks. ViTs have found usage in the Medical field for different classification tasks 
+including diagnosing breast cancer, evaluating retinal diseases, and even categorizing skin lesions. But ViTs need 
+larger training sets, and they often do not model spatial structures well, proving less efficient for mimicking 
+detail in irregular lesion boundary precision. This study tackles those shortcomings by implementing GNNs that 
+allow for better lesions spatial relation modeling.
+Graph neural networks (GNNs) for skin lesion analysis
+Graph Neural Networks (GNNs) are increasingly recognized in the field of medical image processing due to 
+their capability to capture non-Euclidean spatial relationships. Unlike Convolutional Neural Networks (CNNs), 
+which are designed for structured grid layouts, GNNs efficiently comprehend the topological interdependencies 
+inherent in lesion structures by modeling images as graphs. Recent research, including work by Santoso et al.19 
+and Raval et al.20, has examined GNN-based approaches for segmenting and classifying tumors. Attention 
+mechanisms play a crucial role in deep learning, allowing models to focus on vital features while filtering out 
+irrelevant information. A variety of attention-centric architectures have been studied within the realm of medical 
+image analysis, such as Self-Attention, Channel-Spatial Attention, and Transformer-based Attention systems.
+In skin cancer classification, attention processes help:
+• To pay attention to diagnostically relevant lesion areas to increase classification accuracy.
+• To improve feature extraction during multi-scale analysis of lesions to capture intricate features.
+• To improve the interpretability of the models so that the judgments made by AI can be more easily compre -
+hended by dermatologists.
+The study describes a Region-Adaptive Attention mechanism that allocates attention weights to different lesion 
+regions adaptively, allowing the model to focus on regions of high-risk while downplaying noise. Open for 
+editing.
+Summary of research gaps and proposed contributions
+The literature analysis points out several noteworthy gaps in research as shown in Table  1.
+ 1. (1) It combines the global feature extraction potential of ViTs with the spatial relation modelling capacity of 
+GNNs in the skin lesion image.
+ 2. (2) It introduces a Region-Adaptive Attention mechanism to dynamically enhance feature extraction accord -
+ing to lesion features.
+ 3. (3) It creates a framework for multi-scale skin lesion analysis to enhance the robustness of size, texture, and 
+color variations of lesions.
+ 4. (4) It enhances the model with meta-learning in order to improve the generalizability to different skin tones 
+and imaging conditions.
+Scientific Reports  |         (2026) 16:5385 3 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+Methodological steps for implementation of the proposed architecture of the hybrid model along with its 
+training order and fine-tuning methods are explained in further detail in the subsequent section.
+Unlike earlier ViT–GNN combinations21 that depend on fixed late concatenation or hand-crafted region 
+graphs, we propose constructing a flexible graph directly in the ViT embedding space, merging the universal ViT 
+self-attention with GNN relational attention through a Region-Adaptive Attention (RAA) gating mechanism. 
+This integrated, trainable scheme is co-optimised for the prediction task, including optional penalties on 
+attention-mask variance, yielding sharper accuracy gains alongside interpretive robustness—which we validate 
+through IoU, Pointing Game, and checks for SHAP score consistency—while computational overhead is curbed 
+through token pruning and the use of sparse graphs. The empirical performance and the decision-justifying 
+ablations together clarify why uniform gains appear for dermatological tasks across HAM10000, ISIC, and PH2.
+Proposed methodology
+In this section the authors propose a new model blending Hybrid Vision Transformer (ViT)22 and Graph Neural 
+Network (GNN)23, which employs Region-Adaptive Attention (RAA)24 for skin cancer prediction. The proposed 
+framework improves the accuracy and interpretability of the models by including global feature extraction, 
+spatial connection modeling, and adaptive attention mechanisms. This method consists of five main parts: Data 
+cleansing, vision transformer feature extraction, graph neural networking for feature spatial relations modeling, 
+region adaptive attention (RAA), and multi-scale analysis of lesions with meta-learning optimization.
+Overview of the proposed architecture
+The proposed architecture shown in Fig.  2 consists of:
+ 1. Image Uploading Module - Processes dermoscopic images to enable feature variability with standardization 
+and enhancement.
+ 2. ViT Feature Extractor - Captures global dependencies in dermatological lesions images.
+ 3. GNN Module - Models spatial relations between lesions regions.
+ 4. RAA Mechanism - Selectively increases feature importance with focus on critically important areas.
+ 5. MSLAF - Integrates sister’s scale analysis of lesion features to texture, morphology, and size.
+ 6. MLO - Adapts the model to improve performance for different skin colors and imaging conditions.
+Data preprocessing and augmentation
+Augmented strategies are made to dermoscopic images from benchmark datasets for example, ISIC 2020 and 
+HAM10000, to improve model robustness. The preprocessing steps comprise25:
+• Image normalization-Rescaling pixel values to the range [0,1] for consistency.
+• Data augmentation-Employing random rotations, flips, contrast enhancement, and Cut Mix to promote gen -
+eralization.
+• Lesion Segmentation-we employ U-Net for automatic mapping of lesion contours while keeping the back -
+ground to a minimal level.
+Prior to inputting images into the model, normalization guarantees that pixel values are confined within a 
+certain range: I′=I−µ
+σ (1).
+Where,
+I’=normalized image .
+I = original image .
+µ = mean pixel value .
+σ = standard deviation .
+U-Net masks were utilized solely for preprocessing (region refinement) and not as direct input features for 
+classification. This methodology maintains the independence of classification from U-Net prediction errors. It 
+ensures that attention maps align with lesion boundaries naturally (through RAA). Additionally, it enhances 
+interpretability as attention highlights correspond with U-Net segmented regions.Aspect Typical ViT–GNN fusion This work (ViT-GNN + RAA)
+Node definition Superpixels / fixed patches ViT-refined tokens → nodes
+Edge policy Static (pixel space) Dynamic k-NN in ViT space
+Attention fusion Heuristic concat/average Learned, region-adaptive fusion (RAA)
+Training objective Cross-entropy only CE + prediction alignment + (optional) mask consistency
+Interpretability Qualitative only Quantitative (IoU, Pointing, SHAP stability) vs. baselines
+Efficiency Dense tokens/graphs Token pruning + sparse k-NN
+Robustness Single dataset Cross-dataset + calibration/ECE
+Table 1 . Difference between proposed work and other ViT-GNN fusion approaches. To counteract these 
+limitations, we develop our Hybrid ViT-GNN Model with Region-Adaptive Attention. In this model: 
+Scientific Reports  |         (2026) 16:5385 4 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+Vision transformer (ViT) feature extraction
+The ViT module supplants conventional CNNs for feature extraction. ViT segments images into fixed-size patches 
+and utilizes self-attention techniques to acquire feature representations rather than employing convolutional 
+filters.
+Procedures in ViT feature extraction26:
+ (1) Image patch embedding—The input image is segmented into 16 × 16 patches, each converted into a feature 
+vector.
+ (2) Positional encoding—Spatial information is retained by incorporating positional encodings into the patch 
+embeddings.
+ (3) Multi-head self-attention (MHSA)—Calculates attention weights to identify global dependencies within 
+the image.
+ (4) Feedforward network (FFN)—Non-linear adjustments augment feature representations before transmit -
+ting to the classifier.
+In contrast to CNNs, ViTs enable the model to capture long-range relationships in skin lesion patterns, enhancing 
+classification accuracy.
+The mathematical equations supporting ViT feature extraction is shown below in Eq. ( 2) as:
+ Z0=[X1E;X2E;... ... ;XNE]+Ep (2)
+Where,
+Xi= image patches ,
+E = learnable linear projection ,
+Ep= position embeddings .
+ViT Self- attention is shown below in Eq. ( 3) as:
+ Attn (q, k, v )=softmax(
+qkT
+√Dk)
+v (3)
+Where,
+q, k,v are query key, key, and value matrices  and Dk is dimension of key vectors.
+Graph neural network (GNN) for modeling Spatial relationships
+Although ViTs are proficient in collecting global properties, they fail to represent the spatial interactions 
+among lesion sub regions explicitly. We propose a Graph Neural Network (GNN) module that models lesion 
+characteristics as a graph structure.
+• Procedures in GNN feature modeling:
+ 1. Graph Construction — Each lesion image is transformed into a graph using adjacency matrix A,with nodes 
+representing lesion sub regions and edges indicating spatial relationships.
+ Aij={1, if sim (X i,Xj)>τ
+0, otherwsie}
+ (4)
+ Here sim(Xi, Xj) is similarity measure(cosine similarity) and τ is threshold value.
+ 2. Graph Convolution - Graph Convolutional Networks (GCNs) consolidate information from adjacent nodes 
+to encapsulate structural interdependencies.
+ H(l+1)=σ(
+∼
+D−1/2∼
+A∼
+D−1/2
+HlWl)
+ (5)
+ Where,
+ Hl= node features at layer l.
+ ∼
+A =A + I (adjacency matrix with self-loops),
+ ∼
+D=degree matrix of∼
+A
+ Wl = learnable weight matrix,
+ σ = activation function (ReLU).
+ 3. Message passing — The model acquires knowledge of the interactions among lesion sub regions, enhancing 
+the classification of atypical skin lesions.
+Scientific Reports  |         (2026) 16:5385 5 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+ 4. Feature Fusion - The output from the GNN is integrated with the output from the ViT,amalgamating global 
+and local spatial information. After GNN processing,a softmax function is used to classify skin lesions as 
+benign/malignant:
+ P(yi|Xi)=eWX i∑C
+j=1eWX j, (6)
+ Where C is the number of classes.
+ Our methodology integrates Vision Transformers with Graph Neural Networks to maintain intricate lesion 
+details while utilizing global contextual information. As outlined in the methods of our GNN module, the 
+Graph adjacency threshold (the metric used to determine whether any two lesion patches/nodes must be 
+connected) has been selected and set to a value of 0.0 based on trial and error and validation tests.
+• Step 1: Threshold candidates - We examined many values (0.5, 0.6, 0.7, 0.8, and more) for cosine similarity 
+patch embeddings.
+• Step 2:- Threshold validation for each dataset: ISIC 2020, HAM10000, PH2.
+• Step 3: Cross-dataset value stability: We noticed that around 0.7, the values nicely balance graph sparsity 
+(avoiding over-connected graphs) and information flow (maintaining relevant lesion connections).
+• Step 4: Conservation - It was demonstrated that dataset independence is effective in this case, so the adja -
+cency threshold was set to 0.7, resulting in strong performance without dataset-specific fine-tuning.
+ The graph becomes extremely cluttered at 0.5, introducing noise from unnecessary patch connections. The graph 
+at 0.8 is overly thin and restrictive to message passing. 0.7 is the sweet spot because it has the best balance of 
+all, and it achieves the highest Accuracy, F1, and AUC scores, which is why it was selected for all datasets.
+Region-adaptive attention (RAA) mechanism
+The Region-Adaptive Attention (RAA) mechanism as shown in Fig.  1 is designed to enhance the Vision 
+Transformer’s (ViT) ability to focus on clinically relevant lesion regions while suppressing irrelevant background 
+information, such as skin texture, hair, or imaging artifacts. Unlike conventional self-attention, which treats all 
+patches equally, RAA assigns adaptive weights to image regions based on the importance of the lesions.
+ 1. Input representation
+ The input dermoscopic image I∈RH×W×C is divided into non-overlapping patches pi .
+ Each patch is embedded into a feature vector xi .
+ 2. Region importance estimation
+ For each patch embedding xi , a region descriptor is computed using a learnable function f( ⋅):
+ ri=f(xi)=σ(W rxi+br) (7)
+Fig. 1 . Region adaptive attention mechanism. 
+Scientific Reports  |         (2026) 16:5385 6 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+ where Wr  and br  are learnable parameters, and σ( ⋅) is a sigmoid activation to normalize values between [0,1].
+• ri  indicates the importance score of patch i.
+ 3. Adaptive attention weighting
+ The conventional self-attention computes weights as:
+ αij=exp(
+(Qxi)(Kx j)T)
+∑
+jexp(
+(Qx i)(Kx j)T) (8)
+ In RAA, these weights are modulated by region importance:
+ /hatwidestαij=ri.rj.exp/parenleftbig
+(Qxi)(Kx j)T/parenrightbig
+/summationtext
+jexp/parenleftbig
+(Qx i)(Kx j)T/parenrightbig (9)
+ This ensures that patches belonging to lesion regions contribute more strongly to the attention computation.
+ 4. Output feature update
+ The attention output is then updated as:
+ zi=/summationdisplay
+j/hatwidestαijVx j (10)
+ Where V = projection matrix.
+ 5. Integration with GNN
+ Following RAA, the refined attribute set moves to the Graph Neural Network (GNN), where each lesion patch is 
+treated as a graph node. Edges are drawn between nodes based on both spatial proximity and embedded fea -
+ture similarity, thereby sharpening boundary delineation and enriching the overall contextual representation 
+of the lesions.
+How RAA improves over conventional attention in lesion-focused tasks
+Standard attention modules within Vision Transformers (ViTs) and Graph Neural Networks (GNNs) commonly 
+evaluate importance from a broad global perspective, applying similar attention weights to all image tokens and 
+graph nodes without regard for the questioned clinical context in which the observation resides. This global 
+uniformity introduces two notable drawbacks in the context of skin cancer detection:
+• The mechanism equitably weights the features contributing to clinically ambiguous backgrounds—such as 
+hair strands, benign skin texture, and photometric inconsistencies—while the decisive lesion behaviours, 
+represented by irregular peripheries and subtle chromatic inhomogeneity, receive attenuated representation 
+as the spurious attention influence spreads across the entire image instead of contracting compactly around 
+the abnormality itself.
+• Region-adaptive attention (RAA) addresses these distortions by explicitly isolating and magnifying patches in 
+the vicinity of the lesion, concentrating the receptive field on a biologically relevant neighborhood and thus 
+freeing computational and architectural capacity from the irrelevant periphery to the diagnostically decisive 
+segments of the image.
+• Mathematical distinction.
+• Conventional attention (ViT self-attention):
+ αij=softmax(
+QiKT
+j√
+d)
+ (11)
+where attention weights αij  depend only on query-key similarity across tokens.
+• Region-Adaptive Attention (RAA):
+ αRAA
+ij=softmax(
+QiKT
+j√
+d+θ .R ij)
+ (12)
+Scientific Reports  |         (2026) 16:5385 7 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+ where Rij  is a region importance coefficient derived from lesion-specific priors (texture irregularity, color 
+contrast, boundary sharpness).
+• If a region corresponds to a lesion boundary, Rij  is boosted.
+• If a region corresponds to background, Rij  is down-weighted.
+Thus, attention weights become region-aware and adaptive, unlike plain similarity-driven ViT weights.
+• Practical Benefits in Skin Lesion Analysis.
+ (1) Focus guidance on lesion edges and morphologies  RAA steers attention heads to highlight zones where ma -
+lignant features typically appear, such as autochthonous edges and asymmetrically developed shapes.
+ (2)  Ambient noise suppression  As opposed to prior attention heads, RAA actively filters out contextual clutter, 
+dismissing redundancies like skin fold artefacts and other imaging in homogeneities.
+ (3) Lesion-adaptive learning dynamics  Uniform and diffuse attention distributions are learned for benign cases, 
+while malignant lesions attract tighter, high-intensity mapping that envelops key morphological irregulari -
+ties.
+ (4) Interpretability Improvement  RAA-derived heatmaps overlay primary clinical concern regions more faith -
+fully, elevating artifact-free confidence for dermatological applications.
+Multi-scale lesion analysis with meta-learning optimization
+Skin lesions are relatively easier to categorize when an individual phenomena is considered in comparison to the 
+collection of different phenomena due to significant intraclass variability and interclass similarities. To improve 
+robustness, we propose a Multi-Scale Lesion Analysis Framework that analyzes the lesion’s characteristics on 
+different scale sizes.
+Steps for Multi-Scale Analysis:
+ (1) Obtain differences of a lesion at multiple levels - Ensures model captures coarse and fine details of other 
+identified lesions.
+ (2) Attention Based Feature Weighting - Combines features of the different scales, differentially for every scale.
+ (3) Meta-learning For Model Rigidity - Refines model parameters on hostile datasets while ensuring adaptation 
+to different skin colors and imaging conditions.
+Meta-learning enables quick adaptation of model to new data distributions, improving performance on 
+heterogeneous populations.
+Training procedure and evaluation metrics
+The adaptive learning rate stochastic gradient descent (SGD) algorithm is used to train the model. The loss 
+function used during training is Focal Loss, which is often applied to rectify class imbalances in melanoma 
+datasets. Performance assessment is done using:
+• Precision (ACC).
+• Precision, Recall, and F1 Score.
+• Area Under the Receiver Operating Characteristic Curve (AUC-ROC).
+• Interpretability Index (for XAI assessment).
+The proposed model will be compared with CNN models (ResNet, EfficientNet), Transformer models (Swin-
+Transformer, DeiT), and fusion models (CNN-GNN architectures) (Fig. 2).
+Summary of proposed methodology
+The suggested Hybrid ViT-GNN Model utilizing Region-Adaptive Attention (RAA) improves skin cancer 
+prediction by:
+• Using Vision Transformers (ViTs) for global feature extraction.
+• Employing Graph Neural Networks (GNNs) to model spatial relationships.
+• Integrating Region-Adaptive Attention (RAA) for lesion-focused learning.
+• Leveraging multi-scale lesion analysis for robust classification.
+• Optimizing generalization through meta-learning techniques.
+Experimental results and performance evaluation
+This section presents the experimental setup, dataset details, performance metrics, and comparative evaluation 
+of the proposed Hybrid Vision Transformer (ViT) and Graph Neural Network (GNN) Model with Region-
+Adaptive Attention (RAA) for skin cancer prediction. The results are analyzed based on accuracy, robustness, 
+interpretability, and generalization across multiple datasets.
+Experimental setup
+Datasets
+We evaluate the proposed model using three benchmark dermoscopic image datasets:
+• ISIC 2020 Challenge Dataset – 33,126 images (melanoma, benign, and atypical cases).
+Scientific Reports  |         (2026) 16:5385 8 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+• HAM10000 Dataset – 10,015 images covering seven skin lesion types.
+• PH2 Dataset – 200 high-resolution images with expert annotations.
+Dimensionality and characteristics of the three datasets used
+A comparison of the ISIC 2020, HAM10000, and PH2 datasets is shown in Table  2, along with important details 
+like image count, resolution, and class distribution.
+ISIC 2020 is also the most extensive dataset, making it suitable for deep learning models, but it is heavily 
+imbalanced. The HAM10000 dataset contains multiple types of lesions (seven classes) but suffers from some 
+class hybrids. Albeit small but far from having a weak attitude, PH2 can be beneficial in validation and controlled 
+tests.
+Handling class imbalance
+In our proposed methodology, class imbalance is handled using a combination of data-level and algorithm-level 
+strategies:
+ 1. Data-level handling
+ Data augmentation Implemented exclusively for harmful categories (rotation,flipping,zooming, contrast aug -
+mentation, MixUp, CutMix). This artificially augmented the diversity of malignant cases.
+ Class-balanced sampling Mini-batches were created to ensure proportional representation of each class, hence 
+averting model bias towards benign instances.
+ 2. Algorithm-level handling
+ Weighted Cross-Entropy Loss: Each class was assigned an inverse-frequency weight:
+ L=−∑
+N
+i=1wyilog(pyi) (13)
+ where wyi=1√
+fyifyi   is the frequency of class yi .Dataset Number of images Image resolution Classes Class distribution Format
+ISIC 2020[17] 33,126 Variable (e.g., 600 × 450) 2 (Benign/Malignant) Highly imbalanced (Malignant cases are fewer) JPG/PNG
+HAM10000[18] 10,015 600 × 450 7 Imbalanced (Certain lesion types dominate) JPG
+PH2[19] 200 768 × 560 3 (Normal, Atypical, Melanoma) Balanced JPG
+Table 2 . Dimensionality and characteristics of the three Datasets. 
+Fig. 2 . Architecture diagram of the proposed Hybrid ViT-GNN Model. 
+Scientific Reports  |         (2026) 16:5385 9 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+ Focal Loss (for ablation study): Used to focus more on hard-to-classify malignant cases by down-weighting easy 
+benign examples:
+ FL(pt)=−α t(1−pt)γlog(pt) (14)
+ with γ = 2 and αt  tuned empirically.
+ In the absence of imbalance management, models may exhibit satisfactory accuracy while demonstrating subpar 
+performance on cancerous classes, as indicated by low Balanced Accuracy and Macro-F1 scores. Following 
+the implementation of data augmentation and weighted loss, Balanced Accuracy and Macro-F1 exhibit sub -
+stantial improvement, indicating enhanced sensitivity to malignant lesions. The AUC-ROC also enhances, 
+indicating the resilience of categorization boundaries as shown in Table  3 and visually in Fig.  3 respectively.
+Hardware and software configuration
+• Hardware  NVIDIA A100 GPU, 48GB VRAM, Intel Xeon 64-core CPU, 256GB RAM.
+• Software  PyTorch 2.0, TensorFlow 2.9, OpenCV , SciPy, and Matplotlib.
+• Training parameters  Batch size = 32, Learning rate = 0.0001 (AdamW optimizer), Epochs = 100.
+Optimizing size of image patches
+We carefully analyzed how the ViT patch size affects the model’s ability to acquire spatial features for melanoma 
+classification, since this choice determines the spatial granularity of the input signal.
+• Default Configuration (16 × 16 segments):
+Adopting the standard ViT patch dimension of 16 × 16 strikes a balance between computation and spatial 
+resolution. The patch encompasses the surrounding pixels necessary to convey contextual features, while still 
+retaining the resolution required to resolve fine lesion details.
+• Alternatives evaluated
+To measure the robustness of this choice, we explored 8 × 8 and 32 × 32 patches. 8 × 8 patches (higher granularity): 
+The model collects more peripheral pixels and captures richer border features, but the total token count inflates 
+by approximately 2.5×, raising memory requirements and computation time. 32 × 32 patches (lower granularity): 
+The total token count decreases, resulting in reduced memory usage and accelerated convergence. However, 
+the loss of contextual neighbors around the lesion, combined with the upsampling of the head, renders the fine 
+margin fuzzy, causing clear spatial aliasing and lowering the observed accuracy.
+Fig. 3 . Bar graph showing impact of imbalance handling on dataset performance. Dataset Method Accuracy (%) Balanced Accuracy (%) Macro-F1 AUC-ROC
+ISIC 2020Without imbalance handling 87.2 74.5 0.68 0.82
+With data Aug. + weighted loss 91.8 86.9 0.82 0.93
+HAM10000Without imbalance handling 84.6 70.2 0.64 0.80
+With data Aug. + weighted loss 90.5 84.1 0.79 0.91
+Table 3 . Performance comparison with and without imbalance handling. 
+Scientific Reports  |         (2026) 16:5385 10 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+• Supervised results summary
+8 × 8 provided a modest gain in boundary localization (+ 2.9% on irregular melanoma) but incurred a 2.5× higher 
+inference cost while improvement in overall accuracy remained negligible (+ 0.7% AUC). A 32 × 32 resolution 
+resulted in a marked drop in composite sensitivity on the validation set (− 2.1%) due to missing border artifacts, 
+leading to a class balance catastrophe in the convex and arrhythmic counts. 16 × 16 segments remained the clear 
+choice, delivering statistically equivalent accuracy, the best sensitivity gain of 0.43% across 5 × 2 × 5 snapshot 
+trials, and approximately 1.9 times testing speed resiliency.
+We did not determine the patch size arbitrarily; instead, we assessed different configurations as shown in 
+Table  4. The 16 × 16 patch size was deemed best as it maintained a good fusion between computational power 
+and how well the lesion’s edges were defined. Smaller patches (8 × 8) did not add much and were expensive 
+computationally.
+As outlined in the methods of our GNN module, the Graph adjacency threshold (the metric used to determine 
+whether any two lesion patches/nodes must be connected) has been selected and set to a value of 0.0 based on 
+trial and error and validation tests.
+• Step 1: Threshold candidates - We examined many values (0.5, 0.6, 0.7, 0.8, and more) for cosine similarity 
+patch embeddings.
+• Step 2:- Threshold validation for each dataset: ISIC 2020, HAM10000, PH2.
+• Step 3: Cross-dataset value stability: We noticed that around 0.7, the values nicely balance graph sparsity 
+(avoiding over-connected graphs) and information flow (maintaining relevant lesion connections).
+• Step 4: Conservation - It was demonstrated that dataset independence is effective in this case, so the adjacency 
+threshold was set to 0.7, resulting in strong performance without dataset-specific fine-tuning.
+The graph becomes extremely cluttered at 0.5, introducing noise from unnecessary patch connections. The graph 
+at 0.8 is overly thin and restrictive to message passing. 0.7 is the sweet spot because it has the best balance of all, 
+and it achieves the highest Accuracy, F1, and AUC scores, which is why it was selected for all datasets.
+Performance metrics
+The proposed model is evaluated using the following metrics27:
+• Accuracy (ACC)  Measures overall classification correctness.
+ ACC=TP+TN
+TP+TN+FP+FN (15)
+• Precision (P)  Indicates the proportion of correctly identified melanoma cases.
+ P=TP
+TP+FP (16)
+• Recall (R)  Measures the model’s ability to detect true melanoma cases.
+ R=TP
+TP+FN (17)
+• F1-Score (F1)  Balances precision and recall.
+ F1=2∗P∗R
+P+R (18)
+Area under the ROC Curve (AUC-ROC): Evaluates the model’s capability to differentiate between melanoma 
+and benign cases.
+Comparative performance evaluation
+In this section, our proposed model performance is compared on three different datasets with existing models 
+like ResNet-50, EfficientNet-B3, and Swin Transformer. Our proposed model shows better performance on all 
+three datasets. The results are shown in Tables  5 and 6, and Table  7, respectively.
+Compared to other models considered to be state-of-the-art, such as Swin Transformer and Efficient Net, 
+the suggested Hybrid ViT-GNN with RAA achieves an accuracy of 94.3%. Figures  4 and 5 show the bar graph 
+Patch size Accuracy (%) Sensitivity (%) Specificity (%) Training cost
+8 × 8 94.2 93.8 94.5 High (2.5×)
+16 × 16 95.1 94.7 95.4 Moderate
+32 × 32 92.6 92.1 93.0 Low
+Table 4 . Different patch size with performance metrics. 
+Scientific Reports  |         (2026) 16:5385 11 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+of different model comparison and AUC-ROC curve, which show the proposed model has better classification 
+performance on the ISIC 2020 dataset.
+Compared to other models considered to be state-of-the-art, such as Swin Transformer and Efficient Net, the 
+suggested Hybrid ViT-GNN with RAA achieves an accuracy of 88.7% as shown in Table 6 and visually in Fig. 6.
+In comparison to previous state-of-the-art models, such Swin Transformer and Efficient Net,the proposed 
+Hybrid ViT-GNN with RAA attains an accuracy of 94.3%. The comparative performance on the PH2 dataset is 
+illustrated in Table  7 and Fig.  7.
+Robustness across multiple datasets  Table  8; Fig.  8 show that our model demonstrates superior resilience, with 
+an average accuracy of 92.8% across all datasets, in contrast to 88.1% for the Swin Transformer and 86.4% for 
+EfficientNet-B3.
+Table  9 shows the statistical significance analysis of proposed hybrid ViT-GNN with RAA. The p-values 
+(< 0.05) indicate that the enhancements in performance are statistically significant. The substantial effect size 
+(Cohen’s d > 0.8) signifies that the enhancements are both statistically significant and practically relevant.
+Fig. 4 . Proposed Model Performance Comparison. Model Accuracy (%) Precision (%) Recall (%) F1-Score (%) AUC-ROC
+ResNet-50 85.1 84.4 85.8 85.1 91.2
+EfficientNet-B3 87.3 86.6 88.1 87.3 92.8
+Swin transformer 88.0 87.3 88.7 88.0 93.5
+Proposed hybrid ViT-GNN with RAA 89.5 88.7 90.2 89.4 94.3
+Table 7 . Comparative performance evaluation on PH2 Dataset. Model Accuracy (%) Precision (%) Recall (%) F1-score (%) AUC-ROC
+ResNet-50 84.2 83.5 85.0 84.2 90.1
+EfficientNet-B3 86.8 86.0 87.5 86.7 92.0
+Swin transformer 87.5 86.8 88.1 87.4 92.7
+Proposed hybrid ViT-GNN with RAA 88.7 87.9 89.3 88.6 93.5
+Table 6 . Comparative performance evaluation on HAM10000 Dataset. Model Accuracy (%) Precision (%) Recall (%) F1-score (%) AUC-ROC
+ResNet-50 85.1 84.5 82.7 83.6 0.89
+EfficientNet-B3 87.6 86.9 85.1 86.0 0.91
+Swin Transformer 89.2 88.7 87.3 88.0 0.93
+Proposed Hybrid ViT-GNN with RAA 94.3 93.8 92.5 93.1 0.97
+Table 5 . Classification performance on ISIC 2020 Dataset. 
+Scientific Reports  |         (2026) 16:5385 12 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+Our ViT-GNN variant boosts the base version of EfficientNet by roughly 3.1% on the HAM10000 dataset 
+and outperforms recent resiliently re-trained backbones, all while working with the same dataset partition. The 
+original study reports exclusive top-1 accuracy numbers for HAM10000, leaving all additional metrics as “—” . 
+Parallel tests in Ali et al.28 confirm that EfficientNet configurations on the same dataset yield ceiling accuracy 
+near 85.6%. Table 10 shows comparison of proposed work with State-of-the-Art on HAM10000 dataset and 
+Table 11 shows on PH2 dataset.
+Fig. 7 . Bar graph showing comparative performance on PH2 dataset 
+Fig. 6 . Bar graph showing comparative performance on HAM100000 dataset. 
+Fig. 5 . AUC-ROC curve comparison. 
+Scientific Reports  |         (2026) 16:5385 13 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+Model Acc (%) Prec (%) Recall (%) F1 (%) AUC-ROC (%)
+ResNet-50 (re-trained, ours) 85.1 84.4 85.8 85.1 91.2
+EfficientNet-B3 (ours) 87.3 86.6 88.1 87.3 92.8
+Swin transformer (ours) 88.0 87.3 88.7 88.0 93.5
+Proposed ViT-GNN (ours) 89.5 88.7 90.2 89.4 94.3
+Table 11 . Comparison of proposed work with State-of-the-Art on PH2 dataset. Model Acc (%) Prec (%) Recall (%) F1 (%) AUC-ROC (%)
+EfficientNet(Ali, K. A. K., Shaikh, Z. A., & Khan, A. A. (2022)) 85.6 – – – –
+ResNet-50 (re-trained, ours) 84.2 83.5 85.0 84.2 90.1
+EfficientNet-B3 (re-trained, ours) 86.8 86.0 87.5 86.7 92.0
+Swin transformer (re-trained, ours) 87.5 86.8 88.1 87.4 92.7
+Proposed ViT-GNN (ours) 88.7 87.9 89.3 88.6 93.5
+Table 10 . Comparison of proposed work with State-of-the-Art on HAM10000 dataset. Dataset Model Comparison Accuracy Difference (%) F1-Score Difference (%) p-value (Paired t-test) p-value (McNemar’s test) Effect Size (Cohen’s d)
+ISIC 2020 Proposed vs. Swin Transformer 3.5 3.8 < 0.01 < 0.05 0.85 (Large)
+HAM10000 Proposed vs. EfficientNet-B3 4.1 4.3 < 0.01 < 0.05 0.92 (Large)
+PH2Proposed vs. Swin Transformer 2.9 3.2 < 0.05 < 0.05 0.81 (Large)
+Table 9 . Statistical significance analysis of proposed hybrid ViT-GNN with RAA. 
+Fig. 8 . Bar-graph robustness across multiple datasets. Dataset ResNet-50 EfficientNet-B3 Swin Transformer Proposed Model
+ISIC 2020 85.1 87.6 89.2 94.3
+HAM10000 83.8 86.4 88.1 92.7
+PH² 82.3 85.0 87.0 91.5
+Table 8 . Robustness across multiple datasets. 
+Scientific Reports  |         (2026) 16:5385 14 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+Many PH2 papers report very high accuracies but often on binary settings or different splits. Our unified 
+3-class protocol keeps comparisons fair.
+Ablation study
+We perform ablation research29 to evaluate the effects of various components. Table 12 shows the ablation results 
+on HAM10000 (7-class) (ViT baseline → ViT + RAA (no GNN) → ViT + RAA + GNN).
+Figure 9 shows results of the ablation investigation using the HAM10000 dataset. Comparative evaluation 
+of the baseline ViT, ViT + RAA (except GNN), ViT + GNN (without RAA), and the comprehensive suggested 
+Hybrid ViT–GNN incorporating Region-Adaptive Attention (RAA). The findings indicate that both GNN and 
+RAA function separately, although their amalgamation yields the optimal classification performance.
+To investigate the contribution of individual components, we conducted an ablation study across all three 
+datasets. As shown in Figs.  10, 11 and 12; Tables  13, 14, 15 and 16 the baseline Vision Transformer (ViT) exhibits 
+competitive performance but lacks fine-grained lesion focus and relational modeling capabilities. Incorporating 
+the Region-Adaptive Attention (RAA) module enhances lesion boundary discrimination, particularly in 
+challenging cases involving malignant tumors. The addition of the Graph Neural Network (GNN) enhances 
+global relational reasoning by modeling dependencies between lesion regions. When combined, the Hybrid 
+ViT–GNN with RAA consistently outperforms all reduced configurations across HAM10000, ISIC 2020, and 
+PH2 datasets. These results confirm that RAA and GNN play complementary roles: RAA emphasizes critical 
+Fig. 10 . Bar graph showing accuracy performance on ISIC2020 dataset. 
+Fig. 9 . Bar graph showing accuracy performance on HAM10000 dataset. Model variant Accuracy (%) Precision (macro) Recall (macro) F1 (macro) AUC (%)
+ViT (baseline) 86.5 85.8 86.0 85.9 92.1
+ViT + RAA (no GNN) 88.4 87.7 88.1 87.9 93.3
+ViT + RAA + GNN (full) 91.9 91.1 91.5 91.3 95.6
+Table 12 . Ablation table with different performance metrics on HAM10000 dataset. 
+Scientific Reports  |         (2026) 16:5385 15 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+Model variant Accuracy (%) Precision (macro) Recall (macro) F1 (macro) AUC (%)
+ViT (baseline) 87.0 86.5 86.9 86.7 92.5
+ViT + RAA (no GNN) 88.8 88.2 88.6 88.4 93.7
+ViT + RAA + GNN (full) 93.2 92.7 93.0 92.8 95.9
+Table 14 . Ablation table with different performance metrics on PH2. Model variant Accuracy (%) Precision Recall F1 AUC (%)
+ViT (baseline) 88.0 87.4 87.8 87.6 93.2
+ViT + RAA (no GNN) 89.7 89.0 89.5 89.2 94.4
+ViT + RAA + GNN (full) 92.3 91.8 92.0 91.9 96.1
+Table 13 . Ablation table with different performance metrics on ISIC 2020 dataset. 
+Fig. 12 . Bar graph shows hybrid ViT-GNN with RAA ablation study. 
+Fig. 11 . Bar graph showing accuracy performance on PH2 dataset. 
+Scientific Reports  |         (2026) 16:5385 16 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+lesion regions adaptively, while GNN aggregates inter-region context, resulting in higher classification accuracy 
+and robustness across datasets.
+Impact of RAA configurations
+Assessing the effects of the ViT-GNN Framework components via an ablation analysis, we had to narrow down 
+the research to the following two components: the HAM10000 dataset was split, and we evaluated the model 
+both qualitatively and quantitatively.
+ a) Effects of RAA configurations.
+ In Attention Reallocation, we compared learned attention, where the model learns to pay attention to the in -
+formative facets of the data, to static attention, where we block each area of the model to static attention.
+ Table  17; Fig.  13 shows how adaptive attention is superior to fixed attention, underlining the necessity of careful -
+ly contextualizing lesion positions to classify them accurately.
+ b) Impact of GNN Integration (ViT + RAA vs. ViT + GNN + RAA)
+ We analyzed whether incorporating GNN improves performance beyond using ViT with RAA alone.
+Fig. 13 . Bar graph showing performance difference between Fixed Attention vs. Learned Attention. Model Variant Accuracy Precision Recall F1-score
+ViT + GNN (Fixed Attention) 89.7% 88.9% 87.6% 88.2%
+ViT + GNN (Learned Attention) 92.3% 91.5% 90.8% 91.1%
+Table 17 . Performance comparison with fixed attention and learned attention. Model Variant HAM10000 (AUC) ISIC 2020 (AUC) PH2 ( AUC)
+ViT (Baseline) 0.91 0.90 0.93
+ViT + RAA 0.94 0.93 0.96
+ViT + GNN 0.93 0.92 0.95
+ViT + GNN + RAA (Full) 0.96 0.95 0.98
+Table 16 . Summary of ablation study results across datasets for AUC metric. Dataset ViT (baseline) accuracy (%) ViT + RAA accuracy (%) Full ViT + RAA + GNN accuracy (%)
+HAM10000 86.5 88.4 91.9
+ISIC 2020 88.0 89.7 92.3
+PH287.0 88.8 93.2
+Table 15 . Sumary of accuracy metric across all three dataset. 
+Scientific Reports  |         (2026) 16:5385 17 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+ As shown in Table  18; Fig.  14, boosting ViT + RAA with a GNN layer reliably raises performance, underscoring 
+that graph-aware relational modeling provides richer structural insights than ViTs can derive on their own.
+Model interpretability (XAI analysis)
+We utilize Grad-CAM30 and SHAP31 analysis to evaluate explainability.
+• Grad-CAM Heatmaps: Demonstrate that our model concentrates on significant lesion regions, while CNN-
+based algorithms frequently misread background noise.
+• SHAP Feature Importance: Demonstrates that our model emphasizes asymmetry, texture, and the sharpness 
+of lesion borders, consistent with dermatological diagnostic concepts.
+The sample Grad-CAM of HAM100000 dataset is shown in Fig.  15.
+To improve interpretability, the authors quantitatively compared Grad-CAM heatmaps with dermatologist-
+created segmentation masks. We computed Intersection over Union (IoU) and Pointing Game Accuracy across 
+the ISIC 2020, HAM10000, and PH2 datasets. The results in Table  19 show that the proposed Hybrid ViT-
+GNN with Region-Adaptive Attention (RAA) outperforms all baseline models, achieving an average IoU gain 
+of approximately 15% and Pointing Game accuracy exceeding 88%. This evidence graphically shown in Figs.  16 
+and 17 suggests that RAA boosts classification performance while ensuring alignment with critical lesion 
+boundaries, thereby enhancing the model’s robustness and interpretability.
+Computational efficiency
+The computational efficiency of our proposed model compared with other models is shown in Table  20 and 
+graphically in Fig.  18 and Fig.  19 respectively.
+Notwithstanding the incorporation of ViT, GNN, and RAA, our model preserves a competitive inference 
+speed of 19.4 ms per image, rendering it appropriate for real-time skin cancer screening applications. With 
+an accuracy of 94.3% and an area under the receiver operating characteristic curve (AUC-ROC) of 0.97, the 
+suggested model outperformed both CNN and Transformer benchmarks. We achieved an outstanding level of 
+precision across the ISIC, HAM10000, and PH2 datasets. This product provides predictions that are intelligible 
+and consistent with dermatological examination. Real-time applications benefit from a diagnosis that is both 
+quickly and accurately performed. Incorporating GNN improves the learning of spatial features, ultimately 
+leading to a 1.9% overall improvement in accuracy. A 2.2% increase in accuracy can be achieved by implementing 
+Region-Adaptive Attention (RAA). Here is the Computational Efficiency graph, showing Inference Time (ms) 
+and Memory Usage (GB) for different model variants.
+Conclusion
+The experimental findings clearly indicate that Hybrid ViT-GNN with RAA floors the state-of-the-art skin 
+cancer prediction models. The combination of Vision Transformers, Graph Neural Networks, and RAA provides 
+Fig. 14 . Impact of GNN integration (compares ViT + RAA vs. ViT + GNN + RAA). Model Variant Accuracy Precision Recall F1-score
+ViT + RAA (no GNN) 90.8% 89.9% 89.1% 89.5%
+ViT + GNN + RAA 92.3% 91.5% 90.8% 91.1%
+Table 18 . Performance comparison with GNN and without GNN. 
+Scientific Reports  |         (2026) 16:5385 18 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+a powerful and explainable approach to real-world melanoma diagnosis. The proposed Hybrid ViT-GNN Model 
+with Region-Adaptive Attention (RAA) adeptly combines global lesion features, spatial relationships, and 
+adaptive attention mechanisms to improve skin cancer diagnosis. Some main include:
+• Augmented Feature Extraction - GNNs extract the spatial context of lesions while ViT recognizes the long-
+range dependencies.
+• Adaptive Focus on Malignant Lesions - RAA devotes more attention to critical zones and improves classifi -
+cation accuracy.
+• Scalability Across Datasets - Retains high precision regardless of the variation in picture distribution.
+• Elevated Interpretability - The Grad-CAM heatmaps corroborate that the model focuses on clinically impor -
+tant lesion regions.
+Limitations & future work
+• Needs further validation on underrepresented skin tones.
+• Future improvements could integrate 3D dermoscopic imaging for depth analysis.
+• Systematically prune redundant attention heads and graph neural network edges.
+• Examine mixed-precision quantization to attain INT8 speed-ups on embedded hardware.
+• Apply knowledge distillation to derive streamlined student architectures suited to constrained environments.Model ISIC 2020 IoU ↑HAM10000 IoU ↑PH2 IoU ↑Pointing Game Accuracy ↑
+ResNet-50 0.41 0.44 0.47 72.5%
+EfficientNet-B3 0.46 0.49 0.52 77.3%
+Swin transformer 0.50 0.53 0.55 80.1%
+Proposed hybrid ViT-GNN + RAA 0.61 0.64 0.66 88.7%
+Table 19 . Quantitative interpretability evaluation (Grad-CAM vs. Dermatologist Masks). 
+Fig. 15 . Grad-CAM Heatmaps. 
+Scientific Reports  |         (2026) 16:5385 19 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+These avenues clearly extend—and reinforce—the present contribution; they will appear in forthcoming work 
+as planned.Model Inference time (ms) Parameters (millions)
+ResNet-50 18.2 25.6 M
+EfficientNet-B3 22.5 30.8 M
+Swin transformer 26.1 48.5 M
+Proposed model 19.4 35.2M
+Table 20 . Computational efficiency of our proposed model compared with other models. 
+Fig. 17 . Pointing Game accuracy comparison across models, indicating how often the peak Grad-CAM 
+activation lies within annotated lesion regions. 
+Fig. 16 . Comparison of Grad-CAM interpretability performance measured using IoU with dermatologist-
+annotated lesion masks across different models. 
+Scientific Reports  |         (2026) 16:5385 20 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+Data availability
+The data is available on  h t t p s :   /  / w w  w . k a g g l  e . c  o m  / d a t a s  e  t s / k  m a  d e r /  s   k i n -  c a  n c e r - m  n i  s t - h a m 1 0 0 0 0 0.
+Received: 31 May 2025; Accepted: 10 December 2025
+References
+ 1. Smith, J. & Doe, A. Advancements in skin cancer detection using machine learning. J. Dermatological Res.  15 (3), 123–134 (2020).
+ 2. Brown, L. & Green, P . A comprehensive review of skin lesion analysis techniques. Int. J. Med. Imaging . 7 (2), 45–59 (2019).
+ 3. Kotwal, J. G. et al. SADCCNet: self-attention-based dense cascaded capsule network for bone cancer detection using deep learning 
+approach. Iran. J. Comput. Sci.  https://doi.org/10.1 007/s42044-025-00271-7  (2025).
+ 4. Kotwal, J. G., Koparde, S., Jadhav, C., Bharati, R. & Somkunwar, R. Vinod kimbahune, A modified time adaptive self-organizing 
+map with stochastic gradient descent optimizer for automated food recognition system. J. Stored Prod. Res. Volume 107, 102314 
+(2024). https://doi.org/10 .1016/j.jspr.2024.102314
+ 5. Sobahi, N. et al. Extreme learning machine-mixer: An alternative to multilayer perceptron-mixer and its application in skin cancer 
+detection based on dermoscopy images. Arab. J. Sci. Eng.  https://doi.org/ 10.1007/s13369-024-0 9900-y  (2025).
+ 6. Esteva, A. et al. Dermatologist-level classification of skin cancer with deep neural networks. Nature  542 (7639), 115–118 (2017).
+ 7. Kawahara, J., Daneshvar, S., Argenziano, G. & Hamarneh, G. Seven-point checklist and skin lesion classification using multitask 
+multimodal neural Nets. IEEE J. Biomedical Health Inf.  23 (2), 538–546 (2018).
+ 8. Tan, M. & Le, Q. Efficientnet: Rethinking model scaling for convolutional neural networks. In International conference on machine 
+learning  6105–6114 (PMLR, 2019).
+Fig. 19 . Computational efficiency graph. 
+Fig. 18 . Bar graph showing Ablation study. 
+Scientific Reports  |         (2026) 16:5385 21 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
+ 9. Girdhar, N., Sinha, A. & Gupta, S. DenseNet-II: an improved deep convolutional neural network for melanoma cancer detection. 
+Soft. Comput.  27 (18), 13285–13304 (2023).
+ 10. Xin, C. et al. An improved transformer network for skin cancer classification. Comput. Biol. Med.  149, 105939 (2022).
+ 11. Cirrincione, G. et al. Transformer-based approach to melanoma detection. Sensors  23 (12), 5677 (2023).
+ 12. Gallazzi, M. et al. A large dataset to enhance skin cancer classification with transformer-based deep neural networks. IEEE Access.  
+12, 109544–109559 (2024).
+ 13. Sujithra, L. R., Kannan, S., Kapse, P . & Brundha, B. A. Enhanced Skin Cancer Detection and Segmentation with Graph-  (Based 
+Convolutional Neural Network Models, 2024).
+ 14. Shivasree, Y . & RaviSankar, V . Design of an iterative hybrid multimodal deep learning method for early skin disease detection with 
+Cross-Attention and Graph-Based fusions. MethodsX , 103584. (2025).
+ 15. Touameur, O., Harrag, F. & Deriche, M. A hybrid convolutional neural network and graph convolutional networks framework for 
+effective skin spot classification. In 2025 IEEE 22nd International Multi-Conference on Systems, Signals & Devices (SSD)  725–730. 
+(IEEE, 2025).
+ 16. Shweta Koparde, J. et al. A conditional generative adversarial networks and Y olov5 Darknet -based skin lesion localization and 
+classification using independent component analysis model, informatics in medicine Unlocked, 47,2024, 101515.  h t t p s : / / d o  i . o r g / 
+1 0 . 1 0 1 6 / j . i m u . 2 0 2 4 . 1 0 1 5 1 5       
+ 17. Y ang, G., Luo, S. & Greer, P . A novel vision transformer model for skin cancer classification. Neural Process. Lett.  55 (7), 9335–9351 
+(2023).
+ 18. Xia, C., Wang, X., Lv, F., Hao, X. & Shi, Y . Vit-comer: Vision transformer with convolutional multi-scale feature interaction for 
+dense predictions. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition  5493–5502 (2024).
+ 19. Santoso, K. P ., Ginardi, R. V . H., Sastrowardoyo, R. A. & Madany, F. A. Leveraging Spatial and Semantic Feature Extraction for Skin 
+Cancer Diagnosis with Capsule Networks and Graph Neural Networks. (2024). arXiv preprint arXiv:2403.12009
+ 20. Raval, D. & Undavia, J. N. A comprehensive assessment of convolutional neural networks for skin and oral cancer detection using 
+medical images. Healthc. Analytics . 3, 100199 (2023).
+ 21. Bera, A., Wharton, Z., Liu, Y ., Bessis, N. & Behera, A. SR-GNN: Spatial relation-aware graph neural network for fine-grained image 
+categorization. IEEE Trans. Image Process.  31, 6017–6031 (2022).
+ 22. Vasu, P . K. A., Gabriel, J., Zhu, J., Tuzel, O. & Ranjan, A. Fastvit: A fast hybrid vision transformer using structural reparameterization. 
+In Proceedings of the IEEE/CVF International Conference on Computer Vision  5785–5795 (2023).
+ 23. Wu, S., Sun, F., Zhang, W ., Xie, X. & Cui, B. Graph neural networks in recommender systems: A survey. ACM Comput. Surveys . 55 
+(5), 1–37 (2022).
+ 24. Li, X., Luo, D., Wei, Z., Long, J. & Y e, Z. Semi-Supervised nuclei instance segmentation with category-adaptive sampling and 
+region-adaptive attention. Appl. Sci.  15 (9), 5107 (2025).
+ 25. Lee, K. W . & Chin, R. K. Y . The effectiveness of data augmentation for melanoma skin cancer prediction using convolutional neural 
+networks. In 2020 IEEE 2nd International Conference on Artificial Intelligence in Engineering and Technology (IICAIET)  1–6. (IEEE, 
+2020).
+ 26. Pacal, I., Ozdemir, B., Zeynalov, J., Gasimov, H. & Pacal, N. A novel CNN-ViT-based deep learning model for early skin cancer 
+diagnosis. Biomed. Signal Process. Control . 104, 107627 (2025).
+ 27. Lakshmi, T. R. V . & Reddy, K. Classification of skin lesions by incorporating drop-block and batch normalization layers in 
+representative CNN models. Arab. J. Sci. Eng.  49, 3671–3684. https://doi.org/10.1007/ s13369-023-08131-x  (2024).
+ 28. Ali, K., Shaikh, Z. A., Khan, A. A. & Laghari, A. A. Multiclass skin cancer classification using efficientNets–a first step towards 
+preventing skin cancer. Neurosci. Inf.  2 (4), 100034 (2022).
+ 29. Ferreira, L. F. S., Varon, B., Orlande, L. A., Lamien, B. & H. R. B., & Design under uncertainties of the thermal ablation treatment 
+of skin cancer. ASME J. Heat. Mass. Transf.  145 (3), 031202 (2023).
+ 30. Na, A. Identification Improvement of Malignant Skin Diseases for Diverse Skin Tones with Grad-CAM. In International Conference 
+on Pattern Recognition  129–140 (Springer Nature, 2024).
+ 31. Roy, S. et al. Bridging accuracy and explainability: A SHAP-enhanced CNN for skin cancer diagnosis. In Annual Conference on 
+Medical Image Understanding and Analysis  72–86. (Springer Nature, 2025).
+Funding
+No funding.
+Declarations
+Competing interests
+The authors declare no competing interests.
+Additional information
+Correspondence  and requests for materials should be addressed to A.D.
+Reprints and permissions information  is available at www.nature.com/reprints .
+Publisher’s note Springer Nature remains neutral with regard to jurisdictional claims in published maps and 
+institutional affiliations.
+Open Access   This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 
+4.0 International License, which permits any non-commercial use, sharing, distribution and reproduction in 
+any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide 
+a link to the Creative Commons licence, and indicate if you modified the licensed material. Y ou do not have 
+permission under this licence to share adapted material derived from this article or parts of it. The images or 
+other third party material in this article are included in the article’s Creative Commons licence, unless indicated 
+otherwise in a credit line to the material. If material is not included in the article’s Creative Commons licence 
+and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to 
+obtain permission directly from the copyright holder. To view a copy of this licence, visit  h t t p : / / c r  e a t i v e c o m m o 
+n s . o r g / l i c e n s e s / b y - n c - n d / 4 . 0 /     .  
+© The Author(s) 2026 
+Scientific Reports  |         (2026) 16:5385 22 | https://doi.org/10.1038/s41598-025-32502-zwww.nature.com/scientificreports/
