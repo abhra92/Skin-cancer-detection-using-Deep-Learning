@@ -1,0 +1,33 @@
+{
+  "experiment_id": "EXP-002",
+  "model": "SmallCNN",
+  "pretrained": false,
+  "imbalance_strategy": "inverse_frequency_class_weighted_cross_entropy",
+  "description": "Controlled imbalance experiment paired with EXP-001.",
+  "seed": 42,
+  "image_size": 160,
+  "batch_size": 16,
+  "epochs": 10,
+  "early_stopping_patience": 3,
+  "num_workers": 0,
+  "split": {
+    "method": "StratifiedGroupKFold; outer 5-fold test holdout, inner 4-fold validation from the remaining data",
+    "approximate_proportions": {
+      "train": 0.6,
+      "validation": 0.2,
+      "test": 0.2
+    },
+    "seed": 42,
+    "selection_metric": "validation macro-F1",
+    "test_policy": "Held-out test set is evaluated once after checkpoint/model selection; it is not used for tuning"
+  },
+  "augmentation": {
+    "applies_to": "training split only, on the fly after split assignment",
+    "operations": [
+      "random horizontal flip p=0.5",
+      "random vertical flip p=0.5",
+      "random rotation within +/-15 degrees"
+    ],
+    "validation_test": "deterministic resize, tensor conversion, ImageNet normalization only"
+  }
+}

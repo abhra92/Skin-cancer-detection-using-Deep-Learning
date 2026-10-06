@@ -1,0 +1,6 @@
+record_type,key,value,status,details
+quality_check,data_root,/home/user/Skin-cancer-detection-using-Deep-Learning/DATA/HAM10000,MISSING,
+quality_check,metadata_csv_count,0,MISSING,
+quality_check,image_file_count,0,MISSING,
+quality_check,dataset_status,HAM10000 assets were not found under the requested root,BLOCKED,
+quality_check,dataset_status,not suitable for training until blockers are resolved,BLOCKED,Dataset root does not exist: /home/user/Skin-cancer-detection-using-Deep-Learning/DATA/HAM10000
