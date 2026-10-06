@@ -11,6 +11,8 @@ DATA/
 .~lock.*#
 
 # Python and Jupyter Notebooks
+.venv/
+venv/
 __pycache__/
 *.py[cod]
 *$py.class

@@ -1,0 +1,60 @@
+{
+  "dataset": "HAM10000",
+  "data_root_default": "/home/user/Skin-cancer-detection-using-Deep-Learning/DATA/HAM10000",
+  "expected_metadata_filename": "HAM10000_metadata.csv",
+  "label_column": "dx",
+  "image_identifier_column": "image_id",
+  "grouping_priority": [
+    "patient_id",
+    "lesion_id",
+    "exact_image_sha256",
+    "image_id"
+  ],
+  "classes": [
+    "akiec",
+    "bcc",
+    "bkl",
+    "df",
+    "mel",
+    "nv",
+    "vasc"
+  ],
+  "image_size": 160,
+  "color_mode": "RGB",
+  "resize": "PIL bilinear resize to a fixed square; aspect ratio is not preserved",
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "source": "ImageNet constants for pretrained MobileNetV3; no statistics are estimated from validation/test"
+  },
+  "split": {
+    "method": "StratifiedGroupKFold; outer 5-fold test holdout, inner 4-fold validation from the remaining data",
+    "approximate_proportions": {
+      "train": 0.6,
+      "validation": 0.2,
+      "test": 0.2
+    },
+    "seed": 42,
+    "selection_metric": "validation macro-F1",
+    "test_policy": "Held-out test set is evaluated once after checkpoint/model selection; it is not used for tuning"
+  },
+  "augmentation": {
+    "applies_to": "training split only, on the fly after split assignment",
+    "operations": [
+      "random horizontal flip p=0.5",
+      "random vertical flip p=0.5",
+      "random rotation within +/-15 degrees"
+    ],
+    "validation_test": "deterministic resize, tensor conversion, ImageNet normalization only"
+  },
+  "raw_data_policy": "Read-only. No raw images or metadata are rewritten. Split manifest and model inputs are stored separately.",
+  "duplicate_policy": "Exact byte duplicates and patient/lesion identifiers are joined into one leakage group; conflicting duplicate labels block training."
+}

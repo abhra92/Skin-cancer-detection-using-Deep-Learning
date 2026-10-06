@@ -1,0 +1,128 @@
+{
+  "audit_timestamp_utc": "2026-10-06T09:36:04+00:00",
+  "repository": "/home/user/Skin-cancer-detection-using-Deep-Learning",
+  "branch": "arena/5a5efa09-skin-cancer-detection-using-de",
+  "commit": "d0240649e4355f3462230bb6fdfb27f2f08483c8",
+  "inventory_scope": "All tracked and untracked repository source files outside .git and the generated research-output directory; no files are modified by the audit.",
+  "source_file_count": 76,
+  "file_counts_by_category": {
+    "notebook": 1,
+    "other": 2,
+    "research_methodology_or_draft_pdf": 4,
+    "research_paper_pdf": 35,
+    "tabular_file": 1,
+    "text_or_configuration": 26,
+    "word_document": 7
+  },
+  "pdf_path_count": 39,
+  "unique_pdf_contents": 34,
+  "research_paper_pdf_paths": 35,
+  "unique_research_paper_contents": 30,
+  "pdf_extraction_errors": [],
+  "docx_count": 7,
+  "notebooks": [
+    {
+      "path": "HAM10000_Deep_Learning_PyTorch.ipynb",
+      "cell_count": 25,
+      "code_cells": 21,
+      "executed_code_cells": 0,
+      "stored_outputs": 0
+    }
+  ],
+  "dataset_findings": {
+    "image_files_found": 0,
+    "metadata_csv_candidates": [],
+    "ham10000_metadata_found": false,
+    "only_csv_files": [
+      "Extra/skin_cancer_papers_clean.csv"
+    ],
+    "bibliography_csv_rows": 45,
+    "interpretation": "The only supplied CSV is a literature bibliography; it does not have image_id/dx fields and is not dataset metadata."
+  },
+  "existing_results": {
+    "checkpoints": [],
+    "plots": [],
+    "existing_python_scripts_before_generated_pipeline": [],
+    "other_csv_files": [
+      "Extra/skin_cancer_papers_clean.csv"
+    ],
+    "existing_notebook_outputs": "No code cells have execution counts and no stored cell outputs.",
+    "existing_paper_text_extracts": [
+      "HAM10000/pdf_text_dump/International Journal of Biomedical Imaging - 2024 - Himel - Skin Cancer Segmentation and Classification Using Vision.txt",
+      "HAM10000/pdf_text_dump/paper_051af425744157c1b9fec6b63445a483.txt",
+      "HAM10000/pdf_text_dump/paper_199ed56ea8cd5ab18d0664abadcb21fc.txt",
+      "HAM10000/pdf_text_dump/paper_20559e74133d51fc8d04593c678e7ea7.txt",
+      "HAM10000/pdf_text_dump/paper_2b031f6e5e2d57adaa5aea41bcb02368.txt",
+      "HAM10000/pdf_text_dump/paper_45866f3362a35de084d840bba4f6485e.txt",
+      "HAM10000/pdf_text_dump/paper_48767bbc04ff53a98a83ccc5c9ccd399.txt",
+      "HAM10000/pdf_text_dump/paper_4ae3a46584645ef49c1ffd38ab82bcdf.txt",
+      "HAM10000/pdf_text_dump/paper_58d7f048719f5e9fb1139076c0c0769e.txt",
+      "HAM10000/pdf_text_dump/paper_7314ac335b105680ad684da95b2777b8.txt",
+      "HAM10000/pdf_text_dump/paper_da5ac31c75ac5fbc8847e742ce77a9c3.txt"
+    ],
+    "existing_extraction_json": [
+      "Paper/knowledge_graph_output.json",
+      "Paper/paper_extracts.json",
+      "Paper/paper_full_extracts.json"
+    ]
+  },
+  "hardware": {
+    "python_version": "3.11.2",
+    "python_executable": "/home/user/.venv/bin/python",
+    "initial_system_python_environment": {
+      "python_version": "3.11.2",
+      "python_executable": "/usr/bin/python",
+      "modules": {
+        "torch": false,
+        "torchvision": false,
+        "tensorflow": false,
+        "sklearn": false,
+        "pandas": false,
+        "numpy": false,
+        "PIL": false,
+        "matplotlib": false,
+        "seaborn": false,
+        "openpyxl": false
+      },
+      "status": "queried from untouched system Python"
+    },
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_count_visible": 2,
+    "memory_total_mib": 3939.9,
+    "memory_available_mib": 3564.1,
+    "gpu": "NOT DETECTED (nvidia-smi is unavailable)",
+    "nvidia_smi_available": false,
+    "torch_installed": false,
+    "torch_version": "NOT INSTALLED",
+    "cuda_available": "NOT CHECKED",
+    "active_interpreter_ml_libraries": {
+      "torch": false,
+      "torchvision": false,
+      "tensorflow": false,
+      "sklearn": true,
+      "pandas": true,
+      "numpy": true,
+      "PIL": true,
+      "matplotlib": true,
+      "seaborn": true,
+      "openpyxl": true
+    }
+  },
+  "disk": {
+    "free_gib": 18.46,
+    "total_gib": 20.34
+  },
+  "analysis_environment_packages": {
+    "pypdf": "6.19.0",
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.2",
+    "pillow": "12.3.0",
+    "seaborn": "0.13.2",
+    "openpyxl": "3.1.5",
+    "torch": "NOT INSTALLED",
+    "torchvision": "NOT INSTALLED"
+  },
+  "important_source_limit": "The unexecuted notebook contains a Kaggle-download instruction, but no Kaggle dataset files, credentials, checkpoints, outputs, or local model framework were present in the initial host Python environment."
+}

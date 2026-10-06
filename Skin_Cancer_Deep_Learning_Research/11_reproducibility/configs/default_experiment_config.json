@@ -1,0 +1,39 @@
+{
+  "dataset_root": "/home/user/Skin-cancer-detection-using-Deep-Learning/DATA/HAM10000",
+  "seed": 42,
+  "image_size": 160,
+  "batch_size": 16,
+  "epochs": 10,
+  "early_stopping_patience": 3,
+  "num_workers": 0,
+  "experiment_matrix": [
+    {
+      "experiment_id": "EXP-001",
+      "model": "SmallCNN",
+      "pretrained": false,
+      "imbalance_strategy": "unweighted_cross_entropy",
+      "description": "From-scratch CNN reference; same train-only augmentation as paired run."
+    },
+    {
+      "experiment_id": "EXP-002",
+      "model": "SmallCNN",
+      "pretrained": false,
+      "imbalance_strategy": "inverse_frequency_class_weighted_cross_entropy",
+      "description": "Controlled imbalance experiment paired with EXP-001."
+    },
+    {
+      "experiment_id": "EXP-003",
+      "model": "MobileNetV3-Small",
+      "pretrained": true,
+      "imbalance_strategy": "unweighted_cross_entropy",
+      "description": "ImageNet transfer-learning reference; same split and augmentation."
+    },
+    {
+      "experiment_id": "EXP-004",
+      "model": "MobileNetV3-Small",
+      "pretrained": true,
+      "imbalance_strategy": "inverse_frequency_class_weighted_cross_entropy",
+      "description": "Controlled imbalance experiment paired with EXP-003."
+    }
+  ]
+}
